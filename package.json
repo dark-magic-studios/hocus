@@ -21,6 +21,7 @@
   "scripts": {
     "build": "tsup src/cli.ts --format esm --dts --clean --shims",
     "dev": "tsx src/cli.ts",
+    "tui": "bun src/cli.ts tui",
     "typecheck": "tsc --noEmit",
     "test": "node --test --import tsx tests/*.test.ts"
   },
@@ -29,12 +30,15 @@
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "gray-matter": "^4.0.3",
+    "ink": "^7.1.0",
     "picocolors": "^1.1.0",
+    "react": "^19.2.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.0",
+    "@types/react": "^19.2.17",
     "tsup": "^8.2.4",
     "tsx": "^4.19.0",
     "typescript": "^5.6.2"

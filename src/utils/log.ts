@@ -5,5 +5,5 @@ export const log = {
   ok: (msg: string) => console.log(pc.green("✓"), msg),
   warn: (msg: string) => console.log(pc.yellow("!"), msg),
   error: (msg: string) => console.error(pc.red("✗"), msg),
-  heading: (msg: string) => console.log("\n" + pc.bold(msg)),
+  heading: (msg: string) => console.log("\n" + pc.green(pc.bold(msg))),
 };

@@ -4,6 +4,7 @@ import { runInit } from "./commands/init.js";
 import { runCast } from "./commands/cast.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
+import { runTui } from "./commands/tui.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
 
@@ -49,6 +50,14 @@ program
   .option("-n, --name <name>", "project name (defaults to the directory name)")
   .action(async (opts: { name?: string }) => {
     await runSync({ repoRoot: process.cwd(), projectName: opts.name });
+  });
+
+program
+  .command("tui")
+  .description("launch the terminal UI dashboard (requires Bun)")
+  .option("-n, --name <name>", "project name (defaults to the directory name)")
+  .action(async (opts: { name?: string }) => {
+    await runTui({ repoRoot: process.cwd(), projectName: opts.name });
   });
 
 program.parseAsync(process.argv).catch((err: unknown) => {
