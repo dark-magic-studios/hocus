@@ -1,0 +1,45 @@
+{
+  "name": "aviomancy",
+  "version": "0.1.0",
+  "description": "A multi-agent harness generator: one persona spec (SOUL.md) compiled into Claude Code, OpenCode, Cursor, and Antigravity native agent/rule formats.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Dark Magic Studios",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dark-magic-studios/aviomancy.git"
+  },
+  "bin": {
+    "aviomancy": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src/personas",
+    "src/templates",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --dts --clean --shims",
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --import tsx tests/*.test.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "gray-matter": "^4.0.3",
+    "picocolors": "^1.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.5.0",
+    "tsup": "^8.2.4",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
