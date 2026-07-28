@@ -1,6 +1,6 @@
 import path from "node:path";
 import fsExtra from "fs-extra";
-const { readdir, writeFile } = fsExtra;
+const { readdir } = fsExtra;
 import { log } from "../utils/log.js";
 import { PROJECT_PERSONAS_DIR, PROJECT_SPELLS_DIR } from "../utils/paths.js";
 import { parseSoulFile, type SoulFile } from "../schema/soul.js";
@@ -15,11 +15,15 @@ export interface CastOptions {
   repoRoot: string;
   projectName?: string;
   targets?: TargetId[];
+  dryRun?: boolean;
 }
 
-export async function runCast({ repoRoot, projectName, targets }: CastOptions): Promise<void> {
+export async function runCast({ repoRoot, projectName, targets, dryRun = false }: CastOptions): Promise<void> {
   const name = projectName ?? path.basename(repoRoot);
   log.heading(`casting in ${repoRoot}`);
+  if (dryRun) {
+    log.info("dry run — no files will be written");
+  }
 
   const stack = await detectStack(repoRoot);
   const stackSummary = [...stack.languages, ...stack.frameworks];
@@ -56,9 +60,12 @@ export async function runCast({ repoRoot, projectName, targets }: CastOptions): 
   }
 
   for (const compiler of compilers) {
+    if (dryRun) {
+      log.info(`compiler: ${compiler.label}`);
+    }
     for (const soul of tailoredSouls) {
       const compiled = compiler.compile(soul, { repoRoot, stack });
-      await writeCompiledFile(repoRoot, compiled);
+      await writeCompiledFile(repoRoot, compiled, { dryRun, target: compiler.label });
     }
     log.ok(`${compiler.label}: compiled ${tailoredSouls.length} agents`);
   }
@@ -66,7 +73,7 @@ export async function runCast({ repoRoot, projectName, targets }: CastOptions): 
   // the dashboard always gets refreshed, regardless of which compilers ran
   const spells = await readSpells(PROJECT_SPELLS_DIR(repoRoot));
   const html = renderDashboard({ projectName: name, personas: souls, spells });
-  await writeFile(path.join(repoRoot, "dashboard.html"), html, "utf8");
+  await writeCompiledFile(repoRoot, { relPath: "dashboard.html", content: html }, { dryRun });
   log.ok("refreshed dashboard.html");
 }
 

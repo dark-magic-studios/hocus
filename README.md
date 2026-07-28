@@ -49,6 +49,7 @@ Code agents from them, installs the starter skill, and writes the initial
 
 ```bash
 hocus init --name my-project
+hocus init --dry-run   # preview personas and skills that would be installed
 ```
 
 ### `hocus cast`
@@ -62,6 +63,7 @@ targets Claude Code.
 ```bash
 hocus cast
 hocus cast --targets claude-code,opencode,cursor,antigravity
+hocus cast --dry-run   # preview compiled outputs and which compilers would run
 ```
 
 ### `hocus skill add <name>`

@@ -19,8 +19,9 @@ program
   .command("init")
   .description("bootstrap the persona cast, main files, and Claude Code agents into the current repo")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .action(async (opts: { name?: string }) => {
-    await runInit({ repoRoot: process.cwd(), projectName: opts.name });
+  .option("--dry-run", "print planned file writes without touching the filesystem")
+  .action(async (opts: { name?: string; dryRun?: boolean }) => {
+    await runInit({ repoRoot: process.cwd(), projectName: opts.name, dryRun: opts.dryRun });
   });
 
 program
@@ -28,11 +29,17 @@ program
   .description("scan the repo and (re)compile personas for every detected or specified target tool")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
   .option("-t, --targets <list>", "comma-separated targets: claude-code,opencode,cursor,antigravity")
-  .action(async (opts: { name?: string; targets?: string }) => {
+  .option("--dry-run", "print planned file writes without touching the filesystem")
+  .action(async (opts: { name?: string; targets?: string; dryRun?: boolean }) => {
     const targets = opts.targets
       ? (opts.targets.split(",").map((t) => t.trim()) as TargetId[])
       : undefined;
-    await runCast({ repoRoot: process.cwd(), projectName: opts.name, targets });
+    await runCast({
+      repoRoot: process.cwd(),
+      projectName: opts.name,
+      targets,
+      dryRun: opts.dryRun,
+    });
   });
 
 const skill = program.command("skill").description("manage skills");
