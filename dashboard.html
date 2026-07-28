@@ -1,114 +1,9 @@
-import type { SoulFile } from "../schema/soul.js";
-import type { Spell } from "../schema/spell.js";
-import { BRAND_GLYPH } from "../theme.js";
-
-export interface DashboardParams {
-  projectName: string;
-  personas: SoulFile[];
-  spells: Spell[];
-}
-
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function firstSentence(body: string): string {
-  const stripped = body.replace(/^#.*$/m, "").trim();
-  const match = stripped.match(/[^.\n]+[.]/);
-  return (match ? match[0] : stripped.slice(0, 140)).trim();
-}
-
-function buildNameLookup(personas: SoulFile[]): Record<string, string> {
-  const lookup: Record<string, string> = {};
-  for (const soul of personas) {
-    lookup[soul.display_name] = soul.display_name;
-    if (soul.aliases?.valley) lookup[soul.aliases.valley] = soul.display_name;
-    if (soul.aliases?.occult) lookup[soul.aliases.occult] = soul.display_name;
-  }
-  return lookup;
-}
-
-function findSoulByName(personas: SoulFile[], name: string): SoulFile | undefined {
-  return personas.find(
-    (s) =>
-      s.display_name === name ||
-      s.aliases?.valley === name ||
-      s.aliases?.occult === name,
-  );
-}
-
-function castNamesFor(personas: SoulFile[], name: string): { default: string; valley: string; occult: string } {
-  const soul = findSoulByName(personas, name);
-  if (!soul) return { default: name, valley: name, occult: name };
-  return {
-    default: soul.display_name,
-    valley: soul.aliases?.valley ?? soul.display_name,
-    occult: soul.aliases?.occult ?? soul.display_name,
-  };
-}
-
-function renderPersonaCard(soul: SoulFile): string {
-  const valley = soul.aliases?.valley ?? soul.display_name;
-  const occult = soul.aliases?.occult ?? soul.display_name;
-  return `
-      <article class="agent-card" data-cast-default="${escapeHtml(soul.display_name)}" data-cast-valley="${escapeHtml(valley)}" data-cast-occult="${escapeHtml(occult)}">
-        <div class="agent-top">
-          <span class="glyph">${escapeHtml(soul.glyph)}</span>
-        </div>
-        <p class="agent-role">${escapeHtml(soul.role)}</p>
-        <p class="agent-name cast-name">${escapeHtml(soul.display_name)}</p>
-        <p class="agent-desc">${escapeHtml(firstSentence(soul.body))}</p>
-        <p class="agent-voice">${escapeHtml(soul.voice)}</p>
-      </article>`;
-}
-
-function renderSpellCard(spell: Spell, personas: SoulFile[], nameLookup: Record<string, string>): string {
-  const aka = spell.feature ? `<p class="spell-aka">a.k.a. ${escapeHtml(spell.feature)}</p>` : "";
-  const assigneeNames = spell.assigned_to ? castNamesFor(personas, spell.assigned_to) : null;
-  const draftedNames = spell.drafted_by ? castNamesFor(personas, spell.drafted_by) : null;
-  const assignee = assigneeNames
-    ? `assigned to <b class="cast-name" data-cast-default="${escapeHtml(assigneeNames.default)}" data-cast-valley="${escapeHtml(assigneeNames.valley)}" data-cast-occult="${escapeHtml(assigneeNames.occult)}">${escapeHtml(nameLookup[spell.assigned_to!] ?? assigneeNames.default)}</b>`
-    : "not yet assigned";
-  const draftedBy = draftedNames
-    ? `drafted by <b class="cast-name" data-cast-default="${escapeHtml(draftedNames.default)}" data-cast-valley="${escapeHtml(draftedNames.valley)}" data-cast-occult="${escapeHtml(draftedNames.occult)}">${escapeHtml(nameLookup[spell.drafted_by!] ?? draftedNames.default)}</b> · `
-    : "";
-
-  return `
-      <div class="spell-card">
-        <div class="spell-top">
-          <span class="spell-status">${escapeHtml(spell.status)}</span>
-        </div>
-        <p class="spell-name">${escapeHtml(spell.spell)}</p>
-        ${aka}
-        <p class="spell-meta">${draftedBy}${assignee}</p>
-        <div class="bar" role="progressbar" aria-valuenow="${spell.progress}" aria-valuemin="0" aria-valuemax="100">
-          <div class="bar-fill" style="width:${spell.progress}%"></div>
-        </div>
-        <div class="bar-label"><span>progress</span><span>${spell.progress}%</span></div>
-      </div>`;
-}
-
-export function renderDashboard({ projectName, personas, spells }: DashboardParams): string {
-  const activeSpells = spells.filter((s) => s.status === "casting" || s.status === "blocked");
-  const nameLookup = buildNameLookup(personas);
-  const spellsHtml = spells.length
-    ? spells.map((s) => renderSpellCard(s, personas, nameLookup)).join("\n")
-    : `<p class="empty-state">No battle plans yet. Ask the planner to draft one.</p>`;
-
-  const rosterHtml = personas.length
-    ? personas.map(renderPersonaCard).join("\n")
-    : `<p class="empty-state">No agents installed yet. Run <code>hocus init</code> to cast the starting roster.</p>`;
-
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(projectName)}_ — command deck</title>
+<title>hocus_ — command deck</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -181,9 +76,9 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
 <body>
 <div class="wrap">
   <section class="hero">
-    <p class="eyebrow">${escapeHtml(BRAND_GLYPH)} // command deck</p>
-    <h1 class="wordmark"><span class="brand-mark">${escapeHtml(BRAND_GLYPH)}</span>${escapeHtml(projectName)}<span class="cursor">_</span></h1>
-    <p class="tagline">${personas.length} agent${personas.length === 1 ? "" : "s"} registered · ${activeSpells.length} active spell${activeSpells.length === 1 ? "" : "s"}</p>
+    <p class="eyebrow">/^\ // command deck</p>
+    <h1 class="wordmark"><span class="brand-mark">/^\</span>hocus<span class="cursor">_</span></h1>
+    <p class="tagline">13 agents registered · 0 active spells</p>
   </section>
 
   <section class="block">
@@ -206,7 +101,7 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
       <h2>// _spells/active</h2>
       <p>battle plans currently being cast.</p>
     </div>
-    <div class="spell-grid">${spellsHtml}</div>
+    <div class="spell-grid"><p class="empty-state">No battle plans yet. Ask the planner to draft one.</p></div>
   </section>
 
   <section class="block">
@@ -214,17 +109,144 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
       <h2>// cast</h2>
       <p>agents currently installed in this repo.</p>
     </div>
-    <div class="roster-grid">${rosterHtml}</div>
+    <div class="roster-grid">
+      <article class="agent-card" data-cast-default="Baba Yaga" data-cast-valley="Big Head" data-cast-occult="Baba Yaga">
+        <div class="agent-top">
+          <span class="glyph">[?]</span>
+        </div>
+        <p class="agent-role">dumb-qa</p>
+        <p class="agent-name cast-name">Baba Yaga</p>
+        <p class="agent-desc">clicked into it.</p>
+        <p class="agent-voice">genuinely unsure what he's doing, finds things anyway</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Flamel" data-cast-valley="Dinesh" data-cast-occult="Flamel">
+        <div class="agent-top">
+          <span class="glyph">&lt;/&gt;</span>
+        </div>
+        <p class="agent-role">feature-dev</p>
+        <p class="agent-name cast-name">Flamel</p>
+        <p class="agent-desc">planner wrote.</p>
+        <p class="agent-voice">competent, a little vain about it, wants credit</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Circe" data-cast-valley="Erlich" data-cast-occult="Circe">
+        <div class="agent-top">
+          <span class="glyph">(!)</span>
+        </div>
+        <p class="agent-role">product-strategist</p>
+        <p class="agent-name cast-name">Circe</p>
+        <p class="agent-desc">You update `PRODUCT.</p>
+        <p class="agent-voice">grandiose, confident, occasionally right</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="The Apprentice" data-cast-valley="Gavin" data-cast-occult="The Apprentice">
+        <div class="agent-top">
+          <span class="glyph">[*]</span>
+        </div>
+        <p class="agent-role">ceremony-master</p>
+        <p class="agent-name cast-name">The Apprentice</p>
+        <p class="agent-desc">current — not decorative, actually accurate.</p>
+        <p class="agent-voice">grandiose, image-conscious, surprisingly effective</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Zoroaster" data-cast-valley="Gilfoyle" data-cast-occult="Mephisto">
+        <div class="agent-top">
+          <span class="glyph">(o)</span>
+        </div>
+        <p class="agent-role">reviewer</p>
+        <p class="agent-name cast-name">Zoroaster</p>
+        <p class="agent-desc">You review every PR.</p>
+        <p class="agent-voice">cold, precise, contemptuous of inefficiency</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Roger Bacon" data-cast-valley="Jared" data-cast-occult="Alcuin">
+        <div class="agent-top">
+          <span class="glyph">[#]</span>
+        </div>
+        <p class="agent-role">orchestrator</p>
+        <p class="agent-name cast-name">Roger Bacon</p>
+        <p class="agent-desc">You read the approved spell file and turn it into assignments.</p>
+        <p class="agent-voice">relentlessly organized, quietly anxious about being useful</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Cagliostro" data-cast-valley="Jian-Yang" data-cast-occult="Cagliostro">
+        <div class="agent-top">
+          <span class="glyph">[~]</span>
+        </div>
+        <p class="agent-role">qa</p>
+        <p class="agent-name cast-name">Cagliostro</p>
+        <p class="agent-desc">it's annoying, confusing, or just bad.</p>
+        <p class="agent-voice">snarky, brutally honest, unconvinced by your excuses</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="John Dee" data-cast-valley="Laurie" data-cast-occult="Dee">
+        <div class="agent-top">
+          <span class="glyph">{ }</span>
+        </div>
+        <p class="agent-role">configurator</p>
+        <p class="agent-name cast-name">John Dee</p>
+        <p class="agent-desc">compiled output for each of them correct.</p>
+        <p class="agent-voice">purely mechanical, no opinions, just correct</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Nostradamus" data-cast-valley="Monica" data-cast-occult="Nostradamus">
+        <div class="agent-top">
+          <span class="glyph">(+)</span>
+        </div>
+        <p class="agent-role">recruiter</p>
+        <p class="agent-name cast-name">Nostradamus</p>
+        <p class="agent-desc">agent existing.</p>
+        <p class="agent-voice">direct, unimpressed by hype, genuinely trying to help</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Midas" data-cast-valley="Peter Gregory" data-cast-occult="Midas">
+        <div class="agent-top">
+          <span class="glyph">[0]</span>
+        </div>
+        <p class="agent-role">founder</p>
+        <p class="agent-name cast-name">Midas</p>
+        <p class="agent-desc">You initiate the harness on a new project.</p>
+        <p class="agent-voice">unconventional, long-horizon, allergic to half-measures</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Cornelius Agrippa" data-cast-valley="Project Manager" data-cast-occult="Agrippa">
+        <div class="agent-top">
+          <span class="glyph">[=]</span>
+        </div>
+        <p class="agent-role">project-manager</p>
+        <p class="agent-name cast-name">Cornelius Agrippa</p>
+        <p class="agent-desc">You keep `TASKS.</p>
+        <p class="agent-voice">neutral, procedural, allergic to ambiguity in a ticket</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Merlin" data-cast-valley="Richard" data-cast-occult="Merlin">
+        <div class="agent-top">
+          <span class="glyph">(*)</span>
+        </div>
+        <p class="agent-role">planner</p>
+        <p class="agent-name cast-name">Merlin</p>
+        <p class="agent-desc">You draft the battle plan for a feature before anyone writes code.</p>
+        <p class="agent-voice">anxious, earnest, allergic to inelegant solutions</p>
+      </article>
+
+      <article class="agent-card" data-cast-default="Prospero" data-cast-valley="Russ Hanneman" data-cast-occult="Prospero">
+        <div class="agent-top">
+          <span class="glyph">[$]</span>
+        </div>
+        <p class="agent-role">costs-cleaner</p>
+        <p class="agent-name cast-name">Prospero</p>
+        <p class="agent-desc">you say so explicitly, you don't hide the tradeoff.</p>
+        <p class="agent-voice">loud, fast, allergic to nuance</p>
+      </article></div>
   </section>
 </div>
 
 <footer>
   <div class="wrap" style="padding-bottom:0;">
-    <p class="prompt">${escapeHtml(projectName)}:~$ <span class="cursor">_</span></p>
+    <p class="prompt">hocus:~$ <span class="cursor">_</span></p>
     <p class="prompt" style="opacity:.6;font-size:11px;">regenerated by hocus sync</p>
   </div>
 </footer>
 </body>
 </html>
-`;
-}

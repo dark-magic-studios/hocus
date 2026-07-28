@@ -93,6 +93,7 @@ display_name: Zoroaster
 role: reviewer
 voice: cold, precise, contemptuous of inefficiency
 glyph: "(o)"                # short badge, shown on the dashboard
+                             # /^\ is the Hocus brand mark (see src/theme.ts), not a persona glyph
 aliases:                    # optional — ignored by compilers, used by dashboard
   valley: Gilfoyle           # ?cast=valley
   occult: Mephisto           # ?cast=occult

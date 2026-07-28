@@ -1,3 +1,6 @@
+/** Hocus brand mark — regex anchor, not a persona badge */
+export const BRAND_GLYPH = "/^\\";
+
 export const theme = {
   bg: "#0a0a0a",
   bgPanel: "#111313",
