@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { Command } from "commander";
 import { runInit } from "./commands/init.js";
 import { runCast } from "./commands/cast.js";
@@ -8,7 +11,10 @@ import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
 
-const VERSION = "0.1.0";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const VERSION: string = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8")
+).version;
 
 const program = new Command();
 

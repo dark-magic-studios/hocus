@@ -1,5 +1,5 @@
 {
-  "name": "hocus",
+  "name": "@dark-magic-studios/hocus",
   "version": "0.1.1",
   "description": "A multi-agent harness generator: one persona spec (SOUL.md) compiled into Claude Code, OpenCode, Cursor, and Antigravity native agent/rule formats.",
   "type": "module",
@@ -8,6 +8,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dark-magic-studios/hocus.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "bin": {
     "hocus": "dist/cli.js"
