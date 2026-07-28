@@ -43,12 +43,16 @@ npm link   # makes `hocus` available globally for local testing
 Run once, in the repo you want the harness in. Writes the main files if
 they don't already exist (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`,
 `MEMORY.md`, `TASKS.md`, `_spells/`), copies the persona cast into
-`.hocus/personas/` so they're editable per-project, compiles Claude
-Code agents from them, installs the starter skill, and writes the initial
-`dashboard.html`.
+`.hocus/personas/` so they're editable per-project, installs bundled
+skills, and spawns an interactive initialization session with the founder
+persona using your preferred agent CLI (`claude` by default).
 
 ```bash
 hocus init --name my-project
+hocus init --opencode   # spawn opencode instead of claude
+hocus init --agy        # spawn agy (antigravity)
+hocus init --agent      # spawn cursor agent
+hocus init --agent custom-cli  # spawn a custom agent CLI
 hocus init --dry-run   # preview personas and skills that would be installed
 ```
 
@@ -56,9 +60,9 @@ hocus init --dry-run   # preview personas and skills that would be installed
 
 The repo-aware step. Scans the current repo for language and framework
 signals, tailors each persona with that context, and compiles for every
-tool it detects in use (or whichever you pass explicitly). This is also
-where OpenCode, Cursor, and Antigravity support gets added — `init` only
-targets Claude Code.
+tool it detects in use (or whichever you pass explicitly). This is where
+OpenCode, Cursor, and Antigravity rule generation gets compiled — `init`
+fires the founder agent session to bootstrap project docs.
 
 ```bash
 hocus cast

@@ -23,12 +23,44 @@ program
 
 program
   .command("init")
-  .description("bootstrap the persona cast, main files, and Claude Code agents into the current repo")
+  .description("bootstrap the persona cast, main files, and agent harness into the current repo")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
+  .option("-a, --agent [agent]", "agent runner to spawn (e.g. claude, opencode, agy, agent; default: claude)")
+  .option("--claude", "use claude as the agent runner")
+  .option("--opencode", "use opencode as the agent runner")
+  .option("--agy", "use agy (antigravity) as the agent runner")
+  .option("--antigravity", "use agy (antigravity) as the agent runner")
   .option("--dry-run", "print planned file writes without touching the filesystem")
-  .action(async (opts: { name?: string; dryRun?: boolean }) => {
-    await runInit({ repoRoot: process.cwd(), projectName: opts.name, dryRun: opts.dryRun });
-  });
+  .action(
+    async (opts: {
+      name?: string;
+      agent?: string | boolean;
+      claude?: boolean;
+      opencode?: boolean;
+      agy?: boolean;
+      antigravity?: boolean;
+      dryRun?: boolean;
+    }) => {
+      let resolvedAgent = "claude";
+      if (typeof opts.agent === "string" && opts.agent.trim()) {
+        resolvedAgent = opts.agent.trim();
+      } else if (opts.agent === true) {
+        resolvedAgent = "agent";
+      } else if (opts.opencode) {
+        resolvedAgent = "opencode";
+      } else if (opts.agy || opts.antigravity) {
+        resolvedAgent = "agy";
+      } else if (opts.claude) {
+        resolvedAgent = "claude";
+      }
+      await runInit({
+        repoRoot: process.cwd(),
+        projectName: opts.name,
+        agent: resolvedAgent,
+        dryRun: opts.dryRun,
+      });
+    },
+  );
 
 program
   .command("cast")
