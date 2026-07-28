@@ -35,10 +35,11 @@ open standard. One file at `.agents/skills/<name>/`, mirrored to
 ## Install
 
 ```bash
-npm install
-npm run build
-npm link   # makes `hocus` available globally for local testing
+pnpm i -g @darkmagicstudios/hocus
+# or: npm i -g @darkmagicstudios/hocus
 ```
+
+This puts `hocus` on your `PATH`. Run `hocus init` in any repo to get started.
 
 ## Commands
 
@@ -122,6 +123,19 @@ format.
 Validated against the schema in `src/schema/soul.ts` before anything is
 compiled — a malformed `SOUL.md` is rejected on schema grounds with the
 specific field that's wrong, rather than failing inside a compiler.
+
+## Local development
+
+Working on Hocus itself:
+
+```bash
+npm install
+npm run build
+npm link   # makes `hocus` resolve to this checkout globally
+```
+
+`npm run dev` runs the CLI straight from source via `tsx`, no build step
+needed. `npm run typecheck` and `npm run test` cover the rest.
 
 ## Directory layout
 
