@@ -6,6 +6,14 @@ export interface DashboardParams {
   projectName: string;
   personas: SoulFile[];
   spells: Spell[];
+  skillsCount?: number;
+  statusInfo?: {
+    installed: boolean;
+    agentCount: number;
+    skillCount: number;
+    isUpToDate: boolean;
+    statusMessage: string;
+  };
 }
 
 function escapeHtml(input: string): string {
@@ -92,7 +100,7 @@ function renderSpellCard(spell: Spell, personas: SoulFile[], nameLookup: Record<
       </div>`;
 }
 
-export function renderDashboard({ projectName, personas, spells }: DashboardParams): string {
+export function renderDashboard({ projectName, personas, spells, skillsCount = 0, statusInfo }: DashboardParams): string {
   const activeSpells = spells.filter((s) => s.status === "casting" || s.status === "blocked");
   const nameLookup = buildNameLookup(personas);
   const spellsHtml = spells.length
@@ -102,6 +110,14 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
   const rosterHtml = personas.length
     ? personas.map(renderPersonaCard).join("\n")
     : `<p class="empty-state">No agents installed yet. Run <code>hocus init</code> to cast the starting roster.</p>`;
+
+  const statusObj = statusInfo ?? {
+    installed: personas.length > 0,
+    agentCount: personas.length,
+    skillCount: skillsCount,
+    isUpToDate: personas.length > 0,
+    statusMessage: personas.length > 0 ? "Up-to-date" : "Not installed (run hocus init)",
+  };
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -135,6 +151,13 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
   section.block { margin-top: 48px; }
   .section-head h2 { font-family: var(--font-display); font-size: 20px; margin: 0 0 6px; }
   .section-head p { margin: 0; color: var(--text-muted); font-size: 13.5px; }
+  .status-box { border: 1px solid var(--line); background: var(--bg-panel); border-radius: 5px; padding: 18px 22px; margin-top: 18px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+  .status-row { font-family: var(--font-display); font-size: 13.5px; display: flex; gap: 8px; align-items: center; }
+  .status-key { color: var(--text-dim); }
+  .status-val { color: var(--text); font-weight: 600; }
+  .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-ok { background: rgba(0,255,102,0.12); color: var(--green); border: 1px solid rgba(0,255,102,0.3); }
+  .badge-warn { background: rgba(255,180,84,0.12); color: var(--amber); border: 1px solid rgba(255,180,84,0.3); }
   .filetree { border: 1px solid var(--line); background: var(--bg-panel); border-radius: 5px; padding: 20px 22px; font-family: var(--font-display); font-size: 13px; margin-top: 18px; }
   .filetree-row { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
   .filetree-row:last-child { border-bottom: none; }
@@ -183,7 +206,20 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
   <section class="hero">
     <p class="eyebrow">${escapeHtml(BRAND_GLYPH)} // command deck</p>
     <h1 class="wordmark"><span class="brand-mark">${escapeHtml(BRAND_GLYPH)}</span>${escapeHtml(projectName)}<span class="cursor">_</span></h1>
-    <p class="tagline">${personas.length} agent${personas.length === 1 ? "" : "s"} registered · ${activeSpells.length} active spell${activeSpells.length === 1 ? "" : "s"}</p>
+    <p class="tagline">${personas.length} agent${personas.length === 1 ? "" : "s"} registered · ${statusObj.skillCount} skill${statusObj.skillCount === 1 ? "" : "s"} · ${activeSpells.length} active spell${activeSpells.length === 1 ? "" : "s"}</p>
+  </section>
+
+  <section class="block">
+    <div class="section-head">
+      <h2>// hocus status</h2>
+      <p>project harness state & synchronization status.</p>
+    </div>
+    <div class="status-box">
+      <div class="status-row"><span class="status-key">hocus:</span> <span class="status-val">${statusObj.installed ? "installed" : "not installed"}</span></div>
+      <div class="status-row"><span class="status-key">agents:</span> <span class="status-val">${statusObj.agentCount}</span></div>
+      <div class="status-row"><span class="status-key">skills:</span> <span class="status-val">${statusObj.skillCount}</span></div>
+      <div class="status-row"><span class="status-key">status:</span> <span class="status-badge ${statusObj.isUpToDate ? "badge-ok" : "badge-warn"}">${escapeHtml(statusObj.statusMessage)}</span></div>
+    </div>
   </section>
 
   <section class="block">
@@ -228,3 +264,4 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
 </html>
 `;
 }
+

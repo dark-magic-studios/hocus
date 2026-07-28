@@ -10,6 +10,7 @@ import { SoulsTab } from './tabs/SoulsTab.js';
 import { CovenTab } from './tabs/CovenTab.js';
 import { GrimoireTab } from './tabs/GrimoireTab.js';
 import { ScryingTab } from './tabs/ScryingTab.js';
+import { SeanceTab } from './tabs/SeanceTab.js';
 
 const PANES: Record<TabId, React.ComponentType> = {
   spells: SpellsTab,
@@ -17,6 +18,7 @@ const PANES: Record<TabId, React.ComponentType> = {
   coven: CovenTab,
   grimoire: GrimoireTab,
   scrying: ScryingTab,
+  seance: SeanceTab,
 };
 
 const HINTS: Record<TabId, string[]> = {
@@ -25,6 +27,7 @@ const HINTS: Record<TabId, string[]> = {
   coven: ['↑↓ navigate', '⏎ inspect', 'n spawn familiar', 'x dismiss', 'q quit'],
   grimoire: ['↑↓ navigate', 'space toggle', 'i install pack', 'q quit'],
   scrying: ['↑↓ scroll', 'f follow', 'c clear', 'q quit'],
+  seance: ['⏎ send', 'tab cycle agent', 'ctrl+b backend', '/ or @ mention', 'esc cancel/clear', 'ctrl+←/→ switch tab'],
 };
 
 export interface AppProps {
@@ -49,8 +52,20 @@ export function App({ cwd, version, silentBoot, bootTasks }: AppProps) {
 
   useInput((input, key) => {
     if (!booted) return;
-    if (input === 'q' || (key.ctrl && input === 'c')) { exit(); return; }
-    if (key.tab) { key.shift ? prev() : next(); return; }
+    if (key.ctrl && input === 'c') { exit(); return; }
+    // shift+tab never types a character, so it stays a global "leave this
+    // tab" escape hatch even from the seance tab's free-text input.
+    if (key.tab && key.shift) { prev(); return; }
+    // The seance tab is free text entry — its own keys ('q', digits, plain
+    // tab) are message content or its own agent-cycling shortcut, not app
+    // nav. ctrl+arrow substitutes for tab/digit switching while it's active.
+    if (active === 'seance') {
+      if (key.ctrl && key.rightArrow) next();
+      else if (key.ctrl && key.leftArrow) prev();
+      return;
+    }
+    if (input === 'q') { exit(); return; }
+    if (key.tab) { next(); return; }
     const n = Number.parseInt(input, 10);
     if (!Number.isNaN(n)) byIndex(n);
   });

@@ -1,10 +1,8 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { palette } from '../theme.js';
+import { palette, BRAND_MARK } from '../theme.js';
 import { useCapabilities } from '../hooks/useCapabilities.js';
 import { useBootTasks, type BootTask } from './useBootTasks.js';
-
-const BANNER = ['   /\\', '  /  \\', ' /____\\'];
 
 interface Props {
   version: string;
@@ -27,7 +25,7 @@ export function BootSequence({ version, tasks, silent, onDone }: Props) {
     <Box flexDirection="column" paddingX={1} paddingY={1}>
       <Box>
         <Box flexDirection="column" marginRight={2}>
-          {BANNER.map((row) => (
+          {BRAND_MARK.map((row) => (
             <Text key={row} color={palette.green}>{row}</Text>
           ))}
         </Box>

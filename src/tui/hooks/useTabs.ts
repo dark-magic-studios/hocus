@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-export const TAB_IDS = ['spells', 'souls', 'coven', 'grimoire', 'scrying'] as const;
+export const TAB_IDS = ['spells', 'souls', 'coven', 'grimoire', 'scrying', 'seance'] as const;
 export type TabId = (typeof TAB_IDS)[number];
 
 export function useTabs(initial: TabId = 'spells') {

@@ -10,6 +10,7 @@ import { writeCompiledFile } from "../utils/files.js";
 import { detectStack } from "../scanners/detect-stack.js";
 import { readSpells } from "../schema/spell.js";
 import { renderDashboard } from "../templates/dashboard.js";
+import { getHocusStatus } from "../utils/status.js";
 
 export interface CastOptions {
   repoRoot: string;
@@ -72,7 +73,8 @@ export async function runCast({ repoRoot, projectName, targets, dryRun = false }
 
   // the dashboard always gets refreshed, regardless of which compilers ran
   const spells = await readSpells(PROJECT_SPELLS_DIR(repoRoot));
-  const html = renderDashboard({ projectName: name, personas: souls, spells });
+  const statusInfo = await getHocusStatus(repoRoot);
+  const html = renderDashboard({ projectName: name, personas: souls, spells, skillsCount: statusInfo.skillCount, statusInfo });
   await writeCompiledFile(repoRoot, { relPath: "dashboard.html", content: html }, { dryRun });
   log.ok("refreshed dashboard.html");
 }

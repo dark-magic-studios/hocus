@@ -25,6 +25,8 @@ const WARD_AGENT_DIR: Record<string, string> = {
   antigravity: path.join(".agents", "rules"),
 };
 
+import { getHocusStatus } from "../../utils/status.js";
+
 /**
  * Reads the on-disk state the TUI renders. Never throws — a malformed file
  * anywhere downgrades to a warning row instead of taking the whole deck
@@ -34,15 +36,16 @@ const WARD_AGENT_DIR: Record<string, string> = {
 export async function loadDeck(cwd: string): Promise<DeckData> {
   const warnings: string[] = [];
 
-  const [agents, spells, skills, wards, ledger] = await Promise.all([
+  const [agents, spells, skills, wards, ledger, status] = await Promise.all([
     loadAgents(cwd, warnings),
     loadSpells(cwd, warnings),
     loadSkills(cwd, warnings),
     loadWards(cwd),
     loadLedger(cwd, warnings),
+    getHocusStatus(cwd),
   ]);
 
-  return { agents, spells, skills, wards, ledger, warnings };
+  return { agents, spells, skills, wards, ledger, status, warnings };
 }
 
 async function loadAgents(cwd: string, warnings: string[]): Promise<Agent[]> {

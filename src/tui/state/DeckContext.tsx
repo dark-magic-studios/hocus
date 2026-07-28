@@ -10,7 +10,22 @@ interface DeckState {
   reload: () => void;
 }
 
-const EMPTY: DeckData = { agents: [], spells: [], skills: [], wards: [], ledger: [], warnings: [] };
+const EMPTY: DeckData = {
+  agents: [],
+  spells: [],
+  skills: [],
+  wards: [],
+  ledger: [],
+  status: {
+    installed: false,
+    agentCount: 0,
+    skillCount: 0,
+    isUpToDate: false,
+    statusMessage: 'Not installed (run hocus init)',
+    targets: [],
+  },
+  warnings: [],
+};
 
 const DeckContext = createContext<DeckState | null>(null);
 

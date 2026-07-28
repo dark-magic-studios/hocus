@@ -1,4 +1,5 @@
 import type { AgentStatus } from '../theme.js';
+import type { HocusStatus } from '../../utils/status.js';
 
 export type Tier = 'archmage' | 'circle' | 'coven' | 'familiar';
 
@@ -59,5 +60,6 @@ export interface DeckData {
   skills: Skill[];
   wards: Ward[];
   ledger: LedgerEntry[];
+  status: HocusStatus;
   warnings: string[];
 }

@@ -32,3 +32,8 @@ export const glyphs = {
 } as const;
 
 export type GlyphSet = typeof glyphs.unicode;
+
+// Multi-line ASCII lockup used by the boot splash and seance tab. The
+// single-glyph brand mark ("/^\\") referenced by src/personas/*.soul.md's
+// frontmatter comment lives in the top-level src/theme.ts, not here.
+export const BRAND_MARK = ['   /\\', '  /  \\', ' /____\\'] as const;

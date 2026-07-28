@@ -6,6 +6,7 @@ import { PROJECT_PERSONAS_DIR, PROJECT_SPELLS_DIR } from "../utils/paths.js";
 import { parseSoulFile } from "../schema/soul.js";
 import { readSpells } from "../schema/spell.js";
 import { renderDashboard } from "../templates/dashboard.js";
+import { getHocusStatus } from "../utils/status.js";
 
 export interface SyncOptions {
   repoRoot: string;
@@ -21,8 +22,9 @@ export async function runSync({ repoRoot, projectName }: SyncOptions): Promise<v
   );
   const souls = personaFiles.map((f) => parseSoulFile(path.join(personasDir, f)));
   const spells = await readSpells(PROJECT_SPELLS_DIR(repoRoot));
+  const statusInfo = await getHocusStatus(repoRoot);
 
-  const html = renderDashboard({ projectName: name, personas: souls, spells });
+  const html = renderDashboard({ projectName: name, personas: souls, spells, skillsCount: statusInfo.skillCount, statusInfo });
   await writeFile(path.join(repoRoot, "dashboard.html"), html, "utf8");
-  log.ok(`dashboard.html refreshed — ${souls.length} agents, ${spells.length} spells`);
+  log.ok(`dashboard.html refreshed — ${souls.length} agents, ${statusInfo.skillCount} skills, ${spells.length} spells`);
 }

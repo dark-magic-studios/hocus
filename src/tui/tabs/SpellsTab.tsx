@@ -62,12 +62,37 @@ export function SpellsTab() {
     reload();
   };
 
+  const hocusStatus = data.status;
+
+  const statusHeader = (
+    <Box borderStyle="single" borderColor={hocusStatus?.isUpToDate ? palette.green : palette.amber} paddingX={1} marginBottom={1} justifyContent="space-between">
+      <Text>
+        <Text bold color={palette.green}>HOCUS STATUS </Text>
+        <Text color={palette.dim}>│ </Text>
+        <Text color={hocusStatus?.installed ? palette.text : palette.amber}>{hocusStatus?.installed ? 'Installed' : 'Not Installed'} </Text>
+        <Text color={palette.dim}>│ </Text>
+        <Text color={palette.violet}>{`${hocusStatus?.agentCount ?? 0} agents `}</Text>
+        <Text color={palette.dim}>│ </Text>
+        <Text color={palette.text}>{`${hocusStatus?.skillCount ?? 0} skills `}</Text>
+      </Text>
+      <Text color={hocusStatus?.isUpToDate ? palette.green : palette.amber} bold>
+        {hocusStatus?.isUpToDate ? '● Up-to-date' : '▲ Out-of-date'}
+      </Text>
+    </Box>
+  );
+
   if (data.spells.length === 0) {
-    return <Text color={palette.dim}>no spells in _spells/. run `hocus draft` to write the first one.</Text>;
+    return (
+      <Box flexDirection="column">
+        {statusHeader}
+        <Text color={palette.dim}>no spells in _spells/. run `hocus draft` to write the first one.</Text>
+      </Box>
+    );
   }
 
   return (
     <Box flexDirection="column" gap={1}>
+      {statusHeader}
       {data.spells.map((s) => (
         <Box key={s.id} flexDirection="column">
           <Text>
