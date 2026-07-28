@@ -90,10 +90,10 @@ test("ctrl+b cycles the backend shown on the model line", async () => {
         <SeanceTab />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("claude -p"));
-    instance.stdin.write(""); // ctrl+b
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("opencode -p"));
-    assert.match(instance.lastFrame() ?? "", /opencode -p/);
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("claude + Sonnet 5"));
+    instance.stdin.write("\x02"); // ctrl+b
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("claude + Opus 5"));
+    assert.match(instance.lastFrame() ?? "", /claude \+ Opus 5/);
     instance.unmount();
   } finally {
     cleanupRepo(dir);

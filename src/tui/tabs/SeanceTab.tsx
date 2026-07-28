@@ -213,8 +213,8 @@ export function SeanceTab({ spawnImpl }: SeanceTabProps = {}) {
       <Box flexDirection="column" marginBottom={1}>
         <Text>
           <Text color={palette.violet}>{'model  '}</Text>
-          <Text color={palette.text}>{`${backend.command} -p`}</Text>
-          <Text color={palette.dim}>{`  (${backend.label} · ctrl+b to cycle)`}</Text>
+          <Text color={palette.text}>{backend.label}</Text>
+          <Text color={palette.dim}>{`  (${backend.command} -p · ctrl+b to cycle)`}</Text>
         </Text>
         <Text>
           <Text color={palette.violet}>{'agent  '}</Text>

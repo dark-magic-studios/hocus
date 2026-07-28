@@ -1,5 +1,11 @@
 # Hocus
 
+<p align="center">
+  <img src="mark_1.svg" width="80" alt="Hocus mark" />
+  <br/>
+  <img src="stacked.svg" width="200" alt="Hocus stacked logo" />
+</p>
+
 A multi-agent harness generator. Write one persona once — a `SOUL.md` file —
 and compile it into the native agent or rule format for Claude Code,
 OpenCode, Cursor, and Antigravity.
