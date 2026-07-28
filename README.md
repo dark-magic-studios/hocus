@@ -1,14 +1,16 @@
-# Aviomancy
+# Hocus
 
 A multi-agent harness generator. Write one persona once — a `SOUL.md` file —
 and compile it into the native agent or rule format for Claude Code,
 OpenCode, Cursor, and Antigravity.
 
-The cast that ships with it borrows its characters from *Silicon Valley*,
-purely as an internal naming convention: Richard plans, Jared orchestrates,
-Dinesh implements, Gilfoyle reviews, and so on. Rename or replace any of
-them — the harness doesn't care what a persona is called, only that it has
-a role, a voice, and a body of instructions.
+The cast that ships with it borrows wizard names from history and myth —
+Merlin plans, Roger Bacon orchestrates, Flamel implements, Zoroaster
+reviews, and so on. Each persona also keeps aliases for the original
+*Silicon Valley* cast and an earlier occultist recast — toggle them on
+the dashboard with `?cast=valley` or `?cast=occult`. Rename or replace
+any persona — the harness doesn't care what an agent is called, only that
+it has a role, a voice, and a body of instructions.
 
 ## Why this exists
 
@@ -31,25 +33,25 @@ open standard. One file at `.agents/skills/<name>/`, mirrored to
 ```bash
 npm install
 npm run build
-npm link   # makes `aviomancy` available globally for local testing
+npm link   # makes `hocus` available globally for local testing
 ```
 
 ## Commands
 
-### `aviomancy init`
+### `hocus init`
 
 Run once, in the repo you want the harness in. Writes the main files if
 they don't already exist (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`,
 `MEMORY.md`, `TASKS.md`, `_spells/`), copies the persona cast into
-`.aviomancy/personas/` so they're editable per-project, compiles Claude
+`.hocus/personas/` so they're editable per-project, compiles Claude
 Code agents from them, installs the starter skill, and writes the initial
 `dashboard.html`.
 
 ```bash
-aviomancy init --name my-project
+hocus init --name my-project
 ```
 
-### `aviomancy cast`
+### `hocus cast`
 
 The repo-aware step. Scans the current repo for language and framework
 signals, tailors each persona with that context, and compiles for every
@@ -58,25 +60,25 @@ where OpenCode, Cursor, and Antigravity support gets added — `init` only
 targets Claude Code.
 
 ```bash
-aviomancy cast
-aviomancy cast --targets claude-code,opencode,cursor,antigravity
+hocus cast
+hocus cast --targets claude-code,opencode,cursor,antigravity
 ```
 
-### `aviomancy skill add <name>`
+### `hocus skill add <name>`
 
 Installs a skill into `.claude/skills/` and `.agents/skills/`. Defaults to
 the skills bundled with this package; pass `--from <path>` to install from
 anywhere else.
 
 ```bash
-aviomancy skill add example-skill
-aviomancy skill add db-migration-safety --from ../dms-skills/skills/db-migration-safety
+hocus skill add example-skill
+hocus skill add db-migration-safety --from ../dms-skills/skills/db-migration-safety
 ```
 
-### `aviomancy sync`
+### `hocus sync`
 
 Cheap refresh of `dashboard.html` from whatever's currently in
-`.aviomancy/personas/` and `_spells/`. Doesn't touch any compiled agent
+`.hocus/personas/` and `_spells/`. Doesn't touch any compiled agent
 files. Run this often; run `cast` when something about the repo itself has
 changed.
 
@@ -84,11 +86,14 @@ changed.
 
 ```markdown
 ---
-character: gilfoyle        # lowercase, hyphenated slug
-display_name: Gilfoyle
+character: gilfoyle        # lowercase, hyphenated slug (stable across recasts)
+display_name: Zoroaster
 role: reviewer
 voice: cold, precise, contemptuous of inefficiency
 glyph: "(o)"                # short badge, shown on the dashboard
+aliases:                    # optional — ignored by compilers, used by dashboard
+  valley: Gilfoyle           # ?cast=valley
+  occult: Mephisto           # ?cast=occult
 triggers:
   - code review
   - pull request
@@ -96,7 +101,7 @@ tools: [read, grep, bash]   # optional, defaults to read/grep/glob
 model: claude-sonnet-4-6    # optional
 ---
 
-# Gilfoyle — Reviewer
+# Zoroaster — Reviewer
 
 The body is the persona's actual instructions — responsibilities,
 boundaries, voice. This is what gets compiled into each target's native

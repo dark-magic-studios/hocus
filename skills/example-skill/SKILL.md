@@ -5,7 +5,7 @@ description: Placeholder skill demonstrating the format every persona-installed 
 
 # Example Skill
 
-This is a starter skill installed by `aviomancy init` so there's a working
+This is a starter skill installed by `hocus init` so there's a working
 example of the SKILL.md format already in the repo.
 
 ## When to use

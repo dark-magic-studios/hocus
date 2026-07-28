@@ -1,6 +1,6 @@
 ---
 name: gavin-render-dashboard
-description: Gavin — keep the aviomancy dashboard alive, rendered, and current. Display project status in a visually compelling way.
+description: Gavin — keep the hocus dashboard alive, rendered, and current. Display project status in a visually compelling way.
 ---
 
 # Gavin Render Dashboard
@@ -36,7 +36,7 @@ Maintains and renders the project dashboard — the central visual display of pr
    - **Task board**: visual task distribution — cards or bars showing counts per status, with drill-down
    - **Activity feed**: recent commits, recent task completions, recent config changes
    - **Health panel**: config status per tool, MCP status, LLM provider status
-   - **Quick actions**: links to run common commands (`aviomancy cast`, `aviomancy skill add`, etc.)
+   - **Quick actions**: links to run common commands (`hocus cast`, `hocus skill add`, etc.)
 
 4. **HTML dashboard styling**
    - Clean, modern CSS (no framework needed — pure CSS grid/flexbox)
@@ -56,4 +56,4 @@ Maintains and renders the project dashboard — the central visual display of pr
    - Ensure all links work (relative paths to TASKS.md, AGENTS.md, MEMORY.md)
    - Add a "Last rendered" timestamp so viewers know how current the data is
    - Handle empty states gracefully: "No tasks yet" not just an empty table
-   - Include a footer with a link to the aviomancy docs
+   - Include a footer with a link to the hocus docs

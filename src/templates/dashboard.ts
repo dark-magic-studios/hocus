@@ -21,25 +21,60 @@ function firstSentence(body: string): string {
   return (match ? match[0] : stripped.slice(0, 140)).trim();
 }
 
+function buildNameLookup(personas: SoulFile[]): Record<string, string> {
+  const lookup: Record<string, string> = {};
+  for (const soul of personas) {
+    lookup[soul.display_name] = soul.display_name;
+    if (soul.aliases?.valley) lookup[soul.aliases.valley] = soul.display_name;
+    if (soul.aliases?.occult) lookup[soul.aliases.occult] = soul.display_name;
+  }
+  return lookup;
+}
+
+function findSoulByName(personas: SoulFile[], name: string): SoulFile | undefined {
+  return personas.find(
+    (s) =>
+      s.display_name === name ||
+      s.aliases?.valley === name ||
+      s.aliases?.occult === name,
+  );
+}
+
+function castNamesFor(personas: SoulFile[], name: string): { default: string; valley: string; occult: string } {
+  const soul = findSoulByName(personas, name);
+  if (!soul) return { default: name, valley: name, occult: name };
+  return {
+    default: soul.display_name,
+    valley: soul.aliases?.valley ?? soul.display_name,
+    occult: soul.aliases?.occult ?? soul.display_name,
+  };
+}
+
 function renderPersonaCard(soul: SoulFile): string {
+  const valley = soul.aliases?.valley ?? soul.display_name;
+  const occult = soul.aliases?.occult ?? soul.display_name;
   return `
-      <article class="agent-card">
+      <article class="agent-card" data-cast-default="${escapeHtml(soul.display_name)}" data-cast-valley="${escapeHtml(valley)}" data-cast-occult="${escapeHtml(occult)}">
         <div class="agent-top">
           <span class="glyph">${escapeHtml(soul.glyph)}</span>
         </div>
         <p class="agent-role">${escapeHtml(soul.role)}</p>
-        <p class="agent-name">${escapeHtml(soul.display_name)}</p>
+        <p class="agent-name cast-name">${escapeHtml(soul.display_name)}</p>
         <p class="agent-desc">${escapeHtml(firstSentence(soul.body))}</p>
         <p class="agent-voice">${escapeHtml(soul.voice)}</p>
       </article>`;
 }
 
-function renderSpellCard(spell: Spell): string {
+function renderSpellCard(spell: Spell, personas: SoulFile[], nameLookup: Record<string, string>): string {
   const aka = spell.feature ? `<p class="spell-aka">a.k.a. ${escapeHtml(spell.feature)}</p>` : "";
-  const assignee = spell.assigned_to
-    ? `assigned to <b>${escapeHtml(spell.assigned_to)}</b>`
+  const assigneeNames = spell.assigned_to ? castNamesFor(personas, spell.assigned_to) : null;
+  const draftedNames = spell.drafted_by ? castNamesFor(personas, spell.drafted_by) : null;
+  const assignee = assigneeNames
+    ? `assigned to <b class="cast-name" data-cast-default="${escapeHtml(assigneeNames.default)}" data-cast-valley="${escapeHtml(assigneeNames.valley)}" data-cast-occult="${escapeHtml(assigneeNames.occult)}">${escapeHtml(nameLookup[spell.assigned_to!] ?? assigneeNames.default)}</b>`
     : "not yet assigned";
-  const draftedBy = spell.drafted_by ? `drafted by <b>${escapeHtml(spell.drafted_by)}</b> · ` : "";
+  const draftedBy = draftedNames
+    ? `drafted by <b class="cast-name" data-cast-default="${escapeHtml(draftedNames.default)}" data-cast-valley="${escapeHtml(draftedNames.valley)}" data-cast-occult="${escapeHtml(draftedNames.occult)}">${escapeHtml(nameLookup[spell.drafted_by!] ?? draftedNames.default)}</b> · `
+    : "";
 
   return `
       <div class="spell-card">
@@ -58,13 +93,14 @@ function renderSpellCard(spell: Spell): string {
 
 export function renderDashboard({ projectName, personas, spells }: DashboardParams): string {
   const activeSpells = spells.filter((s) => s.status === "casting" || s.status === "blocked");
+  const nameLookup = buildNameLookup(personas);
   const spellsHtml = spells.length
-    ? spells.map(renderSpellCard).join("\n")
+    ? spells.map((s) => renderSpellCard(s, personas, nameLookup)).join("\n")
     : `<p class="empty-state">No battle plans yet. Ask the planner to draft one.</p>`;
 
   const rosterHtml = personas.length
     ? personas.map(renderPersonaCard).join("\n")
-    : `<p class="empty-state">No agents installed yet. Run <code>aviomancy init</code> to cast the starting roster.</p>`;
+    : `<p class="empty-state">No agents installed yet. Run <code>hocus init</code> to cast the starting roster.</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -126,6 +162,19 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
   .prompt .cursor { color: var(--green); animation: blink 1.1s steps(1) infinite; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; } }
 </style>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var cast = params.get("cast");
+  if (!cast || cast === "hocus") return;
+  var key = cast === "valley" || cast === "occult" ? "data-cast-" + cast : null;
+  if (!key) return;
+  document.querySelectorAll("[data-cast-default]").forEach(function (el) {
+    var alt = el.getAttribute(key);
+    if (alt) el.textContent = alt;
+  });
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -143,7 +192,7 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
     <div class="filetree">
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">AGENTS.md / CLAUDE.md</span><span class="filetree-desc">generic instructions for any agent working here</span></div>
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">PRODUCT.md</span><span class="filetree-desc">what shipped, and when</span></div>
-      <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">dashboard.html</span><span class="filetree-desc">you are here — regenerated by <code>aviomancy sync</code></span></div>
+      <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">dashboard.html</span><span class="filetree-desc">you are here — regenerated by <code>hocus sync</code></span></div>
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">MEMORY.md</span><span class="filetree-desc">project chronology and decisions</span></div>
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">TASKS.md</span><span class="filetree-desc">what's next, synced from your tracker</span></div>
       <div class="filetree-row"><span class="filetree-connector">└──</span><span class="filetree-name">_spells/</span><span class="filetree-desc">one battle plan per feature</span></div>
@@ -170,7 +219,7 @@ export function renderDashboard({ projectName, personas, spells }: DashboardPara
 <footer>
   <div class="wrap" style="padding-bottom:0;">
     <p class="prompt">${escapeHtml(projectName)}:~$ <span class="cursor">_</span></p>
-    <p class="prompt" style="opacity:.6;font-size:11px;">regenerated by aviomancy sync</p>
+    <p class="prompt" style="opacity:.6;font-size:11px;">regenerated by hocus sync</p>
   </div>
 </footer>
 </body>

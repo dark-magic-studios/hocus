@@ -5,11 +5,11 @@ description: Peter Gregory — run the initial harness setup, ask about the stac
 
 # Peter Invoke
 
-The "founder" skill. Kicks off the entire aviomancy setup for a project: interrogates the tech stack, asks strategic questions about goals and constraints, and decides which agents and skills the project needs. Named after Peter Gregory — visionary, methodical, asks the right questions before doing anything.
+The "founder" skill. Kicks off the entire hocus setup for a project: interrogates the tech stack, asks strategic questions about goals and constraints, and decides which agents and skills the project needs. Named after Peter Gregory — visionary, methodical, asks the right questions before doing anything.
 
 ## When to use
-- Running `aviomancy init` for the first time on a project
-- Setting up aviomancy on an existing large project
+- Running `hocus init` for the first time on a project
+- Setting up hocus on an existing large project
 - Re-evaluating the project's agent setup after major changes (new product direction, team restructuring)
 - When you're not sure what agents/skills your project needs — start here
 

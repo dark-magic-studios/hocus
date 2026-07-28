@@ -25,12 +25,12 @@ Ensures the AI tool configurations (Cursor, Claude Code, OpenCode, Antigravity) 
 2. **Identify the source of truth**
    - `.claude/agents/` is the canonical agent list (since Claude Code is the primary execution environment)
    - `.claude/skills/` is the canonical skill list
-   - If those don't exist yet, use `.aviomancy/personas/` as the fallback source of truth
+   - If those don't exist yet, use `.hocus/personas/` as the fallback source of truth
    - Note: skills are mirrored as-is (no per-tool compilation needed), so just ensure they exist in both `.agents/skills/` and `.claude/skills/`
 
 3. **Sync each target**
    - For each target, check what agents/skills exist vs. what should exist
-   - Add missing entries (run `aviomancy cast` to recompile all personas for all detected targets)
+   - Add missing entries (run `hocus cast` to recompile all personas for all detected targets)
    - Remove stale entries (agents/skills that were deleted from the source of truth but remain in a target)
    - Update entries whose content has changed (recompile)
 

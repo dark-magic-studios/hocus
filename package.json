@@ -1,5 +1,5 @@
 {
-  "name": "aviomancy",
+  "name": "hocus",
   "version": "0.1.0",
   "description": "A multi-agent harness generator: one persona spec (SOUL.md) compiled into Claude Code, OpenCode, Cursor, and Antigravity native agent/rule formats.",
   "type": "module",
@@ -7,10 +7,10 @@
   "author": "Dark Magic Studios",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dark-magic-studios/aviomancy.git"
+    "url": "git+https://github.com/dark-magic-studios/hocus.git"
   },
   "bin": {
-    "aviomancy": "dist/cli.js"
+    "hocus": "dist/cli.js"
   },
   "files": [
     "dist",

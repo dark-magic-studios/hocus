@@ -12,7 +12,7 @@ Creates new agent personas for a project by analyzing the project's stack, domai
 - The existing cast is too small for the project's complexity
 - You need a specialist agent (e.g., "database-migration-agent") that the generalists shouldn't handle
 - A new domain or service has been added to the project
-- During initial setup after `aviomancy init` when proposing the cast
+- During initial setup after `hocus init` when proposing the cast
 
 ## Instructions
 1. **Analyze the project**
@@ -21,7 +21,7 @@ Creates new agent personas for a project by analyzing the project's stack, domai
    - Identify the major workflow domains: planning, reviewing, deploying, monitoring, onboarding
 
 2. **Identify gaps**
-   - Compare the existing agents (from `.aviomancy/personas/` or `.claude/agents/`) against the project's needs
+   - Compare the existing agents (from `.hocus/personas/` or `.claude/agents/`) against the project's needs
    - Note which domains have no dedicated agent
    - Group small/related domains that one agent can cover together
 
@@ -43,6 +43,6 @@ Creates new agent personas for a project by analyzing the project's stack, domai
    - Triggers don't overlap destructively with other agents (choose more specific triggers for specialists)
    - Present the draft to the user for approval before writing the file
 
-5. **Write to `.aviomancy/personas/`**
-   - Save as `<slug>.soul.md` in the project's `.aviomancy/personas/` directory
-   - If the project has been initialized with `cast`, re-run `aviomancy cast` to compile the new agent for all target tools
+5. **Write to `.hocus/personas/`**
+   - Save as `<slug>.soul.md` in the project's `.hocus/personas/` directory
+   - If the project has been initialized with `cast`, re-run `hocus cast` to compile the new agent for all target tools

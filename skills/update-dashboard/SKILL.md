@@ -8,7 +8,7 @@ description: Regenerate the project dashboard with live status — agents, skill
 Regenerates the project dashboard (dashboard.html or dashboard.md) to reflect the current state of the project: which agents are available, which skills are installed, task progress, and overall project health. The dashboard is the single-pane-of-glass for the project's AI-assisted development setup.
 
 ## When to use
-- After `aviomancy init` completes — build the initial dashboard
+- After `hocus init` completes — build the initial dashboard
 - After adding or removing agents or skills
 - After significant task progress (sprint done, milestone reached)
 - When opening the dashboard and noticing it's out of date
@@ -16,7 +16,7 @@ Regenerates the project dashboard (dashboard.html or dashboard.md) to reflect th
 
 ## Instructions
 1. **Read current state**
-   - Agents: list `.claude/agents/*.md` and `.aviomancy/personas/*.soul.md`
+   - Agents: list `.claude/agents/*.md` and `.hocus/personas/*.soul.md`
    - Skills: list `.claude/skills/*/SKILL.md` and `.agents/skills/*/SKILL.md`
    - Tasks: parse TASKS.md into status buckets
    - Memory: note entry count and last modified date from MEMORY.md

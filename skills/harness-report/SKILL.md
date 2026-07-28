@@ -20,7 +20,7 @@ Generates a detailed report of the project's AI harness configuration: which pro
    - Claude Code: `.claude/agents/`, `.claude/skills/`, `.claude/settings.local.json`
    - OpenCode: `.opencode/` or `opencode.jsonc`
    - Antigravity: `.agents/`
-   - aviomancy: `.aviomancy/personas/`
+   - hocus: `.hocus/personas/`
 
 2. **Report structure**
    ```
@@ -61,7 +61,7 @@ Generates a detailed report of the project's AI harness configuration: which pro
    | OpenAI | gpt-4o, gpt-4o-mini | — | ✅ |
 
    ## Health Issues
-   - ⚠️ OpenCode config not found — run `aviomancy cast` to generate
+   - ⚠️ OpenCode config not found — run `hocus cast` to generate
    - ❌ Linear MCP missing API key — set LINEAR_API_KEY in .env
    - ℹ️ 3 skills installed but never referenced in AGENTS.md — agents might not load them
    ```

@@ -17,7 +17,7 @@ export async function runSkillAdd({ repoRoot, name, from }: SkillAddOptions): Pr
   if (!(await pathExists(sourceDir))) {
     log.error(`no skill found at ${sourceDir}`);
     if (!from) {
-      log.info("pass --from <path> to install a skill that isn't bundled with aviomancy");
+      log.info("pass --from <path> to install a skill that isn't bundled with hocus");
     }
     return;
   }

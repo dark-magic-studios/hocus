@@ -37,7 +37,7 @@ Keeps the project's living documents synchronized with reality. After any signif
    - Prune entries that are no longer relevant (but move them to an "Archive" section rather than deleting)
 
 4. **Update AGENTS.md**
-   - Ensure the registry matches the actual agents in `.claude/agents/` and `.aviomancy/personas/`
+   - Ensure the registry matches the actual agents in `.claude/agents/` and `.hocus/personas/`
    - Add new agents, remove decommissioned ones
    - Update agent descriptions if their scope changed
 

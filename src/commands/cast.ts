@@ -34,7 +34,7 @@ export async function runCast({ repoRoot, projectName, targets }: CastOptions): 
     f.endsWith(".soul.md")
   );
   if (!personaFiles.length) {
-    log.error("no personas found in .aviomancy/personas/ — run `aviomancy init` first");
+    log.error("no personas found in .hocus/personas/ — run `hocus init` first");
     return;
   }
   const souls = personaFiles.map((f) => parseSoulFile(path.join(personasDir, f)));

@@ -9,7 +9,7 @@ Thoroughly examines a project to determine its technology stack. Runs before any
 
 ## When to use
 - Before `peter-invoke` decides which agents to create
-- Before `aviomancy init` when you need to understand the project
+- Before `hocus init` when you need to understand the project
 - When onboarding to a new project — get a quick summary of the stack
 - Before adding stack-specific skills or agents
 - When the project may have been updated since the last survey

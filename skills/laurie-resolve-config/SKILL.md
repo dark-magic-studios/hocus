@@ -21,7 +21,7 @@ Reconciles configuration across all four AI tool targets. Detects when Cursor ha
    - Claude Code: `.claude/agents/*.md` (agents), `.claude/skills/*/SKILL.md` (skills), `.claude/settings.local.json` (MCPs + provider)
    - OpenCode: `.opencode/agent/*.md` or `opencode.jsonc` (agents + config)
    - Antigravity: `.agents/rules/*.md` (agents as rules), `.agents/skills/*/SKILL.md` (skills), `.agents/*.json` (MCPs)
-   - Source of truth: `.aviomancy/personas/*.soul.md` (canonical agent definitions)
+   - Source of truth: `.hocus/personas/*.soul.md` (canonical agent definitions)
 
 2. **Compare agent lists**
    - Build a matrix: agent slug × tool (present / absent / different content)
@@ -36,9 +36,9 @@ Reconciles configuration across all four AI tool targets. Detects when Cursor ha
    - Flag servers with the same name and command but different environment variables (missing tokens, different paths)
 
 4. **Resolve by strategy**
-   - **Missing agent**: Run `aviomancy cast` to recompile all personas for all detected targets
+   - **Missing agent**: Run `hocus cast` to recompile all personas for all detected targets
    - **Orphaned agent (in tool but not in source of truth)**: Ask the user: keep it (and add to source of truth) or remove it
-   - **Diverged content**: The canonical content is in `.aviomancy/personas/` — overwrite tool-specific copies
+   - **Diverged content**: The canonical content is in `.hocus/personas/` — overwrite tool-specific copies
    - **Missing MCP**: Add to the missing tool's config using the canonical definition (most complete version wins)
    - **Diverged MCP**: Present the differences to the user for manual resolution. Auto-merge only if the only difference is that one has more env vars than the other (merge the superset)
    - **Unused skill file**: Keep it — skills are inert unless referenced by an agent
@@ -49,7 +49,7 @@ Reconciles configuration across all four AI tool targets. Detects when Cursor ha
 
    ## Agents
    - ✅ All 6 agents present in all 4 tools
-   - ⚠️ "database-agent" found in Cursor but not in .aviomancy/personas — orphaned
+   - ⚠️ "database-agent" found in Cursor but not in .hocus/personas — orphaned
    - 🔄 "deploy-agent" had different tools in OpenCode (had "bash" extra) — overwritten from SOUL.md
 
    ## MCPs

@@ -16,7 +16,7 @@ Audits the existing team of agents and skills, evaluating coverage, overlap, and
 
 ## Instructions
 1. **Inventory**
-   - List all agents: read `.aviomancy/personas/*.soul.md` or `.claude/agents/*.md`
+   - List all agents: read `.hocus/personas/*.soul.md` or `.claude/agents/*.md`
    - List all skills: read `.agents/skills/*/SKILL.md` and `.claude/skills/*/SKILL.md`
    - For each agent, record: slug, role, triggers, tools
    - For each skill, record: slug, description

@@ -28,3 +28,12 @@ test("character slug is lowercase and hyphenated, no spaces", () => {
     assert.match(soul.character, /^[a-z0-9-]+$/, `${file}: character "${soul.character}" is not a valid slug`);
   }
 });
+
+test("every bundled persona has valley and occult aliases", () => {
+  const files = readdirSync(PERSONAS_DIR).filter((f) => f.endsWith(".soul.md"));
+  for (const file of files) {
+    const soul = parseSoulFile(path.join(PERSONAS_DIR, file));
+    assert.ok(soul.aliases?.valley, `${file}: missing aliases.valley`);
+    assert.ok(soul.aliases?.occult, `${file}: missing aliases.occult`);
+  }
+});

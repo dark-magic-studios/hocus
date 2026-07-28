@@ -11,7 +11,7 @@ import { log } from "./utils/log.js";
 const program = new Command();
 
 program
-  .name("aviomancy")
+  .name("hocus")
   .description("A multi-agent harness generator — one persona spec, four tool-native outputs.")
   .version("0.1.0");
 

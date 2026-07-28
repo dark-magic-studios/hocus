@@ -9,7 +9,7 @@ import type { Compiler, CompiledFile, RepoContext } from "./types.js";
  * OpenCode's docs are inconsistent across sources about whether the project
  * agent directory is singular (`agent`) or plural (`agents`). Shipping with
  * the singular form as the default. If agents aren't being picked up,
- * flip this and re-run `aviomancy cast`.
+ * flip this and re-run `hocus cast`.
  */
 export const OPENCODE_AGENT_DIR = "agent";
 

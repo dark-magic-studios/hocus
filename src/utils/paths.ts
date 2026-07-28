@@ -17,7 +17,7 @@ function findPackageRoot(startDir: string): string {
     if (existsSync(path.join(dir, "package.json"))) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) {
-      throw new Error(`Could not locate aviomancy's package root above ${startDir}`);
+      throw new Error(`Could not locate hocus's package root above ${startDir}`);
     }
     dir = parent;
   }
@@ -28,5 +28,5 @@ export const PACKAGE_ROOT = findPackageRoot(path.dirname(fileURLToPath(import.me
 export const BUNDLED_PERSONAS_DIR = path.join(PACKAGE_ROOT, "src", "personas");
 export const BUNDLED_SKILLS_DIR = path.join(PACKAGE_ROOT, "skills");
 
-export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".aviomancy", "personas");
+export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "personas");
 export const PROJECT_SPELLS_DIR = (repoRoot: string) => path.join(repoRoot, "_spells");

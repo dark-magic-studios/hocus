@@ -194,7 +194,7 @@ function App({ repoRoot, projectName }: TuiOptions) {
             ) : (
               <Text color={theme.textMuted}>
                 {personas.length === 0
-                  ? "No personas installed. Run `aviomancy init` first."
+                  ? "No personas installed. Run `hocus init` first."
                   : ""}
               </Text>
             )}

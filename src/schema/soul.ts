@@ -11,6 +11,13 @@ import { z } from "zod";
  * currently active" belong to whatever orchestration layer runs on top of
  * the compiled output, not to the persona definition itself.
  */
+export const SoulAliasesSchema = z.object({
+  /** Original Silicon Valley cast name — surfaced via dashboard ?cast=valley */
+  valley: z.string().min(1).optional(),
+  /** Previous occultist recast name — surfaced via dashboard ?cast=occult */
+  occult: z.string().min(1).optional(),
+});
+
 export const SoulFrontmatterSchema = z.object({
   character: z
     .string()
@@ -21,6 +28,8 @@ export const SoulFrontmatterSchema = z.object({
   voice: z.string().min(1),
   glyph: z.string().min(1).max(8).default("[?]"),
   triggers: z.array(z.string()).default([]),
+  /** Alternate display names for easter-egg cast views; ignored by compilers */
+  aliases: SoulAliasesSchema.optional(),
   tools: z.array(z.string()).optional(),
   model: z.string().optional(),
 });
