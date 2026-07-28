@@ -23,7 +23,7 @@
     "dev": "tsx src/cli.ts",
     "tui": "bun src/cli.ts tui",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --import tsx tests/*.test.ts"
+    "test": "node --test --import tsx tests/*.test.ts tests/*.test.tsx"
   },
   "dependencies": {
     "commander": "^12.1.0",
@@ -39,6 +39,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.0",
     "@types/react": "^19.2.17",
+    "ink-testing-library": "^4.0.0",
     "tsup": "^8.2.4",
     "tsx": "^4.19.0",
     "typescript": "^5.6.2"

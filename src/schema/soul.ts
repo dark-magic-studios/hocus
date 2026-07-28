@@ -32,6 +32,12 @@ export const SoulFrontmatterSchema = z.object({
   aliases: SoulAliasesSchema.optional(),
   tools: z.array(z.string()).optional(),
   model: z.string().optional(),
+  /** Slug of the persona that spawned this one, e.g. a coven familiar. */
+  parent: z.string().min(1).optional(),
+  /** Rank in the command deck's coven view; inferred from `parent` when omitted. */
+  tier: z.enum(["archmage", "circle", "coven", "familiar"]).optional(),
+  /** Free-text scope note shown alongside a familiar in the coven tree. */
+  scope: z.string().optional(),
 });
 
 export type SoulFrontmatter = z.infer<typeof SoulFrontmatterSchema>;

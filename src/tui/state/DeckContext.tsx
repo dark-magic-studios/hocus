@@ -3,13 +3,14 @@ import type { DeckData } from './types.js';
 import { loadDeck } from './loadDeck.js';
 
 interface DeckState {
+  cwd: string;
   data: DeckData;
   loading: boolean;
   error?: Error;
   reload: () => void;
 }
 
-const EMPTY: DeckData = { agents: [], spells: [], skills: [], wards: [], ledger: [] };
+const EMPTY: DeckData = { agents: [], spells: [], skills: [], wards: [], ledger: [], warnings: [] };
 
 const DeckContext = createContext<DeckState | null>(null);
 
@@ -30,8 +31,8 @@ export function DeckProvider({ cwd, children }: { cwd: string; children: React.R
   }, [cwd, nonce]);
 
   const value = useMemo<DeckState>(
-    () => ({ data, loading, error, reload: () => setNonce((n) => n + 1) }),
-    [data, loading, error],
+    () => ({ cwd, data, loading, error, reload: () => setNonce((n) => n + 1) }),
+    [cwd, data, loading, error],
   );
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>;

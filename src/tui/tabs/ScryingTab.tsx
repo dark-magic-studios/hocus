@@ -1,14 +1,32 @@
-import React from 'react';
-import { Box, Text } from 'ink';
+import React, { useEffect, useState } from 'react';
+import { Box, Text, useInput } from 'ink';
 import { palette } from '../theme.js';
 import { useDeck } from '../state/DeckContext.js';
 
 const usd = (n: number) => `$${n.toFixed(4)}`;
+const WINDOW = 12;
+const FOLLOW_INTERVAL_MS = 2000;
 
-// TODO(DMS): tail .hocus/ledger.jsonl live, aggregate per agent, add a session total
-// and a per-spell rollup. This is Midas's screen — it must show a real number.
 export function ScryingTab() {
-  const { data } = useDeck();
+  const { data, reload } = useDeck();
+  const [scrollFromEnd, setScrollFromEnd] = useState(0);
+  const [following, setFollowing] = useState(false);
+
+  const maxScroll = Math.max(0, data.ledger.length - WINDOW);
+
+  useInput((input, key) => {
+    if (key.upArrow) setScrollFromEnd((v) => Math.min(maxScroll, v + 1));
+    if (key.downArrow) setScrollFromEnd((v) => Math.max(0, v - 1));
+    if (input === 'f') setFollowing((v) => !v);
+    if (input === 'c') setScrollFromEnd(0);
+  });
+
+  useEffect(() => {
+    if (!following) return;
+    setScrollFromEnd(0);
+    const id = setInterval(reload, FOLLOW_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [following, reload]);
 
   if (data.ledger.length === 0) {
     return (
@@ -31,11 +49,15 @@ export function ScryingTab() {
   }
 
   const total = data.ledger.reduce((sum, e) => sum + e.costUsd, 0);
+  const end = data.ledger.length - scrollFromEnd;
+  const start = Math.max(0, end - WINDOW);
+  const visible = data.ledger.slice(start, end);
 
   return (
     <Box flexDirection="column">
-      {data.ledger.slice(-12).map((e, i) => (
-        <Text key={`${e.at}-${i}`}>
+      <Text color={palette.dim}>{following ? 'following · ' : ''}{`showing ${start + 1}-${end} of ${data.ledger.length}`}</Text>
+      {visible.map((e, i) => (
+        <Text key={`${e.at}-${start + i}`}>
           <Text color={palette.dim}>{`${e.at} `}</Text>
           <Text color={palette.text}>{e.agentId.padEnd(18)}</Text>
           <Text color={palette.muted}>{e.event.padEnd(22)}</Text>

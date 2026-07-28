@@ -59,4 +59,5 @@ export interface DeckData {
   skills: Skill[];
   wards: Ward[];
   ledger: LedgerEntry[];
+  warnings: string[];
 }

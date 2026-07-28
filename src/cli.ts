@@ -4,16 +4,22 @@ import { runInit } from "./commands/init.js";
 import { runCast } from "./commands/cast.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
-import { runTui } from "./commands/tui.js";
+import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
+
+const VERSION = "0.1.0";
 
 const program = new Command();
 
 program
   .name("hocus")
   .description("A multi-agent harness generator — one persona spec, four tool-native outputs.")
-  .version("0.1.0");
+  .version(VERSION)
+  .option("--silent", "skip the boot animation when opening the command deck")
+  .action(async (opts: { silent?: boolean }) => {
+    await launchTui({ cwd: process.cwd(), version: VERSION, silent: opts.silent });
+  });
 
 program
   .command("init")
@@ -61,10 +67,10 @@ program
 
 program
   .command("tui")
-  .description("launch the terminal UI dashboard (requires Bun)")
-  .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .action(async (opts: { name?: string }) => {
-    await runTui({ repoRoot: process.cwd(), projectName: opts.name });
+  .description("launch the command deck (alias for running `hocus` with no subcommand)")
+  .option("--silent", "skip the boot animation")
+  .action(async (opts: { silent?: boolean }) => {
+    await launchTui({ cwd: process.cwd(), version: VERSION, silent: opts.silent });
   });
 
 program.parseAsync(process.argv).catch((err: unknown) => {
