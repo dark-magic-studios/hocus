@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { Command } from "commander";
 import { runInit } from "./commands/init.js";
 import { runCast } from "./commands/cast.js";
+import { runAdd } from "./commands/add.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
 import { launchTui } from "./tui/index.js";
@@ -85,6 +86,42 @@ program
       dryRun: opts.dryRun,
     });
   });
+
+program
+  .command("add")
+  .description("add skills and/or agents to target provider(s) locally or globally")
+  .option("-a, --agent <agent_id>", "ID or path of agent/persona to add")
+  .option("-s, --skill <skill_id>", "ID or path of skill to add")
+  .option("-l, --local", "install in project repository (default)")
+  .option("-g, --global", "install globally in home directory")
+  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,opencode,cursor,antigravity")
+  .option("--from <path>", "custom path for skill or persona file/folder")
+  .option("--dry-run", "print planned file writes without touching the filesystem")
+  .action(
+    async (opts: {
+      agent?: string;
+      skill?: string;
+      local?: boolean;
+      global?: boolean;
+      providers?: string;
+      from?: string;
+      dryRun?: boolean;
+    }) => {
+      const providers = opts.providers
+        ? (opts.providers.split(",").map((p) => p.trim()) as TargetId[])
+        : undefined;
+      await runAdd({
+        repoRoot: process.cwd(),
+        agent: opts.agent,
+        skill: opts.skill,
+        local: opts.local,
+        global: opts.global,
+        providers,
+        from: opts.from,
+        dryRun: opts.dryRun,
+      });
+    },
+  );
 
 const skill = program.command("skill").description("manage skills");
 skill
