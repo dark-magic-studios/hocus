@@ -99,9 +99,31 @@ hocus cast --targets claude-code,opencode,cursor,antigravity
 hocus cast --dry-run   # preview compiled outputs and target compilers
 ```
 
+### `hocus add`
+
+Adds agents and/or skills to selected AI tool provider(s) either locally in the current repository or globally in your home directory.
+
+When run interactively without `--providers`, `hocus add` presents an interactive checkmark prompt to select target providers (**Claude Code**, **OpenCode**, **Cursor**, **Antigravity**).
+
+```bash
+# Add agent and/or skill locally to project (default scope)
+hocus add --agent dinesh
+hocus add -a gilfoyle -s atomic-commits -l
+
+# Add agent and/or skill globally to home directory
+hocus add --agent dinesh --global
+hocus add -a dinesh -s atomic-commits -g
+
+# Specify target providers directly (bypass checkmark prompt)
+hocus add -a dinesh -s atomic-commits -g -p claude-code,cursor
+
+# Install custom skill or persona from a local path
+hocus add -s my-custom-skill --from ./path/to/skill
+```
+
 ### `hocus skill add <name>`
 
-Installs a skill into `.claude/skills/` and `.agents/skills/`. Defaults to skills bundled with Hocus; pass `--from <path>` to install from a local path.
+Alias for `hocus add --skill <name> --local`. Installs a skill into target provider skill folders. Defaults to skills bundled with Hocus; pass `--from <path>` to install from a local path.
 
 ```bash
 hocus skill add example-skill
