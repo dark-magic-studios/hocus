@@ -84,9 +84,12 @@ hocus init --claude             # use claude as agent runner (default)
 hocus init --opencode           # spawn opencode instead of claude
 hocus init --agy                # spawn agy (antigravity)
 hocus init --antigravity        # alias for --agy
-hocus init --agent agent        # spawn cursor agent runner
-hocus init --agent custom-cli  # spawn a custom agent CLI
-hocus init --dry-run           # preview files without writing to disk
+hocus init --agent              # spawn cursor `agent` CLI
+hocus init --agent custom-cli   # spawn a custom agent CLI
+hocus init --claude --model opus --effort high
+hocus init --agent --model sonnet-4 --effort high
+hocus init --opencode --model anthropic/claude-sonnet-4 --effort high
+hocus init --dry-run            # preview files without writing to disk
 ```
 
 ### `hocus cast`
