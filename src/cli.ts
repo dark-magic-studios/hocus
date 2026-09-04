@@ -37,6 +37,11 @@ program
   .option("--opencode", "use opencode as the agent runner")
   .option("--agy", "use agy (antigravity) as the agent runner")
   .option("--antigravity", "use agy (antigravity) as the agent runner")
+  .option("-m, --model <model>", "model for the spawned agent runner")
+  .option(
+    "-e, --effort <level>",
+    "reasoning effort (claude/agy: low|medium|high|…; opencode: --variant; cursor: model[effort=…])",
+  )
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(
     async (opts: {
@@ -46,6 +51,8 @@ program
       opencode?: boolean;
       agy?: boolean;
       antigravity?: boolean;
+      model?: string;
+      effort?: string;
       dryRun?: boolean;
     }) => {
       let resolvedAgent = "claude";
@@ -64,6 +71,8 @@ program
         repoRoot: process.cwd(),
         projectName: opts.name,
         agent: resolvedAgent,
+        model: opts.model,
+        effort: opts.effort,
         dryRun: opts.dryRun,
       });
     },

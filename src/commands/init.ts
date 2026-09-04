@@ -11,6 +11,8 @@ export interface InitOptions {
   repoRoot: string;
   projectName?: string;
   agent?: string;
+  model?: string;
+  effort?: string;
   dryRun?: boolean;
   spawnFn?: typeof spawnSync;
 }
@@ -20,44 +22,86 @@ export interface AgentSpawnSpec {
   args: string[];
 }
 
+export interface AgentSpawnOptions {
+  model?: string;
+  effort?: string;
+}
+
+const combinedPrompt = (systemPrompt: string, userPrompt: string): string =>
+  `System instructions:\n${systemPrompt}\n\nTask:\n${userPrompt}`;
+
+/** Cursor agent encodes effort inside parameterized model brackets. */
+const cursorModelWithEffort = (model: string, effort?: string): string => {
+  if (!effort) return model;
+  if (model.includes("[")) {
+    // Already parameterized — inject effort= if missing, else leave as-is.
+    if (/effort\s*=/.test(model)) return model;
+    return model.replace(/\]$/, `,effort=${effort}]`);
+  }
+  return `${model}[effort=${effort}]`;
+};
+
 export function getAgentSpawnSpec(
   agentInput: string = "claude",
   systemPrompt: string,
   userPrompt: string,
+  options: AgentSpawnOptions = {},
 ): AgentSpawnSpec {
   const normalized = agentInput.trim().toLowerCase();
+  const model = options.model?.trim() || undefined;
+  const effort = options.effort?.trim() || undefined;
+  const prompt = combinedPrompt(systemPrompt, userPrompt);
 
   if (normalized === "claude" || normalized === "claude-code") {
-    return {
-      command: "claude",
-      args: ["--system-prompt", systemPrompt, userPrompt],
-    };
+    const args: string[] = [];
+    if (model) args.push("--model", model);
+    if (effort) args.push("--effort", effort);
+    args.push("--system-prompt", systemPrompt, userPrompt);
+    return { command: "claude", args };
   }
 
   if (normalized === "opencode") {
+    // `run -i` supports --model and --variant (effort); plain TUI --prompt does not.
+    if (model || effort) {
+      const args: string[] = ["run", "-i"];
+      if (model) args.push("-m", model);
+      if (effort) args.push("--variant", effort);
+      args.push(prompt);
+      return { command: "opencode", args };
+    }
     return {
       command: "opencode",
-      args: ["--prompt", `System instructions:\n${systemPrompt}\n\nTask:\n${userPrompt}`],
+      args: ["--prompt", prompt],
     };
   }
 
   if (normalized === "agy" || normalized === "antigravity") {
-    return {
-      command: "agy",
-      args: ["-i", `System instructions:\n${systemPrompt}\n\nTask:\n${userPrompt}`],
-    };
+    const args: string[] = [];
+    if (model) args.push("--model", model);
+    if (effort) args.push("--effort", effort);
+    args.push("-i", prompt);
+    return { command: "agy", args };
   }
 
   if (normalized === "agent" || normalized === "cursor") {
-    return {
-      command: "agent",
-      args: [`System instructions:\n${systemPrompt}\n\nTask:\n${userPrompt}`],
-    };
+    if (effort && !model) {
+      throw new Error(
+        "cursor agent requires --model when --effort is set (e.g. --model sonnet-4 --effort high)",
+      );
+    }
+    const args: string[] = [];
+    if (model) args.push("--model", cursorModelWithEffort(model, effort));
+    args.push(prompt);
+    return { command: "agent", args };
   }
 
+  const args: string[] = [];
+  if (model) args.push("--model", model);
+  if (effort) args.push("--effort", effort);
+  args.push(prompt);
   return {
     command: agentInput.trim(),
-    args: [`System instructions:\n${systemPrompt}\n\nTask:\n${userPrompt}`],
+    args,
   };
 }
 
@@ -69,6 +113,8 @@ const INIT_PROMPT =
 export async function runInit({
   repoRoot,
   agent = "claude",
+  model,
+  effort,
   dryRun = false,
   spawnFn = spawnSync,
 }: InitOptions): Promise<void> {
@@ -120,10 +166,21 @@ export async function runInit({
 
   log.ok(`firing ${founder.display_name} — ${founder.role}`);
 
-  const { command, args } = getAgentSpawnSpec(agent, founder.body, INIT_PROMPT);
+  const { command, args } = getAgentSpawnSpec(agent, founder.body, INIT_PROMPT, {
+    model,
+    effort,
+  });
 
   if (dryRun) {
-    log.info(`would spawn ${command} — interactive session creates project docs and dashboard.html`);
+    const extras = [
+      model ? `model=${model}` : null,
+      effort ? `effort=${effort}` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    log.info(
+      `would spawn ${command}${extras ? ` (${extras})` : ""} — interactive session creates project docs and dashboard.html`,
+    );
     return;
   }
 

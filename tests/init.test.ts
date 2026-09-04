@@ -44,6 +44,72 @@ test("getAgentSpawnSpec resolves correct specs for known and custom agents", () 
   assert.match(customSpec.args[0]!, /sys prompt/);
 });
 
+test("getAgentSpawnSpec forwards model and effort per runner", () => {
+  const sys = "sys";
+  const user = "user";
+
+  const claude = getAgentSpawnSpec("claude", sys, user, {
+    model: "opus",
+    effort: "high",
+  });
+  assert.deepEqual(claude.args, [
+    "--model",
+    "opus",
+    "--effort",
+    "high",
+    "--system-prompt",
+    sys,
+    user,
+  ]);
+
+  const opencode = getAgentSpawnSpec("opencode", sys, user, {
+    model: "anthropic/claude-sonnet-4",
+    effort: "high",
+  });
+  assert.equal(opencode.command, "opencode");
+  assert.deepEqual(opencode.args.slice(0, 6), [
+    "run",
+    "-i",
+    "-m",
+    "anthropic/claude-sonnet-4",
+    "--variant",
+    "high",
+  ]);
+  assert.match(opencode.args[6]!, /sys/);
+
+  const agy = getAgentSpawnSpec("agy", sys, user, {
+    model: "gemini-3",
+    effort: "medium",
+  });
+  assert.deepEqual(agy.args.slice(0, 4), [
+    "--model",
+    "gemini-3",
+    "--effort",
+    "medium",
+  ]);
+  assert.equal(agy.args[4], "-i");
+
+  const cursor = getAgentSpawnSpec("agent", sys, user, {
+    model: "sonnet-4",
+    effort: "high",
+  });
+  assert.deepEqual(cursor.args.slice(0, 2), [
+    "--model",
+    "sonnet-4[effort=high]",
+  ]);
+
+  const cursorParam = getAgentSpawnSpec("agent", sys, user, {
+    model: "claude-opus-4-8[context=1m]",
+    effort: "high",
+  });
+  assert.equal(cursorParam.args[1], "claude-opus-4-8[context=1m,effort=high]");
+
+  assert.throws(
+    () => getAgentSpawnSpec("agent", sys, user, { effort: "high" }),
+    /requires --model/,
+  );
+});
+
 test("runInit spawns specified agent runner", async () => {
   const dir = makeEmptyRepo();
   try {
@@ -84,6 +150,22 @@ test("runInit spawns specified agent runner", async () => {
     });
 
     assert.equal(spawnedCommand, "agent");
+
+    // model + effort forwarded
+    await runInit({
+      repoRoot: dir,
+      agent: "claude",
+      model: "opus",
+      effort: "xhigh",
+      spawnFn: mockSpawnFn as any,
+    });
+    assert.equal(spawnedCommand, "claude");
+    assert.deepEqual(spawnedArgs.slice(0, 4), [
+      "--model",
+      "opus",
+      "--effort",
+      "xhigh",
+    ]);
   } finally {
     cleanupRepo(dir);
   }
