@@ -25,23 +25,30 @@ export async function writeCompiledFile(
   return fullPath;
 }
 
+export interface SkillInstallOptions extends FileWriteOptions {
+  pluginName?: string;
+}
+
 /**
- * Skills don't need per-tool compilation — the SKILL.md format is already
- * a shared open standard. Mirror the same folder into both locations so
- * Cursor, OpenCode, and Antigravity (which read .agents/skills/) and
- * Claude Code (which reads .claude/skills/) all pick it up without any
- * translation step.
+ * Skills conform to the Agent Skills open standard.
+ * Installs to .agents/skills/ and optionally into the agent plugin's
+ * skills/ directory under .agents/plugins/<pluginName>/skills/.
+ * No Claude-specific directories (.claude/skills/) are created.
  */
 export async function installSkill(
   sourceDir: string,
   repoRoot: string,
   skillName: string,
-  options: FileWriteOptions = {},
+  options: SkillInstallOptions = {},
 ): Promise<string[]> {
   const targets = [
     path.join(repoRoot, ".agents", "skills", skillName),
-    path.join(repoRoot, ".claude", "skills", skillName),
   ];
+  if (options.pluginName) {
+    targets.push(
+      path.join(repoRoot, ".agents", "plugins", options.pluginName, "skills", skillName)
+    );
+  }
 
   for (const target of targets) {
     if (options.dryRun) {

@@ -30,5 +30,6 @@ export const BUNDLED_SKILLS_DIR = path.join(PACKAGE_ROOT, "skills");
 
 export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "personas");
 export const PROJECT_SPELLS_DIR = (repoRoot: string) => path.join(repoRoot, "_spells");
-export const PROJECT_SKILLS_DIR = (repoRoot: string) => path.join(repoRoot, ".claude", "skills");
+export const PROJECT_SKILLS_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "skills");
+export const PROJECT_PLUGINS_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "plugins");
 export const PROJECT_LEDGER_FILE = (repoRoot: string) => path.join(repoRoot, ".hocus", "ledger.jsonl");

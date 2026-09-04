@@ -144,6 +144,21 @@ async function loadSkills(cwd: string, warnings: string[]): Promise<Skill[]> {
 
   const installedDir = PROJECT_SKILLS_DIR(cwd);
   await collectSkills(installedDir, "local", skills, seen, warnings, cwd);
+
+  const pluginsDir = path.join(cwd, ".agents", "plugins");
+  if (await pathExists(pluginsDir)) {
+    const plugins = (await readdir(pluginsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+    for (const plugin of plugins) {
+      const pSkillsDir = path.join(pluginsDir, plugin, "skills");
+      await collectSkills(pSkillsDir, "local", skills, seen, warnings, cwd);
+    }
+  }
+
+  const legacyClaudeSkills = path.join(cwd, ".claude", "skills");
+  if (await pathExists(legacyClaudeSkills)) {
+    await collectSkills(legacyClaudeSkills, "local", skills, seen, warnings, cwd);
+  }
+
   await collectSkills(BUNDLED_SKILLS_DIR, "bundled", skills, seen, warnings, cwd);
 
   return skills;

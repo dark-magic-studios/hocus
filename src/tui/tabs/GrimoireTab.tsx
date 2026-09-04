@@ -54,8 +54,13 @@ export function GrimoireTab() {
       await installSkill(path.join(BUNDLED_SKILLS_DIR, skill.id), cwd, skill.id);
       setStatus(`installed ${skill.name} into this project`);
     } else {
-      await remove(path.join(cwd, '.claude', 'skills', skill.id));
-      await remove(path.join(cwd, '.agents', 'skills', skill.id));
+      await remove(path.join(cwd, '.claude', 'skills', skill.id)).catch(() => {});
+      await remove(path.join(cwd, '.agents', 'skills', skill.id)).catch(() => {});
+      const pluginsDir = path.join(cwd, '.agents', 'plugins');
+      const plugins = await fsExtra.readdir(pluginsDir).catch(() => [] as string[]);
+      for (const p of plugins) {
+        await remove(path.join(pluginsDir, p, 'skills', skill.id)).catch(() => {});
+      }
       setStatus(`removed ${skill.name} from this project`);
     }
     reload();

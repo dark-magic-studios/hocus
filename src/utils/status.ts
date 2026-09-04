@@ -39,13 +39,29 @@ export async function getHocusStatus(repoRoot: string): Promise<HocusStatus> {
   const agentCount = personaFiles.length;
   const installed = personasExist && agentCount > 0;
 
-  // Count skills installed in .claude/skills and .agents/skills
-  const claudeSkillsDir = PROJECT_SKILLS_DIR(repoRoot);
+  // Count skills installed in .agents/skills, .agents/plugins/*/skills, and legacy .claude/skills
+  const skillNames = new Set<string>();
   const agentsSkillsDir = path.join(repoRoot, ".agents", "skills");
+  const pluginsDir = path.join(repoRoot, ".agents", "plugins");
+  const claudeSkillsDir = path.join(repoRoot, ".claude", "skills");
 
-  const claudeSkills = (await readdir(claudeSkillsDir).catch(() => [])).filter((f) => !f.startsWith("."));
-  const agentsSkills = (await readdir(agentsSkillsDir).catch(() => [])).filter((f) => !f.startsWith("."));
-  const skillNames = new Set([...claudeSkills, ...agentsSkills]);
+  const agentsSkills = (await readdir(agentsSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+  for (const s of agentsSkills) skillNames.add(s);
+
+  if (await pathExists(pluginsDir)) {
+    const plugins = (await readdir(pluginsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+    for (const plugin of plugins) {
+      const pSkillsDir = path.join(pluginsDir, plugin, "skills");
+      if (await pathExists(pSkillsDir)) {
+        const pSkills = (await readdir(pSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+        for (const s of pSkills) skillNames.add(s);
+      }
+    }
+  }
+
+  const claudeSkills = (await readdir(claudeSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+  for (const s of claudeSkills) skillNames.add(s);
+
   const skillCount = skillNames.size;
 
   const dashboardExists = await pathExists(path.join(repoRoot, "dashboard.html"));
