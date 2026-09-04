@@ -1,27 +1,27 @@
 {
   "/home/david/dev/hocus/.claude/settings.local.json": {
-    "mtime": 1782353432.6303551,
-    "ast_hash": "559045c7865835fcc8eea2635af8d7fb",
+    "mtime": 1785259226.128514,
+    "ast_hash": "12449c9bc7bd25eb925eea7ed0b300ac",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/package.json": {
-    "mtime": 1785230530.26771,
-    "ast_hash": "33ea06bacbd45e88c12509e930a05448",
+    "mtime": 1785260407.2937388,
+    "ast_hash": "8aa668b69aa035fe65556753db81c26f",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/cli.ts": {
-    "mtime": 1785233031.6721756,
-    "ast_hash": "506bc4683404063e0d35d5802b78b5ca",
+    "mtime": 1788540648.1505086,
+    "ast_hash": "321f3133bc2b046cd74c99640afa0084",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/commands/cast.ts": {
-    "mtime": 1785233034.6331532,
-    "ast_hash": "37b781d0333b4ed01f3523717af76c85",
+    "mtime": 1785242656.799657,
+    "ast_hash": "aafff4a0d74475e2bee0e7ba1b5b9ffe",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/commands/init.ts": {
-    "mtime": 1785233029.7321904,
-    "ast_hash": "5fd3bae8316f5ce9622e5a4a7be2aeb9",
+    "mtime": 1788540644.5275156,
+    "ast_hash": "5f5d917562c47deaa782670c02eaf1e2",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/commands/skill.ts": {
@@ -30,13 +30,8 @@
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/commands/sync.ts": {
-    "mtime": 1782330443.0,
-    "ast_hash": "521019840ff7d18b730eeb754aa60e58",
-    "semantic_hash": ""
-  },
-  "/home/david/dev/hocus/src/commands/tui.tsx": {
-    "mtime": 1785230536.4849446,
-    "ast_hash": "fa0dfa3b03237ddaf6fb23cb5069ff08",
+    "mtime": 1785242660.7046072,
+    "ast_hash": "1ef12d9d511a486927681ad13b1a8d8a",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/compilers/antigravity.ts": {
@@ -75,8 +70,8 @@
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/schema/soul.ts": {
-    "mtime": 1785231784.8384295,
-    "ast_hash": "d85acb82a33f5f62d87f04048f51bae8",
+    "mtime": 1785234020.555167,
+    "ast_hash": "a27a6971c0e49caab3598c2a1d7d4c8b",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/schema/spell.ts": {
@@ -85,8 +80,8 @@
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/templates/dashboard.ts": {
-    "mtime": 1785233322.2099495,
-    "ast_hash": "09a9485478987ffc11b9d7d9797ab676",
+    "mtime": 1785242649.8857453,
+    "ast_hash": "1c132e24e7590b3d41c365182686a8ea",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/theme.ts": {
@@ -105,8 +100,8 @@
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/src/utils/paths.ts": {
-    "mtime": 1785230531.9210074,
-    "ast_hash": "2199475f5bfac46c7e9cd5aeab235757",
+    "mtime": 1785234084.5174549,
+    "ast_hash": "4b662604487d70e4e9412ac8d9df44e0",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/tests/soul.test.ts": {
@@ -320,8 +315,8 @@
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/README.md": {
-    "mtime": 1785233318.0689957,
-    "ast_hash": "354b98dbb106db5324946bf8ba07aca3",
+    "mtime": 1788540670.921347,
+    "ast_hash": "0925ef681f1057e031b7f9d609f77560",
     "semantic_hash": ""
   },
   "/home/david/dev/hocus/SOUL.md": {
@@ -552,6 +547,501 @@
   "/home/david/dev/hocus/src/personas/russ.soul.md": {
     "mtime": 1785231837.905469,
     "ast_hash": "60b9221c2e8a99cecbf2a14bedc84ce3",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.opencode/package.json": {
+    "mtime": 1785233526.822666,
+    "ast_hash": "0164c462235ae66d80f913cc102924ce",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/App.tsx": {
+    "mtime": 1785239297.4682598,
+    "ast_hash": "bd6ceb5cff04299ed8ffcf9ea539b3b0",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/boot/BootSequence.tsx": {
+    "mtime": 1785238900.8337839,
+    "ast_hash": "ec435ffc2fe7f639192c78b47e8388bf",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/boot/useBootTasks.ts": {
+    "mtime": 1785229764.0,
+    "ast_hash": "95964a1210c2e353f22e241c61ee6574",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/chat/backends.ts": {
+    "mtime": 1785243883.4214168,
+    "ast_hash": "4fd1d4434eea52bbd272f147d28d8d82",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/chat/builtins.ts": {
+    "mtime": 1785242680.616353,
+    "ast_hash": "6ada23d59db10239c8274b454f5dac24",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/chat/resolvePrompt.ts": {
+    "mtime": 1785238947.5381973,
+    "ast_hash": "11f91729c3e38100a301678f89c3cb1d",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/chat/runBackend.ts": {
+    "mtime": 1785238937.4043293,
+    "ast_hash": "de00ca4cd619ab0ffb9e004a0502cc6a",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/components/Footer.tsx": {
+    "mtime": 1785229764.0,
+    "ast_hash": "5a1ddccaf440a0b6343d619fee9a3982",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/components/Frame.tsx": {
+    "mtime": 1785229764.0,
+    "ast_hash": "158549a465f3174db19b3fd9b5d2644a",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/components/ProgressBar.tsx": {
+    "mtime": 1785229764.0,
+    "ast_hash": "0e1b44ae3c4db064a40d6f222b278c86",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/components/StatusDot.tsx": {
+    "mtime": 1785229764.0,
+    "ast_hash": "11dd55bf7e1110941f6f44255f7709dc",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/components/TabBar.tsx": {
+    "mtime": 1785229764.0,
+    "ast_hash": "744f06d4ff07af87ed20a96202aadbb8",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/hooks/useCapabilities.ts": {
+    "mtime": 1785229764.0,
+    "ast_hash": "c8806f5f44119789a614fc68083a80de",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/hooks/useFileIndex.ts": {
+    "mtime": 1785238955.4510942,
+    "ast_hash": "f18c74ca1e9b9125044209e6d58b0cc7",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/hooks/useTabs.ts": {
+    "mtime": 1785238904.6027453,
+    "ast_hash": "131c3378621f0f8a34fe17252015fa52",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/hooks/useTerminalSize.ts": {
+    "mtime": 1785229764.0,
+    "ast_hash": "3462b86d44a884cb4d86490c43d924bc",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/hooks/useTextInput.ts": {
+    "mtime": 1785234224.6898692,
+    "ast_hash": "669000d83c85a9543dfe10e7f436c5e4",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/index.tsx": {
+    "mtime": 1785234502.1237276,
+    "ast_hash": "6d32874570c67ff37e5238c8598896c2",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/state/DeckContext.tsx": {
+    "mtime": 1785242637.5709026,
+    "ast_hash": "c50991a8416ecae74527fb7ac05fc613",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/state/loadDeck.ts": {
+    "mtime": 1785242634.545941,
+    "ast_hash": "3bda25c6f49632a5b07e38b183cd5f2e",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/state/types.ts": {
+    "mtime": 1785242631.7709765,
+    "ast_hash": "04f7bcc484fbd7cb3706562f6e858e0f",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/CovenTab.tsx": {
+    "mtime": 1785234256.7145066,
+    "ast_hash": "f20421d979c95152a8a5a9522625be7d",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/GrimoireTab.tsx": {
+    "mtime": 1785234337.932587,
+    "ast_hash": "3a8c00363c4645b691b648db59af2d61",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/ScryingTab.tsx": {
+    "mtime": 1785234357.4973652,
+    "ast_hash": "c2e952fc9f6a77f9204540507e2bfa3b",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/SeanceTab.tsx": {
+    "mtime": 1785243883.4224167,
+    "ast_hash": "a8b7cf8d96842860863203734c8330bf",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/SoulsTab.tsx": {
+    "mtime": 1785234276.6512809,
+    "ast_hash": "19a426547e7bd97fc13f244413cfd607",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/tabs/SpellsTab.tsx": {
+    "mtime": 1785242664.2935615,
+    "ast_hash": "a27072addb9c583366a87ad58e11718c",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/tui/theme.ts": {
+    "mtime": 1785239105.403315,
+    "ast_hash": "4d5db1212beb7e1e378b02deeee09a5d",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/src/utils/status.ts": {
+    "mtime": 1785242628.4160194,
+    "ast_hash": "2cd86a376906ddcb7772f58840bef720",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/init.test.ts": {
+    "mtime": 1788540670.8623476,
+    "ast_hash": "d5ac09a124939a29381ac268824460ad",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/load-deck.test.ts": {
+    "mtime": 1785234817.497143,
+    "ast_hash": "dfbe7291ece51e0a24e12d9c1f692ff8",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/status.test.ts": {
+    "mtime": 1785242691.2072177,
+    "ast_hash": "4fee3249b4eff50b45175c76d9771fe6",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/tui-app.test.tsx": {
+    "mtime": 1785234684.4946575,
+    "ast_hash": "67f2837ea7d1be9e43f016593ab51cee",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/tui-ascii.test.tsx": {
+    "mtime": 1785234715.455305,
+    "ast_hash": "8827290122fbdbcbd7941177346cdbbd",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/tui-fixtures.ts": {
+    "mtime": 1785234648.009073,
+    "ast_hash": "4364f2143e3f428ed2c616b950579699",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/tui-seance.test.tsx": {
+    "mtime": 1785243883.4224167,
+    "ast_hash": "b9e7008871fa1631b88f1a23ac08220a",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/tests/tui-tabs.test.tsx": {
+    "mtime": 1785234666.3888638,
+    "ast_hash": "b8b1f635d9dd97546b1a352d1cee3649",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/add-harness-mcp/SKILL.md": {
+    "mtime": 1785242740.088342,
+    "ast_hash": "929e94cfcb3ab919722f68dc60d1cdc5",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/add-harness-provider/SKILL.md": {
+    "mtime": 1785242740.0944695,
+    "ast_hash": "9deec0bf6d4d766b9d1761215b7560e4",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/atomic-commits/SKILL.md": {
+    "mtime": 1785242740.0981035,
+    "ast_hash": "b78cae87b19d41832798b08cebe4a8ce",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/bighead-dumb-test/SKILL.md": {
+    "mtime": 1785242740.1061502,
+    "ast_hash": "64285580a894f57f4a7a7e0eb9d9167b",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/deslopify/SKILL.md": {
+    "mtime": 1785242740.1104076,
+    "ast_hash": "97d4951f0189e750cbe80f6dcac4337c",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/dinesh-pr-feedback/SKILL.md": {
+    "mtime": 1785242740.113647,
+    "ast_hash": "9108a2aaab67d89873f537fbaa1f51e0",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/dinesh-pr-open/SKILL.md": {
+    "mtime": 1785242740.1145933,
+    "ast_hash": "0b377b4c8d2ce6d4289f15287f123a91",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/erlich-changelog/SKILL.md": {
+    "mtime": 1785242740.1172383,
+    "ast_hash": "4c988c9ebbb7dbc3022d484d80450fc1",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/erlich-update-product/SKILL.md": {
+    "mtime": 1785242740.118755,
+    "ast_hash": "7cd0428ee7400d74339508cb771eff17",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/expand-prompt/SKILL.md": {
+    "mtime": 1785242740.1199543,
+    "ast_hash": "572740fdd9c1fe16664f8a52eefa8308",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/gavin-render-dashboard/SKILL.md": {
+    "mtime": 1785242740.1212797,
+    "ast_hash": "90caf26f89a5888b525e45f1baebce5c",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/gilfoyle-pr-review/SKILL.md": {
+    "mtime": 1785242740.1229804,
+    "ast_hash": "16ec60a29e803205a1bfd7ed820b1197",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/harness-report/SKILL.md": {
+    "mtime": 1785242740.1241865,
+    "ast_hash": "eb906e516b1d3dfd3644ee6c2bde8ad7",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/jared-orchestrate/SKILL.md": {
+    "mtime": 1785242740.1254888,
+    "ast_hash": "52ebce9ccd2262a40de8f2ef0c4b70a9",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/jianyang-smart-test/SKILL.md": {
+    "mtime": 1785242740.1268356,
+    "ast_hash": "22c3255d22a28a756aa1c74825f4b178",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/laurie-fix-conflict/SKILL.md": {
+    "mtime": 1785242740.1279333,
+    "ast_hash": "4cd13fd3c3aaff019008b73730d3cf94",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/laurie-resolve-config/SKILL.md": {
+    "mtime": 1785242740.1290956,
+    "ast_hash": "f92d3db18422fa1d3504bc92ba5c81cd",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/peter-invoke/SKILL.md": {
+    "mtime": 1785242740.1302755,
+    "ast_hash": "700709e89036deff66b619f5a0aa12eb",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/pm-sync-linear/SKILL.md": {
+    "mtime": 1785242740.1314096,
+    "ast_hash": "7c19366c4b9194ec7dabafc92ca8bf59",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/project-update/SKILL.md": {
+    "mtime": 1785242740.1325588,
+    "ast_hash": "23046d7fa79dac2237a8670d56d1ea03",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/recruit-agent/SKILL.md": {
+    "mtime": 1785242740.1349611,
+    "ast_hash": "2dc4928ec632216dd74e5a5514927efc",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/recruit-assessment/SKILL.md": {
+    "mtime": 1785242740.136945,
+    "ast_hash": "f9eaa7c105fc3834c6cd2b3adf0935c3",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/recruit-skill/SKILL.md": {
+    "mtime": 1785242740.1382973,
+    "ast_hash": "be87157e93e6c3408abe045037f1b057",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/richard-draft-spell/SKILL.md": {
+    "mtime": 1785242740.1400368,
+    "ast_hash": "80e6175632572b4164a1be94d384e47b",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/russ-token-trim/SKILL.md": {
+    "mtime": 1785242740.1425457,
+    "ast_hash": "67df589cb882e05f63ce73bde170a86e",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/stack-survey/SKILL.md": {
+    "mtime": 1785242740.1435928,
+    "ast_hash": "6e50b82e4a57592640b325f1f9cf2101",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/sync-harness-config/SKILL.md": {
+    "mtime": 1785242740.1468775,
+    "ast_hash": "861eab5df74e3e0a853cce6e23de89fa",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/update-dashboard/SKILL.md": {
+    "mtime": 1785242740.1492434,
+    "ast_hash": "8617bc58a9c67320a7575f85114c8658",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.agents/skills/whismy-injector/SKILL.md": {
+    "mtime": 1785242740.1511755,
+    "ast_hash": "b916fa63b586392cd4b4899000ab2a3d",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/add-harness-mcp/SKILL.md": {
+    "mtime": 1785242740.0918882,
+    "ast_hash": "929e94cfcb3ab919722f68dc60d1cdc5",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/add-harness-provider/SKILL.md": {
+    "mtime": 1785242740.0955935,
+    "ast_hash": "9deec0bf6d4d766b9d1761215b7560e4",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/atomic-commits/SKILL.md": {
+    "mtime": 1785242740.1022701,
+    "ast_hash": "b78cae87b19d41832798b08cebe4a8ce",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/bighead-dumb-test/SKILL.md": {
+    "mtime": 1785242740.1089752,
+    "ast_hash": "64285580a894f57f4a7a7e0eb9d9167b",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/deslopify/SKILL.md": {
+    "mtime": 1785242740.1121368,
+    "ast_hash": "97d4951f0189e750cbe80f6dcac4337c",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/dinesh-pr-feedback/SKILL.md": {
+    "mtime": 1785242740.1145515,
+    "ast_hash": "9108a2aaab67d89873f537fbaa1f51e0",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/dinesh-pr-open/SKILL.md": {
+    "mtime": 1785242740.116246,
+    "ast_hash": "0b377b4c8d2ce6d4289f15287f123a91",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/erlich-changelog/SKILL.md": {
+    "mtime": 1785242740.1181202,
+    "ast_hash": "4c988c9ebbb7dbc3022d484d80450fc1",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/erlich-update-product/SKILL.md": {
+    "mtime": 1785242740.1193702,
+    "ast_hash": "7cd0428ee7400d74339508cb771eff17",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/expand-prompt/SKILL.md": {
+    "mtime": 1785242740.1206355,
+    "ast_hash": "572740fdd9c1fe16664f8a52eefa8308",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/gavin-render-dashboard/SKILL.md": {
+    "mtime": 1785242740.1221938,
+    "ast_hash": "90caf26f89a5888b525e45f1baebce5c",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/gilfoyle-pr-review/SKILL.md": {
+    "mtime": 1785242740.1235821,
+    "ast_hash": "16ec60a29e803205a1bfd7ed820b1197",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/harness-report/SKILL.md": {
+    "mtime": 1785242740.124794,
+    "ast_hash": "eb906e516b1d3dfd3644ee6c2bde8ad7",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/jared-orchestrate/SKILL.md": {
+    "mtime": 1785242740.1262743,
+    "ast_hash": "52ebce9ccd2262a40de8f2ef0c4b70a9",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/jianyang-smart-test/SKILL.md": {
+    "mtime": 1785242740.1273754,
+    "ast_hash": "22c3255d22a28a756aa1c74825f4b178",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/laurie-fix-conflict/SKILL.md": {
+    "mtime": 1785242740.1284995,
+    "ast_hash": "4cd13fd3c3aaff019008b73730d3cf94",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/laurie-resolve-config/SKILL.md": {
+    "mtime": 1785242740.1296875,
+    "ast_hash": "f92d3db18422fa1d3504bc92ba5c81cd",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/peter-invoke/SKILL.md": {
+    "mtime": 1785242740.1308126,
+    "ast_hash": "700709e89036deff66b619f5a0aa12eb",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/pm-sync-linear/SKILL.md": {
+    "mtime": 1785242740.1319814,
+    "ast_hash": "7c19366c4b9194ec7dabafc92ca8bf59",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/project-update/SKILL.md": {
+    "mtime": 1785242740.1339524,
+    "ast_hash": "23046d7fa79dac2237a8670d56d1ea03",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/recruit-agent/SKILL.md": {
+    "mtime": 1785242740.1360004,
+    "ast_hash": "2dc4928ec632216dd74e5a5514927efc",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/recruit-assessment/SKILL.md": {
+    "mtime": 1785242740.1376243,
+    "ast_hash": "f9eaa7c105fc3834c6cd2b3adf0935c3",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/recruit-skill/SKILL.md": {
+    "mtime": 1785242740.1391766,
+    "ast_hash": "be87157e93e6c3408abe045037f1b057",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/richard-draft-spell/SKILL.md": {
+    "mtime": 1785242740.141276,
+    "ast_hash": "80e6175632572b4164a1be94d384e47b",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/russ-token-trim/SKILL.md": {
+    "mtime": 1785242740.143413,
+    "ast_hash": "67df589cb882e05f63ce73bde170a86e",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/stack-survey/SKILL.md": {
+    "mtime": 1785242740.145551,
+    "ast_hash": "6e50b82e4a57592640b325f1f9cf2101",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/sync-harness-config/SKILL.md": {
+    "mtime": 1785242740.1477578,
+    "ast_hash": "861eab5df74e3e0a853cce6e23de89fa",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/update-dashboard/SKILL.md": {
+    "mtime": 1785242740.150271,
+    "ast_hash": "8617bc58a9c67320a7575f85114c8658",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/.claude/skills/whismy-injector/SKILL.md": {
+    "mtime": 1785242740.151936,
+    "ast_hash": "b916fa63b586392cd4b4899000ab2a3d",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/mark_1.svg": {
+    "mtime": 1785243883.4214168,
+    "ast_hash": "9de56f0e3a9819fde265344c5bda3f3f",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/readme-header.svg": {
+    "mtime": 1785244284.6444457,
+    "ast_hash": "545fc00eaad05f0cbbc2e0793a111a25",
+    "semantic_hash": ""
+  },
+  "/home/david/dev/hocus/stacked.svg": {
+    "mtime": 1785243883.4224167,
+    "ast_hash": "bc09af76ef9682f907a9fbf99e31dc5e",
     "semantic_hash": ""
   }
 }

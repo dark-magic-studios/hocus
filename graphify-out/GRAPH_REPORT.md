@@ -1,16 +1,16 @@
-# Graph Report - hocus  (2026-07-28)
+# Graph Report - hocus  (2026-09-04)
 
 ## Corpus Check
-- 108 files · ~36,582 words
+- 203 files · ~80,932 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 557 nodes · 601 edges · 89 communities
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
+- 1065 nodes · 1258 edges · 180 communities (179 shown, 1 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0a3bcad4`
+- Built from commit: `bf4823bc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -20,6 +20,7 @@
 - [[_COMMUNITY_Community 2|Community 2]]
 - [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
+- [[_COMMUNITY_Community 5|Community 5]]
 - [[_COMMUNITY_Community 6|Community 6]]
 - [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
@@ -103,55 +104,149 @@
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
+- [[_COMMUNITY_Community 90|Community 90]]
+- [[_COMMUNITY_Community 91|Community 91]]
+- [[_COMMUNITY_Community 92|Community 92]]
+- [[_COMMUNITY_Community 93|Community 93]]
+- [[_COMMUNITY_Community 94|Community 94]]
+- [[_COMMUNITY_Community 95|Community 95]]
+- [[_COMMUNITY_Community 96|Community 96]]
+- [[_COMMUNITY_Community 97|Community 97]]
+- [[_COMMUNITY_Community 98|Community 98]]
+- [[_COMMUNITY_Community 99|Community 99]]
+- [[_COMMUNITY_Community 100|Community 100]]
+- [[_COMMUNITY_Community 101|Community 101]]
+- [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 103|Community 103]]
+- [[_COMMUNITY_Community 104|Community 104]]
+- [[_COMMUNITY_Community 105|Community 105]]
+- [[_COMMUNITY_Community 106|Community 106]]
+- [[_COMMUNITY_Community 107|Community 107]]
+- [[_COMMUNITY_Community 108|Community 108]]
+- [[_COMMUNITY_Community 109|Community 109]]
+- [[_COMMUNITY_Community 110|Community 110]]
+- [[_COMMUNITY_Community 111|Community 111]]
+- [[_COMMUNITY_Community 112|Community 112]]
+- [[_COMMUNITY_Community 113|Community 113]]
+- [[_COMMUNITY_Community 114|Community 114]]
+- [[_COMMUNITY_Community 115|Community 115]]
+- [[_COMMUNITY_Community 116|Community 116]]
+- [[_COMMUNITY_Community 117|Community 117]]
+- [[_COMMUNITY_Community 118|Community 118]]
+- [[_COMMUNITY_Community 119|Community 119]]
+- [[_COMMUNITY_Community 120|Community 120]]
+- [[_COMMUNITY_Community 121|Community 121]]
+- [[_COMMUNITY_Community 122|Community 122]]
+- [[_COMMUNITY_Community 123|Community 123]]
+- [[_COMMUNITY_Community 124|Community 124]]
+- [[_COMMUNITY_Community 125|Community 125]]
+- [[_COMMUNITY_Community 126|Community 126]]
+- [[_COMMUNITY_Community 127|Community 127]]
+- [[_COMMUNITY_Community 128|Community 128]]
+- [[_COMMUNITY_Community 129|Community 129]]
+- [[_COMMUNITY_Community 130|Community 130]]
+- [[_COMMUNITY_Community 131|Community 131]]
+- [[_COMMUNITY_Community 132|Community 132]]
+- [[_COMMUNITY_Community 133|Community 133]]
+- [[_COMMUNITY_Community 134|Community 134]]
+- [[_COMMUNITY_Community 135|Community 135]]
+- [[_COMMUNITY_Community 136|Community 136]]
+- [[_COMMUNITY_Community 137|Community 137]]
+- [[_COMMUNITY_Community 138|Community 138]]
+- [[_COMMUNITY_Community 139|Community 139]]
+- [[_COMMUNITY_Community 140|Community 140]]
+- [[_COMMUNITY_Community 141|Community 141]]
+- [[_COMMUNITY_Community 142|Community 142]]
+- [[_COMMUNITY_Community 143|Community 143]]
+- [[_COMMUNITY_Community 144|Community 144]]
+- [[_COMMUNITY_Community 145|Community 145]]
+- [[_COMMUNITY_Community 146|Community 146]]
+- [[_COMMUNITY_Community 147|Community 147]]
+- [[_COMMUNITY_Community 148|Community 148]]
+- [[_COMMUNITY_Community 149|Community 149]]
+- [[_COMMUNITY_Community 150|Community 150]]
+- [[_COMMUNITY_Community 151|Community 151]]
+- [[_COMMUNITY_Community 152|Community 152]]
+- [[_COMMUNITY_Community 153|Community 153]]
+- [[_COMMUNITY_Community 154|Community 154]]
+- [[_COMMUNITY_Community 155|Community 155]]
+- [[_COMMUNITY_Community 156|Community 156]]
+- [[_COMMUNITY_Community 157|Community 157]]
+- [[_COMMUNITY_Community 158|Community 158]]
+- [[_COMMUNITY_Community 159|Community 159]]
+- [[_COMMUNITY_Community 160|Community 160]]
+- [[_COMMUNITY_Community 161|Community 161]]
+- [[_COMMUNITY_Community 162|Community 162]]
+- [[_COMMUNITY_Community 163|Community 163]]
+- [[_COMMUNITY_Community 164|Community 164]]
+- [[_COMMUNITY_Community 165|Community 165]]
+- [[_COMMUNITY_Community 166|Community 166]]
+- [[_COMMUNITY_Community 167|Community 167]]
+- [[_COMMUNITY_Community 168|Community 168]]
+- [[_COMMUNITY_Community 169|Community 169]]
+- [[_COMMUNITY_Community 170|Community 170]]
+- [[_COMMUNITY_Community 171|Community 171]]
+- [[_COMMUNITY_Community 172|Community 172]]
+- [[_COMMUNITY_Community 173|Community 173]]
+- [[_COMMUNITY_Community 174|Community 174]]
+- [[_COMMUNITY_Community 175|Community 175]]
+- [[_COMMUNITY_Community 176|Community 176]]
+- [[_COMMUNITY_Community 177|Community 177]]
+- [[_COMMUNITY_Community 178|Community 178]]
+- [[_COMMUNITY_Community 179|Community 179]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 15 edges
-2. `SoulFile` - 11 edges
-3. `runCast()` - 9 edges
-4. `parseSoulFile()` - 8 edges
-5. `PROJECT_PERSONAS_DIR()` - 8 edges
-6. `Hocus` - 8 edges
-7. `CompiledFile` - 7 edges
-8. `Compiler` - 7 edges
-9. `renderDashboard()` - 7 edges
-10. `log` - 7 edges
+2. `useDeck()` - 13 edges
+3. `palette` - 12 edges
+4. `getHocusStatus()` - 12 edges
+5. `runCast()` - 11 edges
+6. `loadDeck()` - 11 edges
+7. `PROJECT_PERSONAS_DIR()` - 11 edges
+8. `Hocus` - 11 edges
+9. `SoulFile` - 10 edges
+10. `runInit()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `runInit()` --calls--> `SpawnFn`  [INFERRED]
+  src/commands/init.ts → src/tui/chat/runBackend.ts
 - `CastOptions` --references--> `TargetId`  [EXTRACTED]
   src/commands/cast.ts → src/compilers/types.ts
-- `loadPersonas()` --calls--> `parseSoulFile()`  [EXTRACTED]
-  src/commands/tui.tsx → src/schema/soul.ts
-- `DashboardParams` --references--> `SoulFile`  [EXTRACTED]
-  src/templates/dashboard.ts → src/schema/soul.ts
 - `runCast()` --calls--> `detectStack()`  [EXTRACTED]
   src/commands/cast.ts → src/scanners/detect-stack.ts
-- `runCast()` --calls--> `readSpells()`  [EXTRACTED]
-  src/commands/cast.ts → src/schema/spell.ts
+- `DashboardParams` --references--> `SoulFile`  [EXTRACTED]
+  src/templates/dashboard.ts → src/schema/soul.ts
+- `AppProps` --references--> `BootTask`  [EXTRACTED]
+  src/tui/App.tsx → src/tui/boot/useBootTasks.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (89 total, 0 thin omitted)
+## Communities (180 total, 1 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (41): CastOptions, detectRelevantCompilers(), runCast(), InitOptions, runInit(), runSkillAdd(), SkillAddOptions, runSync() (+33 more)
+Cohesion: 0.07
+Nodes (55): BUILTIN_NAMES, BuiltinContext, BuiltinName, BuiltinResult, captureConsole(), getBuiltinCommands(), isBuiltinCommand(), runBuiltin() (+47 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (36): author, bin, hocus, dependencies, commander, fast-glob, fs-extra, gray-matter (+28 more)
+Nodes (39): author, bin, hocus, dependencies, commander, fast-glob, fs-extra, gray-matter (+31 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.14
-Nodes (18): antigravityCompiler, claudeCodeCompiler, DEFAULT_TOOLS, cursorCompiler, openCodeCompiler, CompiledFile, Compiler, DetectedStack (+10 more)
+Cohesion: 0.15
+Nodes (18): CastOptions, antigravityCompiler, claudeCodeCompiler, DEFAULT_TOOLS, cursorCompiler, openCodeCompiler, CompiledFile, Compiler (+10 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.11
 Nodes (17): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, jsx, lib, module, moduleResolution (+9 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.15
-Nodes (12): Commands, Directory layout, Hocus, `hocus cast`, `hocus init`, `hocus skill add <name>`, `hocus sync`, Install (+4 more)
+Cohesion: 0.11
+Nodes (17): Commands, Deck Tabs & Navigation, Directory Layout, Environment Variables, Hocus, `hocus cast`, `hocus` / `hocus tui`, `hocus init` (+9 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.05
+Nodes (47): BootSequence(), Props, BootLine, BootTask, useBootTasks(), Footer(), Frame(), FrameProps (+39 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.33
@@ -485,22 +580,381 @@ Nodes (3): Instructions, Update Dashboard, When to use
 Cohesion: 0.50
 Nodes (3): Instructions, When to use, Whimsy Injector
 
+### Community 90 - "Community 90"
+Cohesion: 0.13
+Nodes (25): detectStack(), FRAMEWORK_SIGNALS, PackageJsonShape, DeckContext, DeckState, EMPTY, collectSkills(), loadDeck() (+17 more)
+
+### Community 91 - "Community 91"
+Cohesion: 0.10
+Nodes (19): Backend, BACKENDS, ResolvedPrompt, resolvePrompt(), BackendResult, runBackend(), RunHandle, SpawnFn (+11 more)
+
+### Community 92 - "Community 92"
+Cohesion: 0.50
+Nodes (3): Add Harness MCP, Instructions, When to use
+
+### Community 93 - "Community 93"
+Cohesion: 0.50
+Nodes (3): Add Harness Provider, Instructions, When to use
+
+### Community 94 - "Community 94"
+Cohesion: 0.50
+Nodes (3): Atomic Commits, Instructions, When to use
+
+### Community 95 - "Community 95"
+Cohesion: 0.50
+Nodes (3): Big Head Dumb Test, Instructions, When to use
+
+### Community 96 - "Community 96"
+Cohesion: 0.50
+Nodes (3): Deslopify, Instructions, When to use
+
+### Community 97 - "Community 97"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Feedback, Instructions, When to use
+
+### Community 98 - "Community 98"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Open, Instructions, When to use
+
+### Community 99 - "Community 99"
+Cohesion: 0.50
+Nodes (3): Erlich Changelog, Instructions, When to use
+
+### Community 100 - "Community 100"
+Cohesion: 0.50
+Nodes (3): Erlich Update Product, Instructions, When to use
+
+### Community 101 - "Community 101"
+Cohesion: 0.50
+Nodes (3): Expand Prompt, Instructions, When to use
+
+### Community 102 - "Community 102"
+Cohesion: 0.50
+Nodes (3): Gavin Render Dashboard, Instructions, When to use
+
+### Community 103 - "Community 103"
+Cohesion: 0.50
+Nodes (3): Gilfoyle PR Review, Instructions, When to use
+
+### Community 104 - "Community 104"
+Cohesion: 0.50
+Nodes (3): Harness Report, Instructions, When to use
+
+### Community 105 - "Community 105"
+Cohesion: 0.50
+Nodes (3): Instructions, Jared Orchestrate, When to use
+
+### Community 106 - "Community 106"
+Cohesion: 0.50
+Nodes (3): Instructions, Jian-Yang Smart Test, When to use
+
+### Community 107 - "Community 107"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Fix Conflict, When to use
+
+### Community 108 - "Community 108"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Resolve Config, When to use
+
+### Community 109 - "Community 109"
+Cohesion: 0.50
+Nodes (3): Instructions, Peter Invoke, When to use
+
+### Community 110 - "Community 110"
+Cohesion: 0.50
+Nodes (3): Instructions, PM Sync Linear, When to use
+
+### Community 111 - "Community 111"
+Cohesion: 0.50
+Nodes (3): Instructions, Project Update, When to use
+
+### Community 112 - "Community 112"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Agent, When to use
+
+### Community 113 - "Community 113"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Assessment, When to use
+
+### Community 114 - "Community 114"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Skill, When to use
+
+### Community 115 - "Community 115"
+Cohesion: 0.50
+Nodes (3): Instructions, Richard Draft Spell, When to use
+
+### Community 116 - "Community 116"
+Cohesion: 0.50
+Nodes (3): Instructions, Russ Token Trim, When to use
+
+### Community 117 - "Community 117"
+Cohesion: 0.50
+Nodes (3): Instructions, Stack Survey, When to use
+
+### Community 118 - "Community 118"
+Cohesion: 0.50
+Nodes (3): Instructions, Sync Harness Config, When to use
+
+### Community 119 - "Community 119"
+Cohesion: 0.50
+Nodes (3): Instructions, Update Dashboard, When to use
+
+### Community 120 - "Community 120"
+Cohesion: 0.50
+Nodes (3): Instructions, When to use, Whimsy Injector
+
+### Community 121 - "Community 121"
+Cohesion: 0.50
+Nodes (3): Add Harness MCP, Instructions, When to use
+
+### Community 122 - "Community 122"
+Cohesion: 0.50
+Nodes (3): Add Harness Provider, Instructions, When to use
+
+### Community 123 - "Community 123"
+Cohesion: 0.50
+Nodes (3): Atomic Commits, Instructions, When to use
+
+### Community 124 - "Community 124"
+Cohesion: 0.50
+Nodes (3): Big Head Dumb Test, Instructions, When to use
+
+### Community 125 - "Community 125"
+Cohesion: 0.50
+Nodes (3): Deslopify, Instructions, When to use
+
+### Community 126 - "Community 126"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Feedback, Instructions, When to use
+
+### Community 127 - "Community 127"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Open, Instructions, When to use
+
+### Community 128 - "Community 128"
+Cohesion: 0.50
+Nodes (3): Erlich Changelog, Instructions, When to use
+
+### Community 129 - "Community 129"
+Cohesion: 0.50
+Nodes (3): Erlich Update Product, Instructions, When to use
+
+### Community 130 - "Community 130"
+Cohesion: 0.50
+Nodes (3): Expand Prompt, Instructions, When to use
+
+### Community 131 - "Community 131"
+Cohesion: 0.50
+Nodes (3): Gavin Render Dashboard, Instructions, When to use
+
+### Community 132 - "Community 132"
+Cohesion: 0.50
+Nodes (3): Gilfoyle PR Review, Instructions, When to use
+
+### Community 133 - "Community 133"
+Cohesion: 0.50
+Nodes (3): Harness Report, Instructions, When to use
+
+### Community 134 - "Community 134"
+Cohesion: 0.50
+Nodes (3): Instructions, Jared Orchestrate, When to use
+
+### Community 135 - "Community 135"
+Cohesion: 0.50
+Nodes (3): Instructions, Jian-Yang Smart Test, When to use
+
+### Community 136 - "Community 136"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Fix Conflict, When to use
+
+### Community 137 - "Community 137"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Resolve Config, When to use
+
+### Community 138 - "Community 138"
+Cohesion: 0.50
+Nodes (3): Instructions, Peter Invoke, When to use
+
+### Community 139 - "Community 139"
+Cohesion: 0.50
+Nodes (3): Instructions, PM Sync Linear, When to use
+
+### Community 140 - "Community 140"
+Cohesion: 0.50
+Nodes (3): Instructions, Project Update, When to use
+
+### Community 141 - "Community 141"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Agent, When to use
+
+### Community 142 - "Community 142"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Assessment, When to use
+
+### Community 143 - "Community 143"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Skill, When to use
+
+### Community 144 - "Community 144"
+Cohesion: 0.50
+Nodes (3): Instructions, Richard Draft Spell, When to use
+
+### Community 145 - "Community 145"
+Cohesion: 0.50
+Nodes (3): Instructions, Russ Token Trim, When to use
+
+### Community 146 - "Community 146"
+Cohesion: 0.50
+Nodes (3): Instructions, Stack Survey, When to use
+
+### Community 147 - "Community 147"
+Cohesion: 0.50
+Nodes (3): Instructions, Sync Harness Config, When to use
+
+### Community 148 - "Community 148"
+Cohesion: 0.50
+Nodes (3): Instructions, Update Dashboard, When to use
+
+### Community 149 - "Community 149"
+Cohesion: 0.50
+Nodes (3): Instructions, When to use, Whimsy Injector
+
+### Community 150 - "Community 150"
+Cohesion: 0.50
+Nodes (3): Add Harness MCP, Instructions, When to use
+
+### Community 151 - "Community 151"
+Cohesion: 0.50
+Nodes (3): Add Harness Provider, Instructions, When to use
+
+### Community 152 - "Community 152"
+Cohesion: 0.50
+Nodes (3): Atomic Commits, Instructions, When to use
+
+### Community 153 - "Community 153"
+Cohesion: 0.50
+Nodes (3): Big Head Dumb Test, Instructions, When to use
+
+### Community 154 - "Community 154"
+Cohesion: 0.50
+Nodes (3): Deslopify, Instructions, When to use
+
+### Community 155 - "Community 155"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Feedback, Instructions, When to use
+
+### Community 156 - "Community 156"
+Cohesion: 0.50
+Nodes (3): Dinesh PR Open, Instructions, When to use
+
+### Community 157 - "Community 157"
+Cohesion: 0.50
+Nodes (3): Erlich Changelog, Instructions, When to use
+
+### Community 158 - "Community 158"
+Cohesion: 0.50
+Nodes (3): Erlich Update Product, Instructions, When to use
+
+### Community 159 - "Community 159"
+Cohesion: 0.50
+Nodes (3): Expand Prompt, Instructions, When to use
+
+### Community 160 - "Community 160"
+Cohesion: 0.50
+Nodes (3): Gavin Render Dashboard, Instructions, When to use
+
+### Community 161 - "Community 161"
+Cohesion: 0.50
+Nodes (3): Gilfoyle PR Review, Instructions, When to use
+
+### Community 162 - "Community 162"
+Cohesion: 0.50
+Nodes (3): Harness Report, Instructions, When to use
+
+### Community 163 - "Community 163"
+Cohesion: 0.50
+Nodes (3): Instructions, Jared Orchestrate, When to use
+
+### Community 164 - "Community 164"
+Cohesion: 0.50
+Nodes (3): Instructions, Jian-Yang Smart Test, When to use
+
+### Community 165 - "Community 165"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Fix Conflict, When to use
+
+### Community 166 - "Community 166"
+Cohesion: 0.50
+Nodes (3): Instructions, Laurie Resolve Config, When to use
+
+### Community 167 - "Community 167"
+Cohesion: 0.50
+Nodes (3): Instructions, Peter Invoke, When to use
+
+### Community 168 - "Community 168"
+Cohesion: 0.50
+Nodes (3): Instructions, PM Sync Linear, When to use
+
+### Community 169 - "Community 169"
+Cohesion: 0.50
+Nodes (3): Instructions, Project Update, When to use
+
+### Community 170 - "Community 170"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Agent, When to use
+
+### Community 171 - "Community 171"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Assessment, When to use
+
+### Community 172 - "Community 172"
+Cohesion: 0.50
+Nodes (3): Instructions, Recruit Skill, When to use
+
+### Community 173 - "Community 173"
+Cohesion: 0.50
+Nodes (3): Instructions, Richard Draft Spell, When to use
+
+### Community 174 - "Community 174"
+Cohesion: 0.50
+Nodes (3): Instructions, Russ Token Trim, When to use
+
+### Community 175 - "Community 175"
+Cohesion: 0.50
+Nodes (3): Instructions, Stack Survey, When to use
+
+### Community 176 - "Community 176"
+Cohesion: 0.50
+Nodes (3): Instructions, Sync Harness Config, When to use
+
+### Community 177 - "Community 177"
+Cohesion: 0.50
+Nodes (3): Instructions, Update Dashboard, When to use
+
+### Community 178 - "Community 178"
+Cohesion: 0.50
+Nodes (3): Instructions, When to use, Whimsy Injector
+
 ## Knowledge Gaps
-- **304 isolated node(s):** `allow`, `enabledMcpjsonServers`, `name`, `version`, `description` (+299 more)
+- **519 isolated node(s):** `allow`, `enabledMcpjsonServers`, `@opencode-ai/plugin`, `name`, `version` (+514 more)
   These have ≤1 connection - possible missing edges or undocumented components.
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SoulFile` connect `Community 2` to `Community 0`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **What connects `allow`, `enabledMcpjsonServers`, `name` to the rest of the system?**
-  _304 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `useDeck()` connect `Community 5` to `Community 90`, `Community 91`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **Why does `palette` connect `Community 5` to `Community 91`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `SeanceTab()` connect `Community 91` to `Community 5`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
+- **What connects `allow`, `enabledMcpjsonServers`, `@opencode-ai/plugin` to the rest of the system?**
+  _519 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07627118644067797 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06639839034205232 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.13978494623655913 - nodes in this community are weakly interconnected._
-- **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1471264367816092 - nodes in this community are weakly interconnected._
