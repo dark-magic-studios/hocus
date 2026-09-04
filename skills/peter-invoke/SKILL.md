@@ -20,7 +20,16 @@ The "founder" skill. Kicks off the entire hocus setup for a project: interrogate
    - Determine the project stage: greenfield, active development, maintenance, or legacy
    - Determine team size and composition (if known)
 
-2. **Ask strategic questions**
+2. **Present and confirm the tech stack**
+   - Present a clear summary of what you found: languages, frameworks, package manager, databases, cloud providers, CI/CD, and notable tools/patterns.
+   - Ask the user to confirm or correct each item. Do not proceed until they've validated the full stack.
+
+3. **Present and confirm the product definition**
+   - Ask the user what the project is, who the target users are, what the primary goals are, and any hard constraints (deadlines, compliance, platform limits).
+   - If a PRODUCT.md already exists, present it and ask for corrections.
+   - Do not proceed until the user has confirmed the product definition.
+
+4. **Ask strategic questions**
    - "What is this project's primary goal right now? Shipping a feature? Fixing bugs? Paying down tech debt?"
    - "Who is the target user? What does success look like for them?"
    - "What are the biggest risks or unknowns right now?"
@@ -28,7 +37,7 @@ The "founder" skill. Kicks off the entire hocus setup for a project: interrogate
    - "What would you like the AI agents to handle, and what should stay human-only?"
    - Present these 2-3 at a time, don't dump all at once. Wait for answers.
 
-3. **Decide the initial cast**
+5. **Decide the initial cast**
    - Based on answers, recommend 5-10 agents. The minimum viable cast:
      - 1 orchestrator (Jared or equivalent)
      - 1 planner (Richard or equivalent)
@@ -40,13 +49,13 @@ The "founder" skill. Kicks off the entire hocus setup for a project: interrogate
    - For each recommended agent, state: what they'll do, why they're needed, which persona template they'd use
    - Present the proposed cast to the user for approval/tweaking
 
-4. **Decide required skills**
+6. **Decide required skills**
    - Based on the stack, recommend starter skills from the bundled set
    - Identify gaps that need custom skills (project-specific conventions, domain knowledge)
    - Recommend skills that cover: code conventions, testing approach, deployment workflow, documentation standards
    - Present for approval
 
-5. **Kick off setup**
+7. **Kick off setup**
    - Once the cast and skills are approved, delegate:
      - Agent recruitment → `recruit-agent` skill
      - Skill authoring → `recruit-skill` skill

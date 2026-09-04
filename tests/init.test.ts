@@ -1,3 +1,6 @@
+import path from "node:path";
+import fsExtra from "fs-extra";
+const { pathExists, readJson, readFile } = fsExtra;
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
@@ -166,6 +169,95 @@ test("runInit spawns specified agent runner", async () => {
       "--effort",
       "xhigh",
     ]);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes Claude-specific files", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      agent: "opencode",
+      spawnFn: mockSpawnFn as any,
+    });
+
+    // 1. NO claude-specific instructions or directories
+    assert.equal(await pathExists(path.join(dir, "CLAUDE.md")), false);
+    assert.equal(await pathExists(path.join(dir, ".claude", "agents")), false);
+    assert.equal(await pathExists(path.join(dir, ".claude", "skills")), false);
+
+    // 2. Agent plugin created following agent-plugins.org convention
+    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
+    assert.equal(await pathExists(pluginDir), true);
+
+    // plugin.json
+    const manifestPath = path.join(pluginDir, "plugin.json");
+    assert.equal(await pathExists(manifestPath), true);
+    const manifest = await readJson(manifestPath);
+    assert.equal(manifest.$schema, "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
+    assert.equal(manifest.name, "sample-app-plugin");
+
+    // skills/ directory in plugin
+    const pluginSkillsDir = path.join(pluginDir, "skills");
+    assert.equal(await pathExists(pluginSkillsDir), true);
+    assert.equal(await pathExists(path.join(pluginSkillsDir, "atomic-commits", "SKILL.md")), true);
+
+    // com.example.client/hooks
+    assert.equal(await pathExists(path.join(pluginDir, "com.example.client", "hooks")), true);
+
+    // 3. mcp.json in plugin
+    const mcpPath = path.join(pluginDir, "mcp.json");
+    assert.equal(await pathExists(mcpPath), true);
+    const mcpConfig = await readJson(mcpPath);
+    assert.equal(mcpConfig.$schema, "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json");
+    assert.deepEqual(mcpConfig.mcpServers.sequentialthinking, {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      type: "stdio",
+    });
+    assert.deepEqual(mcpConfig.mcpServers["code-review-graph"], {
+      command: "uvx",
+      args: ["code-review-graph", "serve"],
+      type: "stdio",
+    });
+    assert.deepEqual(mcpConfig.mcpServers.context7, {
+      command: "npx",
+      args: ["@anthropic-ai/context7"],
+      type: "stdio",
+    });
+
+    // 4. RTK installed on all providers
+    // Antigravity rule
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md")), true);
+    const rtkAntigravityContent = await readFile(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md"), "utf8");
+    assert.match(rtkAntigravityContent, /Rust Token Killer/);
+
+    // Cursor rule
+    assert.equal(await pathExists(path.join(dir, ".cursor", "rules", "rtk.mdc")), true);
+
+    // OpenCode plugin
+    assert.equal(await pathExists(path.join(dir, ".opencode", "plugins", "rtk.js")), true);
+
+    // 5. Graphify installed on all providers
+    // Antigravity rules & workflows
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "graphify.md")), true);
+    assert.equal(await pathExists(path.join(dir, ".agents", "workflows", "graphify.md")), true);
+
+    // Cursor rule
+    assert.equal(await pathExists(path.join(dir, ".cursor", "rules", "graphify.mdc")), true);
+
+    // OpenCode plugin & config
+    assert.equal(await pathExists(path.join(dir, ".opencode", "plugins", "graphify.js")), true);
+    assert.equal(await pathExists(path.join(dir, ".opencode", "opencode.json")), true);
+
+    // Graphify skill installed in plugin and .agents/skills
+    assert.equal(await pathExists(path.join(pluginSkillsDir, "graphify", "SKILL.md")), true);
+    assert.equal(await pathExists(path.join(dir, ".agents", "skills", "graphify", "SKILL.md")), true);
   } finally {
     cleanupRepo(dir);
   }
