@@ -10,6 +10,133 @@ The cast that ships with Hocus borrows wizard names from history and myth — Mi
 
 ---
 
+## Choosing a cast: Silicon Valley vs. Wizards
+
+Hocus ships one logical cast — 13 roles — with two naming conventions. The choice is cosmetic but it touches file names, skill IDs, slash commands, and the default display in compiled outputs and the dashboard. The harness behavior is identical either way; only the names change.
+
+Implementation lives in `src/utils/cast.ts:1` (`CAST_MAP`, `PERSONA_SKILL_IDS`, `transformSoulForCast`, `transformSkillFrontmatterForCast`, `getSoulFilenameForCast`) and is wired through `src/commands/init.ts:200` (`resolveCast`, `promptForCast`, migration logic) and `src/templates/dashboard.ts:1` (client-side toggle).
+
+### How you choose
+
+| Mode | What happens |
+|---|---|
+| **Interactive** (`hocus init` in a TTY) | Prompt: `1) Silicon Valley — Richard, Jared, Gilfoyle, Dinesh...` / `2) Wizards — Merlin, Roger Bacon, Zoroaster, Flamel...` (`src/commands/init.ts:260`). Default is `2` (Wizards) if you press Enter or enter an unrecognized value. |
+| **Flag** | `hocus init --cast valley` or `hocus init --cast wizard` (also accepts `silicon`, `silicon valley`, `sv`, `occult`, `hocus`, `mystic` — see `normalizeCast` in `src/utils/cast.ts:8`). `--cast` bypasses the prompt and logs `using … cast (--cast …)`. |
+| **Non-interactive / `--dry-run`** | No prompt. Defaults to Wizards (`src/commands/init.ts:240`). Pass `--cast` explicitly to force Valley in CI. |
+
+The choice is persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard" }`. `hocus cast` and `hocus sync` read the personas on disk; `hocus init` reads the config to detect an existing cast before deciding whether to migrate (`src/commands/init.ts:300`).
+
+### What changes when you pick a cast
+
+#### 1. Persona files (`.hocus/personas/*.soul.md`)
+
+The bundled sources under `src/personas/` are authored with `character: <valleySlug>` and `display_name: <wizardDisplay>` plus `aliases` for both. At `hocus init` time each file is transformed for the chosen cast (`transformSoulForCast` in `src/utils/cast.ts:180`):
+
+- **Valley**: filename is the valley slug (`richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, `jian-yang.soul.md`, `big-head.soul.md`, …) via `getSoulFilenameForCast` (`src/utils/cast.ts:300`). Frontmatter `character` stays the valley slug, `display_name` becomes the Valley display (`Richard`, `Gilfoyle`, `Jared`, `Peter Gregory`, `Jian-Yang`, `Big Head`), and the `# <Name> —` heading in the body is rewritten to match.
+- **Wizard**: filename is the wizard slug (`merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, `cagliostro.soul.md`, `baba-yaga.soul.md`, …). Frontmatter `character` becomes the wizard slug (`merlin`, `zoroaster`, …), `display_name` becomes the wizard display (`Merlin`, `Zoroaster`, …), same heading rewrite.
+
+In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <WizardDisplay> }` so the dashboard can toggle without reparsing. `character` is the stable key validated by `src/schema/soul.ts:1` and referenced by compiled agent filenames — it survives recasts as the lookup key in `CAST_MAP`.
+
+#### 2. Persona-bound skills
+
+14 skills are persona-specific and are renamed to match the cast (`PERSONA_SKILL_IDS` in `src/utils/cast.ts:45`). Generic skills (`atomic-commits`, `graphify`, `harness-report`, `project-update`, etc.) are **not** renamed and are identical in both casts.
+
+| Valley skill ID | Wizard skill ID | Role |
+|---|---|---|
+| `bighead-dumb-test` | `baba-yaga-dumb-test` | confusion / UX test |
+| `dinesh-pr-feedback` | `flamel-pr-feedback` | PR feedback |
+| `dinesh-pr-open` | `flamel-pr-open` | open PR |
+| `erlich-changelog` | `circe-changelog` | changelog |
+| `erlich-update-product` | `circe-update-product` | product docs |
+| `gavin-render-dashboard` | `the-apprentice-render-dashboard` | dashboard |
+| `gilfoyle-pr-review` | `zoroaster-pr-review` | review |
+| `jared-orchestrate` | `roger-bacon-orchestrate` | orchestration |
+| `jianyang-smart-test` | `cagliostro-smart-test` | smart test |
+| `laurie-fix-conflict` | `john-dee-fix-conflict` | config conflicts |
+| `laurie-resolve-config` | `john-dee-resolve-config` | config sync |
+| `peter-invoke` | `midas-invoke` | founder / harness setup |
+| `richard-draft-spell` | `merlin-draft-spell` | battle plan |
+| `russ-token-trim` | `prospero-token-trim` | cost trimming |
+
+`getSkillIdForCast` (`src/utils/cast.ts:85`) and `transformSkillFrontmatterForCast` (`src/utils/cast.ts:115`) handle this:
+
+- Folder name under `.agents/skills/`, `.agents/plugins/<plugin>/skills/`, `.claude/skills/`, and `.commandcode/skills/` (when Command Code is enabled) uses the cast-appropriate prefix (`hocus init` copies with `installSkill` after transforming).
+- Frontmatter `name` is rewritten to the cast-appropriate skill ID.
+- Frontmatter `description` leading `<Name> — …` is rewritten to the cast's display name (e.g. `Gilfoyle — review PRs` → `Zoroaster — review PRs`).
+
+Slash-command names follow the folder/`name` — `/richard-draft-spell` vs `/merlin-draft-spell`, `/jared-orchestrate` vs `/roger-bacon-orchestrate`, etc. Mentions and autocomplete in the TUI Séance tab surface the same names.
+
+#### 3. Compiled agent outputs
+
+`hocus cast` and the `hocus init` tail step compile every `.hocus/personas/*.soul.md` into native formats for each detected target (`src/compilers/`). Compiled filenames and internal `name`/`description` use the persona's current `character`/`display_name`, so they follow the chosen cast:
+
+- `.claude/agents/<slug>.md` (`claude-code.ts`)
+- `.opencode/agent/<slug>.md` (`opencode.ts`)
+- `.cursor/rules/<slug>.mdc` (`cursor.ts`)
+- `.agents/rules/<slug>.md` (`antigravity.ts`)
+- `.commandcode/agents/<slug>.md` (`command-code.ts`, with Taste compatibility baked in)
+
+Switching the cast and re-running `hocus cast` rewrites all of these to the new slugs.
+
+#### 4. Init prompt / agent instructions
+
+The founder agent spawned at the end of `hocus init` receives a cast-specific system prompt (`buildInitPrompt` in `src/commands/init.ts:70`):
+
+- Valley: *“Confirm the naming convention is Silicon Valley … Use Silicon Valley names consistently … Do not mix in wizard names.”*
+- Wizard: *“Confirm the naming convention is Wizards … Use wizard names consistently … Do not mix in Silicon Valley names.”*
+
+All agents the founder then creates (5–10 tailored personas + project-specific skills) are instructed to follow that convention, and the orchestrator's spell files will reference the chosen names. Mixing conventions is treated as a defect — the prompt explicitly forbids it.
+
+#### 5. Dashboard (`dashboard.html`)
+
+`src/templates/dashboard.ts:1` renders each persona card with `data-cast-default`, `data-cast-valley`, and `data-cast-occult` attributes and `class="cast-name"`. Client-side JS swaps visible names when the URL has `?cast=valley` or `?cast=wizard`/`?cast=occult`. **This toggle is visual only** — it does not rename files or change `hocus cast` output. The **default** rendered name (no query param) matches the cast chosen at `hocus init` (i.e. the `display_name` on disk).
+
+#### 6. Switching / migration
+
+Re-running `hocus init --cast <other>` in an existing repo migrates in place (`src/commands/init.ts:320`):
+
+- Iterates `.hocus/personas/*.soul.md`, runs `transformSoulForCast` to the target cast, renames the file if the slug changed (`richard.soul.md` ↔ `merlin.soul.md`), and rewrites frontmatter/body.
+- Removes stale opposite-cast skill folders under `.agents/skills/` and `.agents/plugins/<plugin>/skills/` and logs `removed stale … (now …)` (`src/commands/init.ts:410`).
+- Overwrites `.hocus/config.json` with the new cast and logs `overwrote … cast "…" -> "…"`.
+
+Legacy repos with no config but existing personas are migrated the same way. `hocus add` and `hocus skill add` respect the on-disk cast for new installs; `hocus cast --dry-run` previews the target filenames without writing.
+
+### What does NOT change
+
+- **Roles, voices, glyphs, tools, triggers, model defaults** — identical. Only `character`, `display_name`, the `# … —` heading, and `aliases` normalization differ. A Valley `Richard` and a Wizard `Merlin` are the same planner (`role: planner`, `voice: anxious, earnest…`, `glyph: "(*)"`, `triggers: [new feature request, architecture decision, battle plan]`); likewise `Jared` ↔ `Roger Bacon` (`role: orchestrator`), `Gilfoyle` ↔ `Zoroaster` (`role: reviewer`), etc. See `src/personas/*.soul.md:1`.
+- **Behavior** — compilation, TUI, skill execution, and orchestration are cast-agnostic. The `character` slug is stable across recasts as the `CAST_MAP` key; `aliases` keeps both names for lookup.
+- **Generic skills and templates** — `PRODUCT.md`, `TASKS.md`, `MEMORY.md`, `AGENTS.md` content (except the live roster in `dashboard.html`) is cast-independent.
+
+### Full slug mapping
+
+Source of truth is `CAST_MAP` in `src/utils/cast.ts:15`. Valley slug is the canonical key; wizard slug/display are the transformed values.
+
+| Valley slug (`character` when valley) | Valley display | Wizard slug (`character` when wizard) | Wizard display |
+|---|---|---|---|
+| `big-head` | Big Head | `baba-yaga` | Baba Yaga |
+| `dinesh` | Dinesh | `flamel` | Flamel |
+| `erlich` | Erlich | `circe` | Circe |
+| `gavin` | Gavin | `the-apprentice` | The Apprentice |
+| `gilfoyle` | Gilfoyle | `zoroaster` | Zoroaster |
+| `jared` | Jared | `roger-bacon` | Roger Bacon |
+| `jian-yang` | Jian-Yang | `cagliostro` | Cagliostro |
+| `laurie` | Laurie | `john-dee` | John Dee |
+| `monica` | Monica | `nostradamus` | Nostradamus |
+| `peter-gregory` | Peter Gregory | `midas` | Midas |
+| `project-manager` | Project Manager | `cornelius-agrippa` | Cornelius Agrippa |
+| `richard` | Richard | `merlin` | Merlin |
+| `russ` | Russ Hanneman | `prospero` | Prospero |
+
+Skill prefix variants normalize hyphens/casing: `bighead` ↔ `big-head`/`baba-yaga`, `jianyang` ↔ `jian-yang`/`cagliostro`, `peter` ↔ `peter-gregory`/`midas`, etc. (`SKILL_PREFIX_TO_VALLEY` in `src/utils/cast.ts:35`).
+
+### Choosing guidance
+
+- **Pick Valley if** you want slash commands and agent names that match the original project vocabulary (`/richard-draft-spell`, `/gilfoyle-pr-review`, `/jared-orchestrate`), you have existing docs/scripts referencing those names, or your team knows the *Silicon Valley* roster.
+- **Pick Wizards if** you prefer the themed names that ship as the default in non-interactive installs and `README.md` examples (`/merlin-draft-spell`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`), or you want the `dashboard.html` default to show the mythic names.
+- Either choice can be previewed with `?cast=valley` / `?cast=wizard` on the dashboard before committing. Switching later is a file-rename migration that will show up as renames in `git status`; coordinate with open PRs to avoid merge conflicts on skill/persona paths.
+
+---
+
 ## Interactive Command Deck (TUI)
 
 Running `hocus` (or `hocus tui`) launches an interactive Terminal User Interface (TUI) command deck built for managing personas, tracking battle plans, chatting with agents, and monitoring repo compilation state.
@@ -92,11 +219,14 @@ hocus init --agent custom-cli   # spawn a custom agent CLI
 hocus init --claude --model opus --effort high
 hocus init --agent --model sonnet-4 --effort high
 hocus init --opencode --model anthropic/claude-sonnet-4 --effort high
+hocus init --cast valley        # Silicon Valley names (Richard, Gilfoyle…) — see Choosing a cast
+hocus init --cast wizard        # wizard names (Merlin, Zoroaster…) — default in CI/dry-run
 hocus init --command-code       # force Command Code (cmdc) support on
 hocus init --no-command-code    # force Command Code support off
 hocus init --dry-run            # preview files without writing to disk
 ```
 
+`--cast` controls file names, skill IDs, and slash commands for the whole repo. Without the flag, `hocus init` prompts interactively (default: Wizards); in non-interactive shells and `--dry-run` it defaults to Wizards — pass `--cast valley` explicitly in CI. The choice is persisted in `.hocus/config.json` and determines the default `dashboard.html` rendering; `?cast=valley` / `?cast=wizard` still toggles the dashboard visually without changing files. Re-running `hocus init --cast <other>` migrates existing personas and removes stale opposite-cast skill folders. Full consequences (renamed `*.soul.md` files, 14 persona-bound skill renames, compiled outputs, init prompt) are documented in [Choosing a cast: Silicon Valley vs. Wizards](#choosing-a-cast-silicon-valley-vs-wizards).
 
 ### `hocus cast`
 
