@@ -71,6 +71,7 @@ Slash-command names follow the folder/`name` — `/richard-draft-spell` vs `/mer
 `hocus cast` and the `hocus init` tail step compile every `.hocus/personas/*.soul.md` into native formats for each detected target (`src/compilers/`). Compiled filenames and internal `name`/`description` use the persona's current `character`/`display_name`, so they follow the chosen cast:
 
 - `.claude/agents/<slug>.md` (`claude-code.ts`)
+- `.codex/agents/<slug>.toml` (`codex.ts`; skills are discovered from `.agents/skills/`)
 - `.opencode/agent/<slug>.md` (`opencode.ts`)
 - `.cursor/rules/<slug>.mdc` (`cursor.ts`)
 - `.agents/agents/<slug>/agent.md` (`antigravity.ts`)
@@ -171,6 +172,7 @@ The five tools don't share a config format, but they've converged on common capa
 |---|---|---|
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown + YAML frontmatter, invoked via the Task tool or `@mention`. |
 | **OpenCode** | `.opencode/agent/<slug>.md` | Same shape, different frontmatter keys (`mode: subagent`). |
+| **Codex** | `.codex/agents/<slug>.toml` | Native TOML custom-agent configuration; repository skills load from `.agents/skills/`. |
 | **Cursor** | `.cursor/rules/<slug>.mdc` | Cursor has no native subagent concept. Compiled as an "Agent Requested" rule instead — conditionally loaded by description, not directly invokable. |
 | **Antigravity** | `.agents/agents/<slug>/agent.md` | Native custom subagents discovered under `.agents/agents/<slug>/agent.md` with YAML frontmatter (`name`, `description`, `tools`, `model`, `subagent: true`) and Markdown system instructions. |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + YAML frontmatter (`name`, `description`, `tools`, optional `model`); the body is the system prompt. Every compiled agent gets [Taste](https://commandcode.ai/docs/taste) compatibility instructions baked in, so Command Code's learned preferences are honored by the whole cast. |
@@ -212,6 +214,7 @@ If you use Command Code, `hocus init` asks about it (or respects `--command-code
 hocus init --name my-project
 hocus init --claude             # use claude as agent runner (default)
 hocus init --opencode           # spawn opencode instead of claude
+hocus init --codex              # spawn Codex instead of claude
 hocus init --agy                # spawn agy (antigravity)
 hocus init --antigravity        # alias for --agy
 hocus init --agent              # spawn cursor `agent` CLI
@@ -234,7 +237,7 @@ Scans the current repo for language and framework signals, tailors each persona 
 
 ```bash
 hocus cast
-hocus cast --targets claude-code,opencode,cursor,antigravity,command-code
+hocus cast --targets claude-code,codex,opencode,cursor,antigravity,command-code
 hocus cast --dry-run   # preview compiled outputs and target compilers
 ```
 
@@ -254,7 +257,7 @@ hocus add --agent dinesh --global
 hocus add -a dinesh -s atomic-commits -g
 
 # Specify target providers directly (bypass checkmark prompt)
-hocus add -a dinesh -s atomic-commits -g -p claude-code,cursor,command-code
+hocus add -a dinesh -s atomic-commits -g -p claude-code,codex,cursor,command-code
 
 # Install custom skill or persona from a local path
 hocus add -s my-custom-skill --from ./path/to/skill
@@ -340,7 +343,7 @@ src/
 ├── commands/               # init, cast, skill add, sync handlers
 ├── personas/               # bundled SOUL.md cast (13 personas)
 ├── schema/                 # SOUL.md & spell frontmatter validation schemas
-├── compilers/              # target compilers (claude-code, opencode, cursor, antigravity)
+├── compilers/              # target compilers (claude-code, codex, opencode, cursor, antigravity)
 ├── scanners/               # repository tech stack detection engine
 ├── templates/              # main file templates & HTML dashboard renderer
 ├── tui/                    # interactive Ink/OpenTUI command deck & tabs
@@ -364,4 +367,3 @@ tests/                      # test suite
 ## License
 
 MIT © Dark Magic Studios
-

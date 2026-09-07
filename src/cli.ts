@@ -22,7 +22,7 @@ const program = new Command();
 
 program
   .name("hocus")
-  .description("A multi-agent harness generator — one persona spec, four tool-native outputs.")
+  .description("A multi-agent harness generator — one persona spec, tool-native outputs.")
   .version(VERSION)
   .option("--silent", "skip the boot animation when opening the command deck")
   .action(async (opts: { silent?: boolean }) => {
@@ -33,15 +33,16 @@ program
   .command("init")
   .description("bootstrap the persona cast, main files, and agent harness into the current repo")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .option("-a, --agent [agent]", "agent runner to spawn (e.g. claude, opencode, agy, agent; default: claude)")
+  .option("-a, --agent [agent]", "agent runner to spawn (e.g. claude, codex, opencode, agy, agent; default: claude)")
   .option("--claude", "use claude as the agent runner")
+  .option("--codex", "use Codex as the agent runner")
   .option("--opencode", "use opencode as the agent runner")
   .option("--agy", "use agy (antigravity) as the agent runner")
   .option("--antigravity", "use agy (antigravity) as the agent runner")
   .option("-m, --model <model>", "model for the spawned agent runner")
   .option(
     "-e, --effort <level>",
-    "reasoning effort (claude/agy: low|medium|high|…; opencode: --variant; cursor: model[effort=…])",
+    "reasoning effort (Codex: config override; claude/agy: --effort; opencode: --variant; cursor: model[effort=…])",
   )
   .option("--cast <cast>", "naming convention: valley (Silicon Valley) or wizard (Merlin, etc.) — prompts interactively if omitted")
   .option("--command-code", "enable Command Code (cmdc) support: compile subagents to .commandcode/agents/, mirror skills, bake in taste instructions")
@@ -53,6 +54,7 @@ program
       name?: string;
       agent?: string | boolean;
       claude?: boolean;
+      codex?: boolean;
       opencode?: boolean;
       agy?: boolean;
       antigravity?: boolean;
@@ -68,6 +70,8 @@ program
         resolvedAgent = opts.agent.trim();
       } else if (opts.agent === true) {
         resolvedAgent = "agent";
+      } else if (opts.codex) {
+        resolvedAgent = "codex";
       } else if (opts.opencode) {
         resolvedAgent = "opencode";
       } else if (opts.agy || opts.antigravity) {
@@ -93,7 +97,7 @@ program
   .command("cast")
   .description("scan the repo and (re)compile personas for every detected or specified target tool")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .option("-t, --targets <list>", "comma-separated targets: claude-code,opencode,cursor,antigravity,command-code")
+  .option("-t, --targets <list>", "comma-separated targets: claude-code,codex,opencode,cursor,antigravity,command-code")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(async (opts: { name?: string; targets?: string; dryRun?: boolean }) => {
     const targets = opts.targets
@@ -115,7 +119,7 @@ program
   .option("-r, --rule <rule_id>", "ID or path of rule to add (or 'all' for all template rules)")
   .option("-l, --local", "install in project repository (default)")
   .option("-g, --global", "install globally in home directory")
-  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,opencode,cursor,antigravity,command-code")
+  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,codex,opencode,cursor,antigravity,command-code")
   .option("--from <path>", "custom path for skill or persona file/folder")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(

@@ -17,7 +17,7 @@ Never operate directly on the real project or user directories during tests:
 
 ## 2. Child Process & Agent Execution Mocking
 
-- Commands that spawn external CLIs (such as `agy`, `claude`, `opencode`, `agent`, `rtk`, or `graphify`) must accept an injectable `spawnFn` argument (defaulting to `node:child_process.spawnSync`).
+- Commands that spawn external CLIs (such as `agy`, `claude`, `codex`, `opencode`, `agent`, `rtk`, or `graphify`) must accept an injectable `spawnFn` argument (defaulting to `node:child_process.spawnSync`).
 - In unit tests, inject a mock `spawnFn` that records command lines and returns simulated results without launching child processes.
 
 ## 3. Ink TUI Testing

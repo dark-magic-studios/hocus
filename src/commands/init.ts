@@ -14,6 +14,7 @@ import {
 import { parseSoulFile } from "../schema/soul.js";
 import { installSkill, writeCompiledFile } from "../utils/files.js";
 import { commandCodeCompiler } from "../compilers/command-code.js";
+import { codexCompiler } from "../compilers/codex.js";
 import { confirmYesNo } from "../utils/prompt.js";
 import {
   type Cast,
@@ -120,6 +121,16 @@ export function getAgentSpawnSpec(
     return { command: "agent", args };
   }
 
+  if (normalized === "codex") {
+    const args: string[] = [];
+    if (model) args.push("--model", model);
+    // Codex exposes reasoning effort as a config override, rather than a
+    // dedicated CLI flag.
+    if (effort) args.push("--config", `model_reasoning_effort=${JSON.stringify(effort)}`);
+    args.push(userPrompt);
+    return { command: "codex", args };
+  }
+
   const args: string[] = [];
   if (model) args.push("--model", model);
   if (effort) args.push("--effort", effort);
@@ -206,6 +217,42 @@ async function installCommandCodeAgents(
     count++;
   }
   return count;
+}
+
+/** Compile the cast into Codex's project-scoped custom-agent TOML files. */
+async function installCodexAgents(
+  repoRoot: string,
+  cast: Cast,
+  dryRun: boolean,
+): Promise<number> {
+  const projectDir = PROJECT_PERSONAS_DIR(repoRoot);
+  let files = (await readdir(projectDir).catch(() => [] as string[])).filter((f) =>
+    f.endsWith(".soul.md"),
+  );
+  let sourceDir = projectDir;
+  if (!files.length) {
+    sourceDir = BUNDLED_PERSONAS_DIR;
+    files = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
+  }
+
+  const { default: matter } = await import("gray-matter");
+  for (const file of files) {
+    const fullPath = path.join(sourceDir, file);
+    let soul: ReturnType<typeof parseSoulFile>;
+    if (sourceDir === BUNDLED_PERSONAS_DIR) {
+      const raw = await readFile(fullPath, "utf8");
+      const transformed = transformSoulForCast(raw, cast);
+      const { data, content } = matter(transformed);
+      soul = { ...data, sourcePath: fullPath, body: content.trim() } as ReturnType<typeof parseSoulFile>;
+    } else {
+      soul = parseSoulFile(fullPath);
+    }
+    await writeCompiledFile(repoRoot, codexCompiler.compile(soul, {
+      repoRoot,
+      stack: { languages: [], frameworks: [] },
+    }), { dryRun, target: "Codex" });
+  }
+  return files.length;
 }
 
 /**
@@ -519,6 +566,11 @@ export async function runInit({
   }
   log.ok(`installed ${skillCount} skills to .agents/plugins/${pluginName}/skills/ and .agents/skills/${useCommandCode ? " and .commandcode/skills/" : ""} (${describeCast(cast)})`);
 
+  // Codex discovers repository skills from .agents/skills/, so the shared
+  // installation above needs no mirror. Its custom subagents are TOML files.
+  const codexAgentCount = await installCodexAgents(repoRoot, cast, dryRun);
+  log.ok(`compiled ${codexAgentCount} Codex subagents to .codex/agents/ (skills use .agents/skills/)`);
+
   // 1f. Compile Command Code subagents (.commandcode/agents/) when enabled —
   //     each one gets taste-compatibility instructions baked into its body.
   if (useCommandCode) {
@@ -610,4 +662,3 @@ export async function runInit({
     throw new Error(`failed to spawn ${command}: ${result.error.message}`);
   }
 }
-

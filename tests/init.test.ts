@@ -18,6 +18,10 @@ test("getAgentSpawnSpec resolves correct specs for known and custom agents", () 
   const claudeCodeSpec = getAgentSpawnSpec("claude-code", sys, user);
   assert.equal(claudeCodeSpec.command, "claude");
 
+  const codexSpec = getAgentSpawnSpec("codex", sys, user);
+  assert.equal(codexSpec.command, "codex");
+  assert.deepEqual(codexSpec.args, [user]);
+
   // opencode
   const opencodeSpec = getAgentSpawnSpec("opencode", sys, user);
   assert.equal(opencodeSpec.command, "opencode");
@@ -106,6 +110,12 @@ test("getAgentSpawnSpec forwards model and effort per runner", () => {
     effort: "high",
   });
   assert.equal(cursorParam.args[1], "claude-opus-4-8[context=1m,effort=high]");
+
+  const codex = getAgentSpawnSpec("codex", sys, user, {
+    model: "gpt-5.6",
+    effort: "high",
+  });
+  assert.deepEqual(codex.args, ["--model", "gpt-5.6", "--config", 'model_reasoning_effort="high"', user]);
 
   assert.throws(
     () => getAgentSpawnSpec("agent", sys, user, { effort: "high" }),
@@ -258,6 +268,14 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
     // Graphify skill installed in plugin and .agents/skills
     assert.equal(await pathExists(path.join(pluginSkillsDir, "graphify", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(dir, ".agents", "skills", "graphify", "SKILL.md")), true);
+
+    // Codex uses native project-agent TOML files and discovers the shared
+    // .agents/skills directory directly.
+    const codexAgent = path.join(dir, ".codex", "agents", "midas.toml");
+    assert.equal(await pathExists(codexAgent), true);
+    const codexContent = await readFile(codexAgent, "utf8");
+    assert.match(codexContent, /^name = "midas"/);
+    assert.match(codexContent, /developer_instructions = \"\"\"/);
   } finally {
     cleanupRepo(dir);
   }

@@ -17,7 +17,7 @@ export interface CompiledFile {
   content: string;
 }
 
-export type TargetId = "claude-code" | "opencode" | "cursor" | "antigravity" | "command-code";
+export type TargetId = "claude-code" | "opencode" | "cursor" | "antigravity" | "command-code" | "codex";
 
 export interface Compiler {
   id: TargetId;

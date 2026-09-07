@@ -23,6 +23,7 @@ export interface HocusStatus {
 
 const WARD_AGENT_DIR: Record<string, string> = {
   "claude-code": path.join(".claude", "agents"),
+  codex: path.join(".codex", "agents"),
   opencode: path.join(".opencode", OPENCODE_AGENT_DIR),
   cursor: path.join(".cursor", "rules"),
   antigravity: path.join(".agents", "agents"),
@@ -84,7 +85,9 @@ export async function getHocusStatus(repoRoot: string): Promise<HocusStatus> {
           compiledCount = counts.reduce<number>((a, b) => a + b, 0);
         } else {
           const files = await readdir(fullDir).catch(() => [] as string[]);
-          compiledCount = files.filter((f) => f.endsWith(".md") || f.endsWith(".mdc")).length;
+          compiledCount = files.filter((f) =>
+            f.endsWith(".md") || f.endsWith(".mdc") || f.endsWith(".toml"),
+          ).length;
         }
       }
       return {

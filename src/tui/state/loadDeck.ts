@@ -20,6 +20,7 @@ const LEDGER_TAIL = 200;
 
 const WARD_AGENT_DIR: Record<string, string> = {
   "claude-code": path.join(".claude", "agents"),
+  codex: path.join(".codex", "agents"),
   opencode: path.join(".opencode", OPENCODE_AGENT_DIR),
   cursor: path.join(".cursor", "rules"),
   antigravity: path.join(".agents", "agents"),

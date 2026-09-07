@@ -48,6 +48,8 @@ export function getAgentTargetPath(
         return path.join(homeDir, ".gemini", "config", "agents", soul.character, "agent.md");
       case "command-code":
         return path.join(homeDir, ".commandcode", "agents", `${soul.character}.md`);
+      case "codex":
+        return path.join(homeDir, ".codex", "agents", `${soul.character}.toml`);
     }
   } else {
     const compiler = getCompiler(provider);
@@ -78,6 +80,8 @@ export function getSkillTargetPath(
         return path.join(homeDir, ".gemini", "antigravity", "skills", skillName);
       case "command-code":
         return path.join(homeDir, ".commandcode", "skills", skillName);
+      case "codex":
+        return path.join(homeDir, ".agents", "skills", skillName);
     }
   } else {
     switch (provider) {
@@ -85,6 +89,8 @@ export function getSkillTargetPath(
         return path.join(repoRoot, ".claude", "skills", skillName);
       case "command-code":
         return path.join(repoRoot, ".commandcode", "skills", skillName);
+      case "codex":
+        return path.join(repoRoot, ".agents", "skills", skillName);
       case "opencode":
       case "cursor":
       case "antigravity":
@@ -234,7 +240,7 @@ export async function runAdd(options: AddOptions): Promise<void> {
     if (isInteractive) {
       selectedProviders = await promptProviders();
     } else {
-      selectedProviders = ["claude-code", "opencode", "cursor", "antigravity", "command-code"];
+      selectedProviders = ["claude-code", "opencode", "cursor", "antigravity", "command-code", "codex"];
     }
   }
 
