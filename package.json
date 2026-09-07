@@ -19,8 +19,7 @@
   "files": [
     "dist",
     "src/personas",
-    "src/templates",
-    "skills"
+    "src/templates"
   ],
   "scripts": {
     "build": "tsup src/cli.ts --format esm --dts --clean --shims",

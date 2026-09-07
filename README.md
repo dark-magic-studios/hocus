@@ -345,13 +345,12 @@ src/
 ├── schema/                 # SOUL.md & spell frontmatter validation schemas
 ├── compilers/              # target compilers (claude-code, codex, opencode, cursor, antigravity)
 ├── scanners/               # repository tech stack detection engine
-├── templates/              # main file templates & HTML dashboard renderer
+├── templates/              # main file templates, bundled rules & skills
 ├── tui/                    # interactive Ink/OpenTUI command deck & tabs
 │   ├── tabs/               # Séance, Spells, Souls, Coven, Grimoire, Scrying
 │   ├── chat/               # prompt engine, slash commands, mentions
 │   └── boot/               # boot animation & theme definitions
 └── utils/
-skills/                     # starter skills bundled with Hocus
 tests/                      # test suite
 ```
 

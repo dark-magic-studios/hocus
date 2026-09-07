@@ -26,7 +26,7 @@ function findPackageRoot(startDir: string): string {
 export const PACKAGE_ROOT = findPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
 
 export const BUNDLED_PERSONAS_DIR = path.join(PACKAGE_ROOT, "src", "personas");
-export const BUNDLED_SKILLS_DIR = path.join(PACKAGE_ROOT, "skills");
+export const BUNDLED_SKILLS_DIR = path.join(PACKAGE_ROOT, "src", "templates", "skills");
 export const BUNDLED_RULES_DIR = path.join(PACKAGE_ROOT, "src", "templates", "rules");
 
 export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "personas");

@@ -18,7 +18,7 @@ test("empty repo loads a fully empty, error-free deck", async () => {
     assert.deepEqual(deck.spells, []);
     assert.deepEqual(deck.ledger, []);
     assert.deepEqual(deck.warnings, []);
-    // BUNDLED_SKILLS_DIR resolves to this package's own skills/, not the
+    // BUNDLED_SKILLS_DIR resolves to this package's own src/templates/skills/, not the
     // fixture cwd, so an "empty project" still surfaces the bundled roster.
     assert.ok(deck.skills.length > 0);
     assert.ok(deck.skills.every((s) => s.source === "bundled"));
