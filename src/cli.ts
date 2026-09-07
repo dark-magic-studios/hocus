@@ -46,6 +46,7 @@ program
   .option("--cast <cast>", "naming convention: valley (Silicon Valley) or wizard (Merlin, etc.) — prompts interactively if omitted")
   .option("--command-code", "enable Command Code (cmdc) support: compile subagents to .commandcode/agents/, mirror skills, bake in taste instructions")
   .option("--no-command-code", "disable Command Code support (skips the interactive question)")
+  .option("--no-rules", "skip installing workspace rules into .agents/rules/")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(
     async (opts: {
@@ -60,6 +61,7 @@ program
       dryRun?: boolean;
       cast?: string;
       commandCode?: boolean;
+      rules?: boolean;
     }) => {
       let resolvedAgent = "claude";
       if (typeof opts.agent === "string" && opts.agent.trim()) {
@@ -82,6 +84,7 @@ program
         dryRun: opts.dryRun,
         cast: opts.cast,
         commandCode: opts.commandCode,
+        rules: opts.rules,
       });
     },
   );
@@ -106,9 +109,10 @@ program
 
 program
   .command("add")
-  .description("add skills and/or agents to target provider(s) locally or globally")
+  .description("add skills, agents, and/or rules to target provider(s) locally or globally")
   .option("-a, --agent <agent_id>", "ID or path of agent/persona to add")
   .option("-s, --skill <skill_id>", "ID or path of skill to add")
+  .option("-r, --rule <rule_id>", "ID or path of rule to add (or 'all' for all template rules)")
   .option("-l, --local", "install in project repository (default)")
   .option("-g, --global", "install globally in home directory")
   .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,opencode,cursor,antigravity,command-code")
@@ -118,6 +122,7 @@ program
     async (opts: {
       agent?: string;
       skill?: string;
+      rule?: string;
       local?: boolean;
       global?: boolean;
       providers?: string;
@@ -131,6 +136,7 @@ program
         repoRoot: process.cwd(),
         agent: opts.agent,
         skill: opts.skill,
+        rule: opts.rule,
         local: opts.local,
         global: opts.global,
         providers,

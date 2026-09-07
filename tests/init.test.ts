@@ -327,3 +327,48 @@ test("runInit with commandCode: false writes no .commandcode directory", async (
     cleanupRepo(dir);
   }
 });
+
+test("runInit installs template rules to .agents/rules/ and references them in founder prompt", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    let spawnedArgs: string[] = [];
+    const mockSpawnFn = (_cmd: string, args: string[]) => {
+      spawnedArgs = args;
+      return { error: undefined } as any;
+    };
+
+    await runInit({
+      repoRoot: dir,
+      agent: "claude",
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "architecture.md")), true);
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "commit-hygiene.md")), true);
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "token-efficiency.md")), true);
+
+    const prompt = spawnedArgs.join(" ");
+    assert.match(prompt, /\.agents\/rules\//);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit with rules: false skips installing template rules", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+
+    await runInit({
+      repoRoot: dir,
+      agent: "claude",
+      rules: false,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "architecture.md")), false);
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "commit-hygiene.md")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});

@@ -6,6 +6,7 @@ import { log } from "../utils/log.js";
 import {
   BUNDLED_PERSONAS_DIR,
   BUNDLED_SKILLS_DIR,
+  BUNDLED_RULES_DIR,
   PROJECT_PERSONAS_DIR,
 } from "../utils/paths.js";
 import { parseSoulFile, type SoulFile } from "../schema/soul.js";
@@ -18,6 +19,7 @@ export interface AddOptions {
   repoRoot?: string;
   agent?: string;
   skill?: string;
+  rule?: string;
   local?: boolean;
   global?: boolean;
   providers?: TargetId[];
@@ -43,7 +45,7 @@ export function getAgentTargetPath(
       case "cursor":
         return path.join(homeDir, ".cursor", "rules", `${soul.character}.mdc`);
       case "antigravity":
-        return path.join(homeDir, ".gemini", "antigravity", "rules", `${soul.character}.md`);
+        return path.join(homeDir, ".gemini", "config", "agents", soul.character, "agent.md");
       case "command-code":
         return path.join(homeDir, ".commandcode", "agents", `${soul.character}.md`);
     }
@@ -180,13 +182,47 @@ export async function findSkillDir(
   return null;
 }
 
+export async function findRuleFiles(
+  ruleId: string,
+  repoRoot: string,
+  fromPath?: string,
+): Promise<{ name: string; sourcePath: string }[]> {
+  if (fromPath && (await pathExists(fromPath))) {
+    const s = await stat(fromPath);
+    if (!s.isDirectory()) {
+      return [{ name: path.basename(fromPath), sourcePath: fromPath }];
+    }
+  }
+
+  if (!(await pathExists(BUNDLED_RULES_DIR))) {
+    return [];
+  }
+
+  const allFiles = (await readdir(BUNDLED_RULES_DIR)).filter((f) => f.endsWith(".md"));
+  if (ruleId === "all") {
+    return allFiles.map((file) => ({
+      name: file,
+      sourcePath: path.join(BUNDLED_RULES_DIR, file),
+    }));
+  }
+
+  const normalized = ruleId.endsWith(".md") ? ruleId : `${ruleId}.md`;
+  for (const file of allFiles) {
+    if (file.toLowerCase() === normalized.toLowerCase()) {
+      return [{ name: file, sourcePath: path.join(BUNDLED_RULES_DIR, file) }];
+    }
+  }
+
+  return [];
+}
+
 export async function runAdd(options: AddOptions): Promise<void> {
   const repoRoot = options.repoRoot ?? process.cwd();
   const homeDir = options.overrideHomeDir ?? os.homedir();
   const dryRun = options.dryRun ?? false;
 
-  if (!options.agent && !options.skill) {
-    log.error("Please specify --agent <agent_id> and/or --skill <skill_id>.");
+  if (!options.agent && !options.skill && !options.rule) {
+    log.error("Please specify --agent <agent_id>, --skill <skill_id>, or --rule <rule_id>.");
     return;
   }
 
@@ -198,7 +234,7 @@ export async function runAdd(options: AddOptions): Promise<void> {
     if (isInteractive) {
       selectedProviders = await promptProviders();
     } else {
-      selectedProviders = ["claude-code", "opencode", "cursor", "antigravity"];
+      selectedProviders = ["claude-code", "opencode", "cursor", "antigravity", "command-code"];
     }
   }
 
@@ -264,6 +300,29 @@ export async function runAdd(options: AddOptions): Promise<void> {
           await ensureDir(targetDir);
           await copy(sourceDir, targetDir, { overwrite: true });
           log.ok(`installed skill "${skillName}" (${scope}) -> ${targetDir}`);
+        }
+      }
+    }
+  }
+
+  if (options.rule) {
+    const matchedRules = await findRuleFiles(options.rule, repoRoot, options.from);
+    if (!matchedRules.length) {
+      log.error(`no rule found matching "${options.rule}"`);
+    } else {
+      const targetDir =
+        scope === "global"
+          ? path.join(homeDir, ".gemini", "config", "rules")
+          : path.join(repoRoot, ".agents", "rules");
+
+      for (const rule of matchedRules) {
+        const dest = path.join(targetDir, rule.name);
+        if (dryRun) {
+          log.planned(path.relative(repoRoot, dest), `rule (${scope})`);
+        } else {
+          await ensureDir(targetDir);
+          await copy(rule.sourcePath, dest, { overwrite: true });
+          log.ok(`installed rule "${rule.name}" (${scope}) -> ${dest}`);
         }
       }
     }

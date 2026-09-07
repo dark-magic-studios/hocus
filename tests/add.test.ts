@@ -23,7 +23,7 @@ test("runAdd installs agent locally to all target providers", async () => {
     assert.equal(await pathExists(path.join(repoRoot, ".claude", "agents", "dinesh.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".opencode", "agent", "dinesh.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".cursor", "rules", "dinesh.mdc")), true);
-    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "dinesh.md")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "agents", "dinesh", "agent.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".commandcode", "agents", "dinesh.md")), true);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
@@ -65,7 +65,7 @@ test("runAdd supports both --agent and --skill simultaneously with --global flag
     assert.equal(await pathExists(path.join(fakeHome, ".claude", "agents", "gilfoyle.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".config", "opencode", "agent", "gilfoyle.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".cursor", "rules", "gilfoyle.mdc")), true);
-    assert.equal(await pathExists(path.join(fakeHome, ".gemini", "antigravity", "rules", "gilfoyle.md")), true);
+    assert.equal(await pathExists(path.join(fakeHome, ".gemini", "config", "agents", "gilfoyle", "agent.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".commandcode", "agents", "gilfoyle.md")), true);
 
     // Global skill folders
@@ -97,8 +97,50 @@ test("runAdd respects explicit --providers list", async () => {
 
     // Should NOT install to opencode & antigravity
     assert.equal(await pathExists(path.join(repoRoot, ".opencode", "agent", "erlich.md")), false);
-    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "erlich.md")), false);
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "agents", "erlich", "agent.md")), false);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
+  }
+});
+
+test("runAdd installs single rule and all rules locally", async () => {
+  const repoRoot = await makeTmpDir();
+  try {
+    // Single rule
+    await runAdd({
+      repoRoot,
+      rule: "commit-hygiene",
+      local: true,
+    });
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "commit-hygiene.md")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "architecture.md")), false);
+
+    // All rules
+    await runAdd({
+      repoRoot,
+      rule: "all",
+      local: true,
+    });
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "architecture.md")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "testing-standards.md")), true);
+  } finally {
+    await rm(repoRoot, { recursive: true, force: true });
+  }
+});
+
+test("runAdd installs rule globally", async () => {
+  const repoRoot = await makeTmpDir();
+  const fakeHome = await makeTmpDir();
+  try {
+    await runAdd({
+      repoRoot,
+      rule: "token-efficiency",
+      global: true,
+      overrideHomeDir: fakeHome,
+    });
+    assert.equal(await pathExists(path.join(fakeHome, ".gemini", "config", "rules", "token-efficiency.md")), true);
+  } finally {
+    await rm(repoRoot, { recursive: true, force: true });
+    await rm(fakeHome, { recursive: true, force: true });
   }
 });
