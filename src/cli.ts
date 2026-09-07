@@ -42,6 +42,7 @@ program
     "-e, --effort <level>",
     "reasoning effort (claude/agy: low|medium|high|…; opencode: --variant; cursor: model[effort=…])",
   )
+  .option("--cast <cast>", "naming convention: valley (Silicon Valley) or wizard (Merlin, etc.) — prompts interactively if omitted")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(
     async (opts: {
@@ -54,6 +55,7 @@ program
       model?: string;
       effort?: string;
       dryRun?: boolean;
+      cast?: string;
     }) => {
       let resolvedAgent = "claude";
       if (typeof opts.agent === "string" && opts.agent.trim()) {
@@ -74,6 +76,7 @@ program
         model: opts.model,
         effort: opts.effort,
         dryRun: opts.dryRun,
+        cast: opts.cast,
       });
     },
   );
