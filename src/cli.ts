@@ -8,6 +8,7 @@ import { runCast } from "./commands/cast.js";
 import { runAdd } from "./commands/add.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
+import { runUpgrade } from "./commands/upgrade.js";
 import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
@@ -150,6 +151,36 @@ program
   .option("-n, --name <name>", "project name (defaults to the directory name)")
   .action(async (opts: { name?: string }) => {
     await runSync({ repoRoot: process.cwd(), projectName: opts.name });
+  });
+
+program
+  .command("upgrade")
+  .description("update personas and static skills to latest bundled versions")
+  .option("--dry-run", "print planned file writes without touching the filesystem")
+  .option("--force", "overwrite even if files appear unchanged")
+  .option("--cast <cast>", "override cast: valley or wizard (defaults to project's .hocus/config.json or inferred)")
+  .option("--personas", "only update personas (default: both)")
+  .option("--skills", "only update skills (default: both)")
+  .option("--no-personas", "skip personas")
+  .option("--no-skills", "skip skills")
+  .action(async (opts: { dryRun?: boolean; force?: boolean; cast?: string; personas?: boolean; skills?: boolean }) => {
+    const personas = opts.personas !== false;
+    const skills = opts.skills !== false;
+    const raw = process.argv.join(" ");
+    const hasPersonasFlag = raw.includes("--personas");
+    const hasSkillsFlag = raw.includes("--skills");
+    let doPersonas = personas;
+    let doSkills = skills;
+    if (hasPersonasFlag && !hasSkillsFlag && !raw.includes("--no-skills")) doSkills = false;
+    if (hasSkillsFlag && !hasPersonasFlag && !raw.includes("--no-personas")) doPersonas = false;
+    await runUpgrade({
+      repoRoot: process.cwd(),
+      dryRun: opts.dryRun,
+      force: opts.force,
+      cast: opts.cast,
+      personas: doPersonas,
+      skills: doSkills,
+    });
   });
 
 program
