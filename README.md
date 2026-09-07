@@ -73,7 +73,7 @@ Slash-command names follow the folder/`name` — `/richard-draft-spell` vs `/mer
 - `.claude/agents/<slug>.md` (`claude-code.ts`)
 - `.opencode/agent/<slug>.md` (`opencode.ts`)
 - `.cursor/rules/<slug>.mdc` (`cursor.ts`)
-- `.agents/rules/<slug>.md` (`antigravity.ts`)
+- `.agents/agents/<slug>/agent.md` (`antigravity.ts`)
 - `.commandcode/agents/<slug>.md` (`command-code.ts`, with Taste compatibility baked in)
 
 Switching the cast and re-running `hocus cast` rewrites all of these to the new slugs.
@@ -172,7 +172,7 @@ The five tools don't share a config format, but they've converged on common capa
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown + YAML frontmatter, invoked via the Task tool or `@mention`. |
 | **OpenCode** | `.opencode/agent/<slug>.md` | Same shape, different frontmatter keys (`mode: subagent`). |
 | **Cursor** | `.cursor/rules/<slug>.mdc` | Cursor has no native subagent concept. Compiled as an "Agent Requested" rule instead — conditionally loaded by description, not directly invokable. |
-| **Antigravity** | `.agents/rules/<slug>.md` | Antigravity's subagents are spawned dynamically by its orchestrator at runtime. This output is advisory context for that orchestrator, not a callable agent. |
+| **Antigravity** | `.agents/agents/<slug>/agent.md` | Native custom subagents discovered under `.agents/agents/<slug>/agent.md` with YAML frontmatter (`name`, `description`, `tools`, `model`, `subagent: true`) and Markdown system instructions. |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + YAML frontmatter (`name`, `description`, `tools`, optional `model`); the body is the system prompt. Every compiled agent gets [Taste](https://commandcode.ai/docs/taste) compatibility instructions baked in, so Command Code's learned preferences are honored by the whole cast. |
 
 Skills don't need a translation layer — `SKILL.md` is already a shared open standard. One file at `.agents/skills/<name>/`, mirrored to `.claude/skills/<name>/` (and `.commandcode/skills/<name>/` for Command Code), covers all five tools.

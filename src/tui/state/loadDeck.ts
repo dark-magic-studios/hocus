@@ -22,7 +22,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
   "claude-code": path.join(".claude", "agents"),
   opencode: path.join(".opencode", OPENCODE_AGENT_DIR),
   cursor: path.join(".cursor", "rules"),
-  antigravity: path.join(".agents", "rules"),
+  antigravity: path.join(".agents", "agents"),
   "command-code": path.join(".commandcode", "agents"),
 };
 
@@ -221,9 +221,20 @@ async function loadWards(cwd: string): Promise<Ward[]> {
 
       if (detected && agentDir) {
         const fullDir = path.join(cwd, agentDir);
-        const count = (await readdir(fullDir).catch(() => [] as string[])).filter(
-          (f) => f.endsWith(".md") || f.endsWith(".mdc"),
-        ).length;
+        let count = 0;
+        if (compiler.id === "antigravity") {
+          const subdirs = await readdir(fullDir).catch(() => [] as string[]);
+          const counts = await Promise.all(
+            subdirs.map(async (subdir) =>
+              (await pathExists(path.join(fullDir, subdir, "agent.md"))) ? 1 : 0
+            )
+          );
+          count = counts.reduce<number>((a, b) => a + b, 0);
+        } else {
+          count = (await readdir(fullDir).catch(() => [] as string[])).filter(
+            (f) => f.endsWith(".md") || f.endsWith(".mdc"),
+          ).length;
+        }
         note = `${count} compiled`;
       }
 

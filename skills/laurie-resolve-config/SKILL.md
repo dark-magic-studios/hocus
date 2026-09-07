@@ -20,7 +20,7 @@ Reconciles configuration across all four AI tool targets. Detects when Cursor ha
    - Cursor: `.cursor/rules/*.mdc` (agents as rules), `.cursor/mcp.json` (MCPs)
    - Claude Code: `.claude/agents/*.md` (agents), `.claude/skills/*/SKILL.md` (skills), `.claude/settings.local.json` (MCPs + provider)
    - OpenCode: `.opencode/agent/*.md` or `opencode.jsonc` (agents + config)
-   - Antigravity: `.agents/rules/*.md` (agents as rules), `.agents/skills/*/SKILL.md` (skills), `.agents/*.json` (MCPs)
+   - Antigravity: `.agents/agents/*/agent.md` (agents), `.agents/skills/*/SKILL.md` (skills), `.agents/*.json` (MCPs)
    - Source of truth: `.hocus/personas/*.soul.md` (canonical agent definitions)
 
 2. **Compare agent lists**

@@ -1,8 +1,21 @@
 import fsExtra from "fs-extra";
 const { pathExists } = fsExtra;
 import path from "node:path";
+import matter from "gray-matter";
 import type { SoulFile } from "../schema/soul.js";
 import type { Compiler, CompiledFile, RepoContext } from "./types.js";
+
+const DEFAULT_TOOLS = ["read", "grep", "glob"];
+
+const ANTIGRAVITY_TOOL_MAP: Record<string, string[]> = {
+  read: ["view_file", "list_dir"],
+  grep: ["grep_search"],
+  glob: ["find_by_name"],
+  edit: ["replace_file_content", "multi_replace_file_content"],
+  write: ["write_to_file"],
+  bash: ["run_command", "manage_task"],
+  shell: ["run_command", "manage_task"],
+};
 
 export const antigravityCompiler: Compiler = {
   id: "antigravity",
@@ -16,30 +29,38 @@ export const antigravityCompiler: Compiler = {
   },
 
   compile(soul: SoulFile, _ctx: RepoContext): CompiledFile {
-    // Antigravity's orchestrator spawns subagents dynamically at runtime —
-    // there's no static, named-subagent file format to target the way
-    // Claude Code or OpenCode have. This file is plain markdown context
-    // under .agents/rules/, advisory rather than invokable: it gives the
-    // orchestrator the persona to reference when it decides how to
-    // decompose work, but doesn't make the persona directly callable.
-    const header = [
-      `<!--`,
-      `  Advisory persona context for Antigravity's orchestrator.`,
-      `  Antigravity does not support statically-defined, named subagents`,
-      `  as of this writing — its subagents are spawned dynamically at`,
-      `  runtime. This file is read as context, not invoked directly.`,
-      `-->`,
-      "",
-      `# ${soul.display_name} — ${soul.role}`,
-      "",
-      `Voice: ${soul.voice}`,
-      `Relevant for: ${soul.triggers.join(", ")}`,
-      "",
-    ].join("\n");
+    const rawTools = soul.tools ?? DEFAULT_TOOLS;
+    const tools = Array.from(
+      new Set(
+        rawTools.flatMap(
+          (tool) => ANTIGRAVITY_TOOL_MAP[tool.toLowerCase()] ?? [tool],
+        ),
+      ),
+    );
+
+    const frontmatter: Record<string, unknown> = {
+      name: soul.character,
+      description: `${soul.display_name} — ${soul.role}. ${firstSentence(soul.body)} Use for: ${soul.triggers.join(", ")}.`,
+      tools,
+      model: soul.model ?? "inherit",
+      subagent: true,
+    };
+
+    let body = soul.body.trim();
+    if (!body.startsWith("#")) {
+      body = `# Agent System Instructions\n\n${body}`;
+    }
+    const content = matter.stringify(`${body}\n`, frontmatter);
 
     return {
-      relPath: path.join(".agents", "rules", `${soul.character}.md`),
-      content: header + soul.body + "\n",
+      relPath: path.join(".agents", "agents", soul.character, "agent.md"),
+      content,
     };
   },
 };
+
+function firstSentence(body: string): string {
+  const stripped = body.replace(/^#.*$/m, "").trim();
+  const match = stripped.match(/[^.\n]+[.]/);
+  return (match ? match[0] : stripped.slice(0, 120)).trim();
+}
