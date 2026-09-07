@@ -44,6 +44,8 @@ export function getAgentTargetPath(
         return path.join(homeDir, ".cursor", "rules", `${soul.character}.mdc`);
       case "antigravity":
         return path.join(homeDir, ".gemini", "antigravity", "rules", `${soul.character}.md`);
+      case "command-code":
+        return path.join(homeDir, ".commandcode", "agents", `${soul.character}.md`);
     }
   } else {
     const compiler = getCompiler(provider);
@@ -72,11 +74,15 @@ export function getSkillTargetPath(
         return path.join(homeDir, ".cursor", "skills", skillName);
       case "antigravity":
         return path.join(homeDir, ".gemini", "antigravity", "skills", skillName);
+      case "command-code":
+        return path.join(homeDir, ".commandcode", "skills", skillName);
     }
   } else {
     switch (provider) {
       case "claude-code":
         return path.join(repoRoot, ".claude", "skills", skillName);
+      case "command-code":
+        return path.join(repoRoot, ".commandcode", "skills", skillName);
       case "opencode":
       case "cursor":
       case "antigravity":

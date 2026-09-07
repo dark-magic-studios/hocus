@@ -6,7 +6,9 @@ const { ensureDir, pathExists, readdir, readFile, writeFile, stat, copy, remove,
 import { log } from "../utils/log.js";
 import { BUNDLED_PERSONAS_DIR, BUNDLED_SKILLS_DIR, PROJECT_PERSONAS_DIR } from "../utils/paths.js";
 import { parseSoulFile } from "../schema/soul.js";
-import { installSkill } from "../utils/files.js";
+import { installSkill, writeCompiledFile } from "../utils/files.js";
+import { commandCodeCompiler } from "../compilers/command-code.js";
+import { confirmYesNo } from "../utils/prompt.js";
 import {
   type Cast,
   CAST_MAP,
@@ -28,6 +30,8 @@ export interface InitOptions {
   dryRun?: boolean;
   spawnFn?: typeof spawnSync;
   cast?: string;
+  /** true = force Command Code support, false = disable, undefined = ask/auto-detect. */
+  commandCode?: boolean;
 }
 
 export interface AgentSpawnSpec {
@@ -122,7 +126,7 @@ import { initializeAgentPlugin, installRtk, installGraphify } from "../utils/plu
 
 const FOUNDER_SOUL = "peter-gregory";
 
-function buildInitPrompt(cast: Cast): string {
+function buildInitPrompt(cast: Cast, commandCode = false): string {
   const base = `scan the repository for its dependencies and tech stack. then, before proceeding with any setup:
 
 1. **Confirm the tech stack with the user.** Present what you found: languages, frameworks, package manager, databases, cloud providers, CI/CD, and any notable tools or patterns. Ask the user to confirm or correct — do not proceed until they've validated it.
@@ -138,11 +142,63 @@ Only after the user has confirmed both the tech stack and product definition sho
 
   const tail = `Then create a team of 5-10 agents and skills and ask the user to accept/tweak each of them. each of them should have a soul based on a soul from this repository which will dictate the tone and output of the agent. also include specialized skills for this repository (for example a new-component or new-hook for frontend and new-controller or new-model for backend). the team must include an orchestrator agent whose job is to (1) maintain battle plans — structured markdown files that break down active goals into phases, tasks, and owners — and keep them up to date as work progresses, and (2) read the planner's task queue and delegate individual tasks to the appropriate specialized sub-agents by spawning them with the right context. create a hocus.md with the agents to be created, mark them as done once you've stopped working on them and after all are done build the initial dashboard.html for this the project. also set up the project's foundational documents: PRODUCT.md (product vision, goals, target users), AGENTS.md (registry of all created agents), MEMORY.md (persistent memory index), and TASKS.md (current work items). fill each with real content derived from the repository — not placeholder text. skills and MCP servers have been pre-installed in the agent plugin under .agents/plugins/ (following agent-plugins.org convention) and .agents/skills/ — reference them when creating agents, and create additional project-specific skills as needed. RTK and graphify have also been configured across providers.`;
 
-  return `${base}\n\n${naming}\n\n${tail}`;
+  const commandCodeSection = commandCode
+    ? `\n\nCommand Code support: this project uses Command Code (cmdc) as one of its agent harnesses. Native subagents are pre-compiled into .commandcode/agents/ and skills are mirrored into .commandcode/skills/ — maintain them when creating agents and skills (a Command Code subagent is a markdown file with name/description/tools frontmatter whose body is the system prompt). The user's learned preferences ("taste") live in .commandcode/taste/taste.md plus category packages in .commandcode/taste/<category>/taste.md (global ones in ~/.commandcode/taste/) — read them before starting work, treat them as requirements, never hand-edit them, and record any preference the user states using the taste tool. Document this in AGENTS.md so every agent stays taste-compatible.`
+    : "";
+
+  return `${base}\n\n${naming}\n\n${tail}${commandCodeSection}`;
 }
 
 // Keep legacy export for tests that may import INIT_PROMPT
 export const INIT_PROMPT = buildInitPrompt("wizard");
+
+/**
+ * Compile every persona into native Command Code subagents under
+ * .commandcode/agents/, each with taste-compatibility instructions baked in.
+ * Prefers project personas (init just wrote them); falls back to the bundled
+ * cast in dry-runs where nothing has been written yet.
+ */
+async function installCommandCodeAgents(
+  repoRoot: string,
+  cast: Cast,
+  dryRun: boolean,
+): Promise<number> {
+  const projectDir = PROJECT_PERSONAS_DIR(repoRoot);
+  let files = (await readdir(projectDir).catch(() => [] as string[])).filter((f) =>
+    f.endsWith(".soul.md"),
+  );
+  let sourceDir = projectDir;
+  if (!files.length) {
+    sourceDir = BUNDLED_PERSONAS_DIR;
+    files = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
+  }
+
+  const { default: matter } = await import("gray-matter");
+  let count = 0;
+  for (const file of files) {
+    const fullPath = path.join(sourceDir, file);
+    let soul: ReturnType<typeof parseSoulFile>;
+    if (sourceDir === BUNDLED_PERSONAS_DIR) {
+      // Bundled souls carry valley naming — transform to the active cast and
+      // parse inline (dry-run must not depend on files already on disk).
+      const raw = await readFile(fullPath, "utf8");
+      const transformed = transformSoulForCast(raw, cast);
+      const { data, content } = matter(transformed);
+      soul = { ...data, sourcePath: fullPath, body: content.trim() } as ReturnType<
+        typeof parseSoulFile
+      >;
+    } else {
+      soul = parseSoulFile(fullPath);
+    }
+    const compiled = commandCodeCompiler.compile(soul, {
+      repoRoot,
+      stack: { languages: [], frameworks: [] },
+    });
+    await writeCompiledFile(repoRoot, compiled, { dryRun, target: "Command Code" });
+    count++;
+  }
+  return count;
+}
 
 async function resolveCast(opts: { cast?: string; dryRun?: boolean }): Promise<Cast> {
   if (opts.cast) {
@@ -203,6 +259,7 @@ export async function runInit({
   dryRun = false,
   spawnFn = spawnSync,
   cast: castOpt,
+  commandCode: commandCodeOpt,
 }: InitOptions): Promise<void> {
   log.heading(`initializing hocus in ${repoRoot}`);
   if (dryRun) {
@@ -210,6 +267,27 @@ export async function runInit({
   }
 
   const cast = await resolveCast({ cast: castOpt, dryRun });
+
+  // Resolve Command Code (cmdc) support: an explicit flag wins; otherwise ask
+  // in a TTY (defaulting to what detection finds), else auto-detect.
+  let useCommandCode = commandCodeOpt;
+  if (useCommandCode === undefined) {
+    const detected = await commandCodeCompiler.detect(repoRoot);
+    if (process.stdin.isTTY) {
+      useCommandCode = await confirmYesNo(
+        `Do you use Command Code (cmdc)?${detected ? " (found an existing .commandcode/ directory)" : ""}`,
+        detected,
+      );
+    } else {
+      useCommandCode = detected;
+      if (detected) {
+        log.info("detected .commandcode/ — enabling Command Code support (pass --no-command-code to disable)");
+      }
+    }
+  }
+  if (useCommandCode) {
+    log.ok("Command Code support enabled — subagents -> .commandcode/agents/, skills -> .commandcode/skills/");
+  }
 
   // Determine existing cast from config (if any) before migration
   const configPath = path.join(repoRoot, ".hocus", "config.json");
@@ -367,9 +445,9 @@ export async function runInit({
     const targetSkillName = getSkillIdForCast(skill, cast);
     if (dryRun) {
       // Preview transformed skill name when it differs
-      await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName });
+      await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode });
     } else {
-      const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName });
+      const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode });
       // When cast transforms the skill id, patch SKILL.md frontmatter (name + description) in place.
       if (targetSkillName !== skill) {
         for (const target of tmpTargets) {
@@ -401,7 +479,14 @@ export async function runInit({
     }
     skillCount++;
   }
-  log.ok(`installed ${skillCount} skills to .agents/plugins/${pluginName}/skills/ and .agents/skills/ (${describeCast(cast)})`);
+  log.ok(`installed ${skillCount} skills to .agents/plugins/${pluginName}/skills/ and .agents/skills/${useCommandCode ? " and .commandcode/skills/" : ""} (${describeCast(cast)})`);
+
+  // 1f. Compile Command Code subagents (.commandcode/agents/) when enabled —
+  //     each one gets taste-compatibility instructions baked into its body.
+  if (useCommandCode) {
+    const compiledCount = await installCommandCodeAgents(repoRoot, cast, dryRun);
+    log.ok(`compiled ${compiledCount} Command Code subagents to .commandcode/agents/`);
+  }
 
   // 1d. Install RTK on all providers (Antigravity, Cursor, OpenCode)
   await installRtk(repoRoot, { dryRun, spawnFn });
@@ -413,7 +498,7 @@ export async function runInit({
 
   // 2. Parse the founder soul (transformed, cast-aware) and fire an interactive
   //    agent session with its body as the system prompt and the cast-aware init task.
-  const initPrompt = buildInitPrompt(cast);
+  const initPrompt = buildInitPrompt(cast, useCommandCode);
   let founder: ReturnType<typeof parseSoulFile>;
   if (dryRun) {
     const founderRaw = await readFile(path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`), "utf8");

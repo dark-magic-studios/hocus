@@ -13,6 +13,7 @@ export const ALL_PROVIDER_OPTIONS: { id: TargetId; label: string }[] = [
   { id: "opencode", label: "OpenCode (.opencode)" },
   { id: "cursor", label: "Cursor (.cursor)" },
   { id: "antigravity", label: "Antigravity (.agents)" },
+  { id: "command-code", label: "Command Code (.commandcode)" },
 ];
 
 export interface ProviderSelectPromptProps {
@@ -22,7 +23,7 @@ export interface ProviderSelectPromptProps {
 
 export const ProviderSelectPrompt: React.FC<ProviderSelectPromptProps> = ({
   onSelect,
-  initialSelected = ["claude-code", "opencode", "cursor", "antigravity"],
+  initialSelected = ["claude-code", "opencode", "cursor", "antigravity", "command-code"],
 }) => {
   const { exit } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);

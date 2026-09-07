@@ -22,7 +22,8 @@ test("empty repo loads a fully empty, error-free deck", async () => {
     // fixture cwd, so an "empty project" still surfaces the bundled roster.
     assert.ok(deck.skills.length > 0);
     assert.ok(deck.skills.every((s) => s.source === "bundled"));
-    assert.ok(deck.wards.length > 0, "wards should still enumerate all four compiler targets");
+    assert.ok(deck.wards.length > 0, "wards should still enumerate all five compiler targets");
+    assert.ok(deck.wards.some((w) => w.target === "command-code"));
     assert.ok(deck.wards.every((w) => w.detected === false));
   } finally {
     cleanupRepo(dir);

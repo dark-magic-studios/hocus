@@ -23,6 +23,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
   opencode: path.join(".opencode", OPENCODE_AGENT_DIR),
   cursor: path.join(".cursor", "rules"),
   antigravity: path.join(".agents", "rules"),
+  "command-code": path.join(".commandcode", "agents"),
 };
 
 import { getHocusStatus } from "../../utils/status.js";

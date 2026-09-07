@@ -2,6 +2,7 @@ import { claudeCodeCompiler } from "./claude-code.js";
 import { openCodeCompiler } from "./opencode.js";
 import { cursorCompiler } from "./cursor.js";
 import { antigravityCompiler } from "./antigravity.js";
+import { commandCodeCompiler } from "./command-code.js";
 import type { Compiler, TargetId } from "./types.js";
 
 export const ALL_COMPILERS: Compiler[] = [
@@ -9,6 +10,7 @@ export const ALL_COMPILERS: Compiler[] = [
   openCodeCompiler,
   cursorCompiler,
   antigravityCompiler,
+  commandCodeCompiler,
 ];
 
 export function getCompiler(id: TargetId): Compiler {

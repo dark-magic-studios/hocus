@@ -1,6 +1,6 @@
 import path from "node:path";
 import fsExtra from "fs-extra";
-const { pathExists, readJson, readFile } = fsExtra;
+const { pathExists, readJson, readFile, readdir } = fsExtra;
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
@@ -258,6 +258,71 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
     // Graphify skill installed in plugin and .agents/skills
     assert.equal(await pathExists(path.join(pluginSkillsDir, "graphify", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(dir, ".agents", "skills", "graphify", "SKILL.md")), true);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit with commandCode: true compiles Command Code subagents and mirrors skills", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    let spawnedArgs: string[] = [];
+    const mockSpawnFn = (_cmd: string, args: readonly string[] = []) => {
+      spawnedArgs = [...args];
+      return { error: undefined } as any;
+    };
+
+    await runInit({
+      repoRoot: dir,
+      agent: "opencode",
+      commandCode: true,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    // Subagents compiled to .commandcode/agents/ (tests default to the wizard cast)
+    const cmdcAgentsDir = path.join(dir, ".commandcode", "agents");
+    assert.equal(await pathExists(cmdcAgentsDir), true);
+    const files = (await readdir(cmdcAgentsDir)).filter((f) => f.endsWith(".md"));
+    assert.ok(files.length >= 5, `expected the compiled cast, found ${files.length}`);
+    assert.ok(files.includes("midas.md"));
+    assert.ok(files.includes("merlin.md"));
+
+    const agentContent = await readFile(path.join(cmdcAgentsDir, "midas.md"), "utf8");
+    assert.match(agentContent, /^---\n/);
+    assert.match(agentContent, /name: midas/);
+    // Midas declares tools: [read, write, bash] — mapped to Command Code tool ids
+    assert.match(agentContent, /read_file, write_file, shell_command/);
+    assert.match(agentContent, /Taste compatibility \(Command Code\)/);
+    assert.match(agentContent, /\.commandcode\/taste\/taste\.md/);
+
+    // Skills mirrored to .commandcode/skills/
+    assert.equal(
+      await pathExists(path.join(dir, ".commandcode", "skills", "atomic-commits", "SKILL.md")),
+      true,
+    );
+
+    // Founder prompt carries the Command Code section
+    const prompt = spawnedArgs.join(" ");
+    assert.match(prompt, /\.commandcode\/agents\//);
+    assert.match(prompt, /taste/);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit with commandCode: false writes no .commandcode directory", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+
+    await runInit({
+      repoRoot: dir,
+      agent: "opencode",
+      commandCode: false,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(await pathExists(path.join(dir, ".commandcode")), false);
   } finally {
     cleanupRepo(dir);
   }

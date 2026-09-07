@@ -44,6 +44,8 @@ program
     "reasoning effort (claude/agy: low|medium|high|…; opencode: --variant; cursor: model[effort=…])",
   )
   .option("--cast <cast>", "naming convention: valley (Silicon Valley) or wizard (Merlin, etc.) — prompts interactively if omitted")
+  .option("--command-code", "enable Command Code (cmdc) support: compile subagents to .commandcode/agents/, mirror skills, bake in taste instructions")
+  .option("--no-command-code", "disable Command Code support (skips the interactive question)")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(
     async (opts: {
@@ -57,6 +59,7 @@ program
       effort?: string;
       dryRun?: boolean;
       cast?: string;
+      commandCode?: boolean;
     }) => {
       let resolvedAgent = "claude";
       if (typeof opts.agent === "string" && opts.agent.trim()) {
@@ -78,6 +81,7 @@ program
         effort: opts.effort,
         dryRun: opts.dryRun,
         cast: opts.cast,
+        commandCode: opts.commandCode,
       });
     },
   );
@@ -86,7 +90,7 @@ program
   .command("cast")
   .description("scan the repo and (re)compile personas for every detected or specified target tool")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .option("-t, --targets <list>", "comma-separated targets: claude-code,opencode,cursor,antigravity")
+  .option("-t, --targets <list>", "comma-separated targets: claude-code,opencode,cursor,antigravity,command-code")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(async (opts: { name?: string; targets?: string; dryRun?: boolean }) => {
     const targets = opts.targets
@@ -107,7 +111,7 @@ program
   .option("-s, --skill <skill_id>", "ID or path of skill to add")
   .option("-l, --local", "install in project repository (default)")
   .option("-g, --global", "install globally in home directory")
-  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,opencode,cursor,antigravity")
+  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,opencode,cursor,antigravity,command-code")
   .option("--from <path>", "custom path for skill or persona file/folder")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(
@@ -166,6 +170,10 @@ program
   .action(async (opts: { dryRun?: boolean; force?: boolean; cast?: string; personas?: boolean; skills?: boolean }) => {
     const personas = opts.personas !== false;
     const skills = opts.skills !== false;
+    // --personas/--skills flags: if user passes one explicitly, the other defaults to false unless also passed
+    // Commander with --no- handles, but for --personas/--skills we need to infer intent
+    // If only one of them is true via explicit flag, the other should be false.
+    // We detect by checking if raw argv contains --personas or --skills
     const raw = process.argv.join(" ");
     const hasPersonasFlag = raw.includes("--personas");
     const hasSkillsFlag = raw.includes("--skills");

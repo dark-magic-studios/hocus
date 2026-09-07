@@ -27,12 +27,15 @@ export async function writeCompiledFile(
 
 export interface SkillInstallOptions extends FileWriteOptions {
   pluginName?: string;
+  /** Also mirror the skill into .commandcode/skills/ for Command Code. */
+  commandCode?: boolean;
 }
 
 /**
  * Skills conform to the Agent Skills open standard.
  * Installs to .agents/skills/ and optionally into the agent plugin's
  * skills/ directory under .agents/plugins/<pluginName>/skills/.
+ * When `commandCode` is set, also mirrors to .commandcode/skills/.
  * No Claude-specific directories (.claude/skills/) are created.
  */
 export async function installSkill(
@@ -48,6 +51,9 @@ export async function installSkill(
     targets.push(
       path.join(repoRoot, ".agents", "plugins", options.pluginName, "skills", skillName)
     );
+  }
+  if (options.commandCode) {
+    targets.push(path.join(repoRoot, ".commandcode", "skills", skillName));
   }
 
   for (const target of targets) {

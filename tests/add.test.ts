@@ -24,6 +24,7 @@ test("runAdd installs agent locally to all target providers", async () => {
     assert.equal(await pathExists(path.join(repoRoot, ".opencode", "agent", "dinesh.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".cursor", "rules", "dinesh.mdc")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".agents", "rules", "dinesh.md")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".commandcode", "agents", "dinesh.md")), true);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
   }
@@ -41,6 +42,7 @@ test("runAdd installs skill locally to target provider skill folders", async () 
 
     assert.equal(await pathExists(path.join(repoRoot, ".claude", "skills", "atomic-commits", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".agents", "skills", "atomic-commits", "SKILL.md")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".commandcode", "skills", "atomic-commits", "SKILL.md")), true);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
   }
@@ -64,12 +66,14 @@ test("runAdd supports both --agent and --skill simultaneously with --global flag
     assert.equal(await pathExists(path.join(fakeHome, ".config", "opencode", "agent", "gilfoyle.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".cursor", "rules", "gilfoyle.mdc")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".gemini", "antigravity", "rules", "gilfoyle.md")), true);
+    assert.equal(await pathExists(path.join(fakeHome, ".commandcode", "agents", "gilfoyle.md")), true);
 
     // Global skill folders
     assert.equal(await pathExists(path.join(fakeHome, ".claude", "skills", "atomic-commits", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".config", "opencode", "skills", "atomic-commits", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".cursor", "skills", "atomic-commits", "SKILL.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".gemini", "antigravity", "skills", "atomic-commits", "SKILL.md")), true);
+    assert.equal(await pathExists(path.join(fakeHome, ".commandcode", "skills", "atomic-commits", "SKILL.md")), true);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
     await rm(fakeHome, { recursive: true, force: true });
