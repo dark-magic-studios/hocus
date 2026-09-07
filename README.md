@@ -357,7 +357,7 @@ tests/                      # test suite
 ## Known Issues
 
 - **OpenCode directory convention**: Default compiler output is `.opencode/agent/`. Check live OpenCode configuration if `.opencode/agents/` is required by your build.
-- **Antigravity output**: Output is advisory context for Antigravity's orchestrator; Antigravity handles runtime subagent spawning dynamically.
+- **Antigravity subagents**: Subagents are compiled to `.agents/agents/<slug>/agent.md` with `subagent: true` YAML frontmatter for native discovery.
 
 ---
 

@@ -41,9 +41,9 @@ export const antigravityCompiler: Compiler = {
     const frontmatter: Record<string, unknown> = {
       name: soul.character,
       description: `${soul.display_name} — ${soul.role}. ${firstSentence(soul.body)} Use for: ${soul.triggers.join(", ")}.`,
-      tools,
+      subagent: soul.subagent !== undefined ? Boolean(soul.subagent) : true,
       model: soul.model ?? "inherit",
-      subagent: true,
+      tools,
     };
 
     let body = soul.body.trim();

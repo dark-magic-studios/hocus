@@ -25,6 +25,9 @@ test("runAdd installs agent locally to all target providers", async () => {
     assert.equal(await pathExists(path.join(repoRoot, ".cursor", "rules", "dinesh.mdc")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".agents", "agents", "dinesh", "agent.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".commandcode", "agents", "dinesh.md")), true);
+
+    const agyContent = await readFile(path.join(repoRoot, ".agents", "agents", "dinesh", "agent.md"), "utf8");
+    assert.match(agyContent, /subagent:\s*true/);
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
   }
@@ -67,6 +70,9 @@ test("runAdd supports both --agent and --skill simultaneously with --global flag
     assert.equal(await pathExists(path.join(fakeHome, ".cursor", "rules", "gilfoyle.mdc")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".gemini", "config", "agents", "gilfoyle", "agent.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".commandcode", "agents", "gilfoyle.md")), true);
+
+    const globalAgy = await readFile(path.join(fakeHome, ".gemini", "config", "agents", "gilfoyle", "agent.md"), "utf8");
+    assert.match(globalAgy, /subagent:\s*true/);
 
     // Global skill folders
     assert.equal(await pathExists(path.join(fakeHome, ".claude", "skills", "atomic-commits", "SKILL.md")), true);

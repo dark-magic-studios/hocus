@@ -32,6 +32,8 @@ export const SoulFrontmatterSchema = z.object({
   aliases: SoulAliasesSchema.optional(),
   tools: z.array(z.string()).optional(),
   model: z.string().optional(),
+  /** Whether this persona compiles as a subagent (default: true) */
+  subagent: z.boolean().optional().default(true),
   /** Slug of the persona that spawned this one, e.g. a coven familiar. */
   parent: z.string().min(1).optional(),
   /** Rank in the command deck's coven view; inferred from `parent` when omitted. */
