@@ -67,4 +67,12 @@ export const BACKENDS: Backend[] = [
     command: 'agy',
     args: (prompt) => ['-p', prompt],
   },
+  {
+    id: 'copilot-gpt-5.4',
+    label: 'copilot + GPT-5.4',
+    provider: 'copilot',
+    model: 'GPT-5.4',
+    command: 'copilot',
+    args: (prompt) => ['-p', prompt, '-s'],
+  },
 ];

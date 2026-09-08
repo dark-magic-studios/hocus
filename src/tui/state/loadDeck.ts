@@ -25,6 +25,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
   cursor: path.join(".cursor", "rules"),
   antigravity: path.join(".agents", "agents"),
   "command-code": path.join(".commandcode", "agents"),
+  copilot: path.join(".github", "agents"),
 };
 
 import { getHocusStatus } from "../../utils/status.js";
@@ -159,6 +160,16 @@ async function loadSkills(cwd: string, warnings: string[]): Promise<Skill[]> {
   const legacyClaudeSkills = path.join(cwd, ".claude", "skills");
   if (await pathExists(legacyClaudeSkills)) {
     await collectSkills(legacyClaudeSkills, "local", skills, seen, warnings, cwd);
+  }
+
+  const commandCodeSkills = path.join(cwd, ".commandcode", "skills");
+  if (await pathExists(commandCodeSkills)) {
+    await collectSkills(commandCodeSkills, "local", skills, seen, warnings, cwd);
+  }
+
+  const githubSkills = path.join(cwd, ".github", "skills");
+  if (await pathExists(githubSkills)) {
+    await collectSkills(githubSkills, "local", skills, seen, warnings, cwd);
   }
 
   await collectSkills(BUNDLED_SKILLS_DIR, "bundled", skills, seen, warnings, cwd);

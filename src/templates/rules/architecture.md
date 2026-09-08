@@ -5,7 +5,7 @@ description: Core architectural boundaries, single-source-of-truth persona model
 
 # Hocus Project Architecture & System Boundaries
 
-Hocus is a multi-agent harness generator. It compiles a single persona specification (`SOUL.md`) into native agent and rule formats across five AI coding environments: Claude Code, OpenCode, Cursor, Antigravity, and Command Code.
+Hocus is a multi-agent harness generator. It compiles a single persona specification (`SOUL.md`) into native agent and rule formats across six AI coding environments: Claude Code, OpenCode, Cursor, Antigravity, Command Code, and GitHub Copilot.
 
 ## 1. Single Source of Truth
 
@@ -28,12 +28,14 @@ Each compiler in `src/compilers/` transforms a `SoulFile` into a target-native f
 | **Codex** | `.codex/agents/<slug>.toml` | TOML custom-agent config (`name`, `description`, `developer_instructions`, optional `model`). Codex discovers repo skills from `.agents/skills/`. |
 | **Cursor** | `.cursor/rules/<slug>.mdc` | MDC format (`alwaysApply: false`, agent requested rule loaded by task description). |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + Taste compatibility section baked into prompt. |
+| **GitHub Copilot** | `.github/agents/<slug>.agent.md` | Markdown with YAML frontmatter (`name`, `description`, `tools`, optional `model`). Skills live in `.github/skills/`. |
 
 ## 3. Directory Responsibilities
 
 - `.agents/agents/<name>/agent.md`: Native subagent definitions for Antigravity.
 - `.agents/rules/*.md`: Workspace rules, coding guidelines, and safety constraints for Antigravity (NEVER place subagent personas here).
 - `.agents/skills/<name>/SKILL.md`: Open-standard skills shared across harnesses.
+- `.github/agents/<slug>.agent.md`: Native custom agents for GitHub Copilot.
 - `_spells/*.md`: Active feature battle plans drafted by planners and executed by orchestrators.
 - `src/tui/`: Interactive command deck built with Ink and React 19.
 - `dashboard.html`: Live visualization of project status, agents, spells, skills, and target readiness.

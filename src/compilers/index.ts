@@ -4,6 +4,7 @@ import { cursorCompiler } from "./cursor.js";
 import { antigravityCompiler } from "./antigravity.js";
 import { commandCodeCompiler } from "./command-code.js";
 import { codexCompiler } from "./codex.js";
+import { copilotCompiler } from "./copilot.js";
 import type { Compiler, TargetId } from "./types.js";
 
 export const ALL_COMPILERS: Compiler[] = [
@@ -13,6 +14,7 @@ export const ALL_COMPILERS: Compiler[] = [
   antigravityCompiler,
   commandCodeCompiler,
   codexCompiler,
+  copilotCompiler,
 ];
 
 export function getCompiler(id: TargetId): Compiler {
@@ -22,3 +24,4 @@ export function getCompiler(id: TargetId): Compiler {
 }
 
 export type { Compiler, TargetId, CompiledFile, RepoContext, DetectedStack } from "./types.js";
+export { copilotCompiler } from "./copilot.js";

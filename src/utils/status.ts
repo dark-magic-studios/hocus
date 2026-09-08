@@ -28,6 +28,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
   cursor: path.join(".cursor", "rules"),
   antigravity: path.join(".agents", "agents"),
   "command-code": path.join(".commandcode", "agents"),
+  copilot: path.join(".github", "agents"),
 };
 
 export async function getHocusStatus(repoRoot: string): Promise<HocusStatus> {
@@ -41,11 +42,13 @@ export async function getHocusStatus(repoRoot: string): Promise<HocusStatus> {
   const agentCount = personaFiles.length;
   const installed = personasExist && agentCount > 0;
 
-  // Count skills installed in .agents/skills, .agents/plugins/*/skills, and legacy .claude/skills
+  // Count skills installed in .agents/skills, .agents/plugins/*/skills, .github/skills, .commandcode/skills, and legacy .claude/skills
   const skillNames = new Set<string>();
   const agentsSkillsDir = path.join(repoRoot, ".agents", "skills");
   const pluginsDir = path.join(repoRoot, ".agents", "plugins");
   const claudeSkillsDir = path.join(repoRoot, ".claude", "skills");
+  const githubSkillsDir = path.join(repoRoot, ".github", "skills");
+  const commandcodeSkillsDir = path.join(repoRoot, ".commandcode", "skills");
 
   const agentsSkills = (await readdir(agentsSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
   for (const s of agentsSkills) skillNames.add(s);
@@ -63,6 +66,12 @@ export async function getHocusStatus(repoRoot: string): Promise<HocusStatus> {
 
   const claudeSkills = (await readdir(claudeSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
   for (const s of claudeSkills) skillNames.add(s);
+
+  const githubSkills = (await readdir(githubSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+  for (const s of githubSkills) skillNames.add(s);
+
+  const commandcodeSkills = (await readdir(commandcodeSkillsDir).catch(() => [] as string[])).filter((f) => !f.startsWith("."));
+  for (const s of commandcodeSkills) skillNames.add(s);
 
   const skillCount = skillNames.size;
 

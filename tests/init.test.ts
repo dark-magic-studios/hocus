@@ -3,6 +3,7 @@ import fsExtra from "fs-extra";
 const { pathExists, readJson, readFile, readdir } = fsExtra;
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import matter from "gray-matter";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
 import { getAgentSpawnSpec, runInit } from "../src/commands/init.js";
 
@@ -44,6 +45,17 @@ test("getAgentSpawnSpec resolves correct specs for known and custom agents", () 
 
   const cursorSpec = getAgentSpawnSpec("cursor", sys, user);
   assert.equal(cursorSpec.command, "agent");
+
+  // copilot
+  const copilotSpec = getAgentSpawnSpec("copilot", sys, user);
+  assert.equal(copilotSpec.command, "copilot");
+  assert.equal(copilotSpec.args[0], "-i");
+  assert.match(copilotSpec.args[1]!, /sys prompt/);
+
+  const ghCopilotSpec = getAgentSpawnSpec("github-copilot", sys, user);
+  assert.equal(ghCopilotSpec.command, "copilot");
+  assert.equal(ghCopilotSpec.args[0], "-i");
+  assert.match(ghCopilotSpec.args[1]!, /sys prompt/);
 
   // custom agent runner
   const customSpec = getAgentSpawnSpec("my-custom-agent", sys, user);
@@ -116,6 +128,19 @@ test("getAgentSpawnSpec forwards model and effort per runner", () => {
     effort: "high",
   });
   assert.deepEqual(codex.args, ["--model", "gpt-5.6", "--config", 'model_reasoning_effort="high"', user]);
+
+  const copilot = getAgentSpawnSpec("copilot", sys, user, {
+    model: "gpt-5.4",
+    effort: "high",
+  });
+  assert.deepEqual(copilot.args.slice(0, 4), [
+    "--model",
+    "gpt-5.4",
+    "--effort",
+    "high",
+  ]);
+  assert.equal(copilot.args[4], "-i");
+  assert.match(copilot.args[5]!, /sys/);
 
   assert.throws(
     () => getAgentSpawnSpec("agent", sys, user, { effort: "high" }),
@@ -390,3 +415,71 @@ test("runInit with rules: false skips installing template rules", async () => {
     cleanupRepo(dir);
   }
 });
+
+test("runInit with copilot: true compiles Copilot custom agents and mirrors skills", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    let spawnedArgs: string[] = [];
+    let spawnedCmd = "";
+    const mockSpawnFn = (cmd: string, args: readonly string[] = []) => {
+      spawnedCmd = cmd;
+      spawnedArgs = [...args];
+      return { error: undefined } as any;
+    };
+
+    await runInit({
+      repoRoot: dir,
+      agent: "copilot",
+      copilot: true,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(spawnedCmd, "copilot");
+    assert.equal(spawnedArgs[0], "-i");
+
+    // Subagents compiled to .github/agents/
+    const copilotAgentsDir = path.join(dir, ".github", "agents");
+    assert.equal(await pathExists(copilotAgentsDir), true);
+    const files = (await readdir(copilotAgentsDir)).filter((f) => f.endsWith(".agent.md"));
+    assert.ok(files.length >= 5, `expected compiled agents, found ${files.length}`);
+    assert.ok(files.includes("midas.agent.md"));
+    assert.ok(files.includes("merlin.agent.md"));
+
+    const agentContent = await readFile(path.join(copilotAgentsDir, "midas.agent.md"), "utf8");
+    const { data: midasData } = matter(agentContent);
+    assert.equal(midasData.name, "midas");
+    // Tools mapped to Copilot aliases: read, edit, execute
+    assert.deepEqual(midasData.tools, ["read", "edit", "execute"]);
+
+    // Skills mirrored to .github/skills/
+    assert.equal(
+      await pathExists(path.join(dir, ".github", "skills", "atomic-commits", "SKILL.md")),
+      true,
+    );
+
+    // Founder prompt carries the GitHub Copilot section
+    const prompt = spawnedArgs.join(" ");
+    assert.match(prompt, /\.github\/agents\//);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit with copilot: false writes no .github directory", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+
+    await runInit({
+      repoRoot: dir,
+      agent: "claude",
+      copilot: false,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(await pathExists(path.join(dir, ".github")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+

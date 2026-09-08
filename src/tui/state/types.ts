@@ -39,7 +39,7 @@ export interface Skill {
 }
 
 export interface Ward {
-  target: 'claude-code' | 'codex' | 'opencode' | 'cursor' | 'antigravity' | 'command-code';
+  target: 'claude-code' | 'codex' | 'opencode' | 'cursor' | 'antigravity' | 'command-code' | 'copilot';
   detected: boolean;
   agentDir?: string;
   note?: string;

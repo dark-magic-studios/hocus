@@ -15,6 +15,7 @@ import { parseSoulFile } from "../schema/soul.js";
 import { installSkill, writeCompiledFile } from "../utils/files.js";
 import { commandCodeCompiler } from "../compilers/command-code.js";
 import { codexCompiler } from "../compilers/codex.js";
+import { copilotCompiler } from "../compilers/copilot.js";
 import { confirmYesNo } from "../utils/prompt.js";
 import {
   type Cast,
@@ -39,6 +40,8 @@ export interface InitOptions {
   cast?: string;
   /** true = force Command Code support, false = disable, undefined = ask/auto-detect. */
   commandCode?: boolean;
+  /** true = force GitHub Copilot support, false = disable, undefined = ask/auto-detect. */
+  copilot?: boolean;
   /** whether to install template rules into .agents/rules/ (default: true) */
   rules?: boolean;
 }
@@ -131,6 +134,14 @@ export function getAgentSpawnSpec(
     return { command: "codex", args };
   }
 
+  if (normalized === "copilot" || normalized === "github-copilot") {
+    const args: string[] = [];
+    if (model) args.push("--model", model);
+    if (effort) args.push("--effort", effort);
+    args.push("-i", prompt);
+    return { command: "copilot", args };
+  }
+
   const args: string[] = [];
   if (model) args.push("--model", model);
   if (effort) args.push("--effort", effort);
@@ -145,7 +156,7 @@ import { initializeAgentPlugin, installRtk, installGraphify } from "../utils/plu
 
 const FOUNDER_SOUL = "peter-gregory";
 
-function buildInitPrompt(cast: Cast, commandCode = false): string {
+function buildInitPrompt(cast: Cast, commandCode = false, copilot = false): string {
   const base = `scan the repository for its dependencies and tech stack. then, before proceeding with any setup:
 
 1. **Confirm the tech stack with the user.** Present what you found: languages, frameworks, package manager, databases, cloud providers, CI/CD, and any notable tools or patterns. Ask the user to confirm or correct — do not proceed until they've validated it.
@@ -165,7 +176,11 @@ Only after the user has confirmed both the tech stack and product definition sho
     ? `\n\nCommand Code support: this project uses Command Code (cmdc) as one of its agent harnesses. Native subagents are pre-compiled into .commandcode/agents/ and skills are mirrored into .commandcode/skills/ — maintain them when creating agents and skills (a Command Code subagent is a markdown file with name/description/tools frontmatter whose body is the system prompt). The user's learned preferences ("taste") live in .commandcode/taste/taste.md plus category packages in .commandcode/taste/<category>/taste.md (global ones in ~/.commandcode/taste/) — read them before starting work, treat them as requirements, never hand-edit them, and record any preference the user states using the taste tool. Document this in AGENTS.md so every agent stays taste-compatible.`
     : "";
 
-  return `${base}\n\n${naming}\n\n${tail}${commandCodeSection}`;
+  const copilotSection = copilot
+    ? `\n\nGitHub Copilot support: this project uses GitHub Copilot as one of its agent harnesses. Native custom agents are pre-compiled into .github/agents/ (<character>.agent.md) and skills are mirrored into .github/skills/ — maintain them when creating agents and skills.`
+    : "";
+
+  return `${base}\n\n${naming}\n\n${tail}${commandCodeSection}${copilotSection}`;
 }
 
 // Keep legacy export for tests that may import INIT_PROMPT
@@ -253,6 +268,47 @@ async function installCodexAgents(
     }), { dryRun, target: "Codex" });
   }
   return files.length;
+}
+
+/** Compile the cast into GitHub Copilot's project-scoped custom-agent .agent.md files. */
+async function installCopilotAgents(
+  repoRoot: string,
+  cast: Cast,
+  dryRun: boolean,
+): Promise<number> {
+  const projectDir = PROJECT_PERSONAS_DIR(repoRoot);
+  let files = (await readdir(projectDir).catch(() => [] as string[])).filter((f) =>
+    f.endsWith(".soul.md"),
+  );
+  let sourceDir = projectDir;
+  if (!files.length) {
+    sourceDir = BUNDLED_PERSONAS_DIR;
+    files = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
+  }
+
+  const { default: matter } = await import("gray-matter");
+  let count = 0;
+  for (const file of files) {
+    const fullPath = path.join(sourceDir, file);
+    let soul: ReturnType<typeof parseSoulFile>;
+    if (sourceDir === BUNDLED_PERSONAS_DIR) {
+      const raw = await readFile(fullPath, "utf8");
+      const transformed = transformSoulForCast(raw, cast);
+      const { data, content } = matter(transformed);
+      soul = { ...data, sourcePath: fullPath, body: content.trim() } as ReturnType<
+        typeof parseSoulFile
+      >;
+    } else {
+      soul = parseSoulFile(fullPath);
+    }
+    const compiled = copilotCompiler.compile(soul, {
+      repoRoot,
+      stack: { languages: [], frameworks: [] },
+    });
+    await writeCompiledFile(repoRoot, compiled, { dryRun, target: "GitHub Copilot" });
+    count++;
+  }
+  return count;
 }
 
 /**
@@ -344,6 +400,7 @@ export async function runInit({
   spawnFn = spawnSync,
   cast: castOpt,
   commandCode: commandCodeOpt,
+  copilot: copilotOpt,
   rules = true,
 }: InitOptions): Promise<void> {
   log.heading(`initializing hocus in ${repoRoot}`);
@@ -372,6 +429,21 @@ export async function runInit({
   }
   if (useCommandCode) {
     log.ok("Command Code support enabled — subagents -> .commandcode/agents/, skills -> .commandcode/skills/");
+  }
+
+  // Resolve GitHub Copilot support: an explicit flag wins; otherwise auto-detect or infer from agent runner.
+  let useCopilot = copilotOpt;
+  if (useCopilot === undefined) {
+    if (agent === "copilot" || agent === "github-copilot") {
+      useCopilot = true;
+    } else if (dryRun) {
+      useCopilot = false;
+    } else {
+      useCopilot = await copilotCompiler.detect(repoRoot);
+    }
+  }
+  if (useCopilot) {
+    log.ok("GitHub Copilot support enabled — subagents -> .github/agents/, skills -> .github/skills/");
   }
 
   // Determine existing cast from config (if any) before migration
@@ -495,6 +567,8 @@ export async function runInit({
       const stalePaths = [
         path.join(repoRoot, ".agents", "skills", staleName),
         path.join(repoRoot, ".agents", "plugins", pluginName, "skills", staleName),
+        ...(useCommandCode ? [path.join(repoRoot, ".commandcode", "skills", staleName)] : []),
+        ...(useCopilot ? [path.join(repoRoot, ".github", "skills", staleName)] : []),
       ];
       for (const p of stalePaths) {
         if (await pathExists(p)) {
@@ -508,10 +582,13 @@ export async function runInit({
       const wizardName = getSkillIdForCast(valleyId, "wizard");
       if (valleyId === wizardName) continue;
       const staleName = cast === "valley" ? wizardName : valleyId;
-      for (const base of [
+      const bases = [
         path.join(".agents", "skills", staleName),
         path.join(".agents", "plugins", pluginName, "skills", staleName),
-      ]) {
+        ...(useCommandCode ? [path.join(".commandcode", "skills", staleName)] : []),
+        ...(useCopilot ? [path.join(".github", "skills", staleName)] : []),
+      ];
+      for (const base of bases) {
         log.planned(base, `remove stale (${describeCast(cast)})`);
       }
     }
@@ -530,9 +607,9 @@ export async function runInit({
     const targetSkillName = getSkillIdForCast(skill, cast);
     if (dryRun) {
       // Preview transformed skill name when it differs
-      await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode });
+      await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
     } else {
-      const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode });
+      const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
       // When cast transforms the skill id, patch SKILL.md frontmatter (name + description) in place.
       if (targetSkillName !== skill) {
         for (const target of tmpTargets) {
@@ -564,7 +641,13 @@ export async function runInit({
     }
     skillCount++;
   }
-  log.ok(`installed ${skillCount} skills to .agents/plugins/${pluginName}/skills/ and .agents/skills/${useCommandCode ? " and .commandcode/skills/" : ""} (${describeCast(cast)})`);
+  const skillTargetsMsg = [
+    `.agents/plugins/${pluginName}/skills/`,
+    `.agents/skills/`,
+    useCommandCode ? `.commandcode/skills/` : "",
+    useCopilot ? `.github/skills/` : "",
+  ].filter(Boolean).join(" and ");
+  log.ok(`installed ${skillCount} skills to ${skillTargetsMsg} (${describeCast(cast)})`);
 
   // Codex discovers repository skills from .agents/skills/, so the shared
   // installation above needs no mirror. Its custom subagents are TOML files.
@@ -576,6 +659,12 @@ export async function runInit({
   if (useCommandCode) {
     const compiledCount = await installCommandCodeAgents(repoRoot, cast, dryRun);
     log.ok(`compiled ${compiledCount} Command Code subagents to .commandcode/agents/`);
+  }
+
+  // 1f-ii. Compile GitHub Copilot custom agents (.github/agents/) when enabled.
+  if (useCopilot) {
+    const copilotCount = await installCopilotAgents(repoRoot, cast, dryRun);
+    log.ok(`compiled ${copilotCount} Copilot subagents to .github/agents/`);
   }
 
   // 1d. Install RTK on all providers (Antigravity, Cursor, OpenCode)
@@ -594,7 +683,7 @@ export async function runInit({
 
   // 2. Parse the founder soul (transformed, cast-aware) and fire an interactive
   //    agent session with its body as the system prompt and the cast-aware init task.
-  const initPrompt = buildInitPrompt(cast, useCommandCode);
+  const initPrompt = buildInitPrompt(cast, useCommandCode, useCopilot);
   let founder: ReturnType<typeof parseSoulFile>;
   if (dryRun) {
     const founderRaw = await readFile(path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`), "utf8");

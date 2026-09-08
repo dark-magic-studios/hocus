@@ -4,7 +4,7 @@
   <img src="readme-header.svg" width="400" alt="Hocus" />
 </p>
 
-A multi-agent harness generator and interactive command deck for AI coding tools. Write one persona once — a `SOUL.md` file — and compile it into native agent and rule formats for **Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, and **Command Code**.
+A multi-agent harness generator and interactive command deck for AI coding tools. Write one persona once — a `SOUL.md` file — and compile it into native agent and rule formats for **Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, **Command Code**, and **GitHub Copilot**.
 
 The cast that ships with Hocus borrows wizard names from history and myth — Midas plans and founds, Roger Bacon orchestrates, Merlin plans, Flamel implements, Zoroaster reviews, and so on. Each persona also keeps aliases for the original *Silicon Valley* cast and an earlier occultist recast — toggle them on the dashboard with `?cast=valley` or `?cast=occult`. Rename or replace any persona — the harness doesn't care what an agent is called, only that it has a role, a voice, and a body of instructions.
 
@@ -60,7 +60,7 @@ In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <Wi
 
 `getSkillIdForCast` (`src/utils/cast.ts:85`) and `transformSkillFrontmatterForCast` (`src/utils/cast.ts:115`) handle this:
 
-- Folder name under `.agents/skills/`, `.agents/plugins/<plugin>/skills/`, `.claude/skills/`, and `.commandcode/skills/` (when Command Code is enabled) uses the cast-appropriate prefix (`hocus init` copies with `installSkill` after transforming).
+- Folder name under `.agents/skills/`, `.agents/plugins/<plugin>/skills/`, `.claude/skills/`, `.commandcode/skills/`, and `.github/skills/` (when enabled) uses the cast-appropriate prefix (`hocus init` copies with `installSkill` after transforming).
 - Frontmatter `name` is rewritten to the cast-appropriate skill ID.
 - Frontmatter `description` leading `<Name> — …` is rewritten to the cast's display name (e.g. `Gilfoyle — review PRs` → `Zoroaster — review PRs`).
 
@@ -76,6 +76,7 @@ Slash-command names follow the folder/`name` — `/richard-draft-spell` vs `/mer
 - `.cursor/rules/<slug>.mdc` (`cursor.ts`)
 - `.agents/agents/<slug>/agent.md` (`antigravity.ts`)
 - `.commandcode/agents/<slug>.md` (`command-code.ts`, with Taste compatibility baked in)
+- `.github/agents/<slug>.agent.md` (`copilot.ts`)
 
 Switching the cast and re-running `hocus cast` rewrites all of these to the new slugs.
 
@@ -210,9 +211,12 @@ Run once in the repo where you want the harness. Writes main entrypoint files (`
 
 If you use Command Code, `hocus init` asks about it (or respects `--command-code` / `--no-command-code`); when enabled it also compiles the cast into `.commandcode/agents/`, mirrors skills into `.commandcode/skills/`, and bakes [Taste](https://commandcode.ai/docs/taste) compatibility instructions into every compiled agent. Outside a TTY it auto-detects an existing `.commandcode/` directory instead of asking.
 
+If you use GitHub Copilot, `hocus init` respects `--copilot` / `--no-copilot` (or auto-detects `.github/`); when enabled it compiles the cast into `.github/agents/<character>.agent.md` and mirrors skills into `.github/skills/`. Passing `--copilot` also sets GitHub Copilot as the agent runner to execute the interactive initialization prompt.
+
 ```bash
 hocus init --name my-project
 hocus init --claude             # use claude as agent runner (default)
+hocus init --copilot            # spawn GitHub Copilot as agent runner
 hocus init --opencode           # spawn opencode instead of claude
 hocus init --codex              # spawn Codex instead of claude
 hocus init --agy                # spawn agy (antigravity)
@@ -220,12 +224,15 @@ hocus init --antigravity        # alias for --agy
 hocus init --agent              # spawn cursor `agent` CLI
 hocus init --agent custom-cli   # spawn a custom agent CLI
 hocus init --claude --model opus --effort high
+hocus init --copilot --model gpt-5.4 --effort high
 hocus init --agent --model sonnet-4 --effort high
 hocus init --opencode --model anthropic/claude-sonnet-4 --effort high
 hocus init --cast valley        # Silicon Valley names (Richard, Gilfoyle…) — see Choosing a cast
 hocus init --cast wizard        # wizard names (Merlin, Zoroaster…) — default in CI/dry-run
 hocus init --command-code       # force Command Code (cmdc) support on
 hocus init --no-command-code    # force Command Code support off
+hocus init --copilot            # force GitHub Copilot support on
+hocus init --no-copilot         # force GitHub Copilot support off
 hocus init --dry-run            # preview files without writing to disk
 ```
 
@@ -237,7 +244,7 @@ Scans the current repo for language and framework signals, tailors each persona 
 
 ```bash
 hocus cast
-hocus cast --targets claude-code,codex,opencode,cursor,antigravity,command-code
+hocus cast --targets claude-code,codex,opencode,cursor,antigravity,command-code,copilot
 hocus cast --dry-run   # preview compiled outputs and target compilers
 ```
 
@@ -245,7 +252,7 @@ hocus cast --dry-run   # preview compiled outputs and target compilers
 
 Adds agents and/or skills to selected AI tool provider(s) either locally in the current repository or globally in your home directory.
 
-When run interactively without `--providers`, `hocus add` presents an interactive checkmark prompt to select target providers (**Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, **Command Code**).
+When run interactively without `--providers`, `hocus add` presents an interactive checkmark prompt to select target providers (**Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, **Command Code**, **GitHub Copilot**).
 
 ```bash
 # Add agent and/or skill locally to project (default scope)
@@ -257,7 +264,7 @@ hocus add --agent dinesh --global
 hocus add -a dinesh -s atomic-commits -g
 
 # Specify target providers directly (bypass checkmark prompt)
-hocus add -a dinesh -s atomic-commits -g -p claude-code,codex,cursor,command-code
+hocus add -a dinesh -s atomic-commits -g -p claude-code,codex,cursor,command-code,copilot
 
 # Install custom skill or persona from a local path
 hocus add -s my-custom-skill --from ./path/to/skill

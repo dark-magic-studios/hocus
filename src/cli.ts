@@ -33,12 +33,14 @@ program
   .command("init")
   .description("bootstrap the persona cast, main files, and agent harness into the current repo")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .option("-a, --agent [agent]", "agent runner to spawn (e.g. claude, codex, opencode, agy, agent; default: claude)")
+  .option("-a, --agent [agent]", "agent runner to spawn (e.g. claude, codex, opencode, agy, agent, copilot; default: claude)")
   .option("--claude", "use claude as the agent runner")
   .option("--codex", "use Codex as the agent runner")
   .option("--opencode", "use opencode as the agent runner")
   .option("--agy", "use agy (antigravity) as the agent runner")
   .option("--antigravity", "use agy (antigravity) as the agent runner")
+  .option("--copilot", "use GitHub Copilot as the agent runner")
+  .option("--no-copilot", "disable GitHub Copilot support (skips the interactive question)")
   .option("-m, --model <model>", "model for the spawned agent runner")
   .option(
     "-e, --effort <level>",
@@ -58,6 +60,7 @@ program
       opencode?: boolean;
       agy?: boolean;
       antigravity?: boolean;
+      copilot?: boolean;
       model?: string;
       effort?: string;
       dryRun?: boolean;
@@ -76,6 +79,8 @@ program
         resolvedAgent = "opencode";
       } else if (opts.agy || opts.antigravity) {
         resolvedAgent = "agy";
+      } else if (opts.copilot) {
+        resolvedAgent = "copilot";
       } else if (opts.claude) {
         resolvedAgent = "claude";
       }
@@ -88,6 +93,7 @@ program
         dryRun: opts.dryRun,
         cast: opts.cast,
         commandCode: opts.commandCode,
+        copilot: opts.copilot,
         rules: opts.rules,
       });
     },
@@ -97,7 +103,7 @@ program
   .command("cast")
   .description("scan the repo and (re)compile personas for every detected or specified target tool")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
-  .option("-t, --targets <list>", "comma-separated targets: claude-code,codex,opencode,cursor,antigravity,command-code")
+  .option("-t, --targets <list>", "comma-separated targets: claude-code,codex,opencode,cursor,antigravity,command-code,copilot")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(async (opts: { name?: string; targets?: string; dryRun?: boolean }) => {
     const targets = opts.targets
@@ -119,7 +125,7 @@ program
   .option("-r, --rule <rule_id>", "ID or path of rule to add (or 'all' for all template rules)")
   .option("-l, --local", "install in project repository (default)")
   .option("-g, --global", "install globally in home directory")
-  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,codex,opencode,cursor,antigravity,command-code")
+  .option("-p, --providers <providers>", "comma-separated list of providers: claude-code,codex,opencode,cursor,antigravity,command-code,copilot")
   .option("--from <path>", "custom path for skill or persona file/folder")
   .option("--dry-run", "print planned file writes without touching the filesystem")
   .action(

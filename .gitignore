@@ -3,3 +3,6 @@ dist/
 .hocus/
 *.log
 .DS_Store
+.code-review-graph
+graphify-out
+.commandcode/

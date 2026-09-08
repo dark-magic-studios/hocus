@@ -56,7 +56,7 @@ export async function runCast({ repoRoot, projectName, targets, dryRun = false }
   if (!compilers.length) {
     log.warn(
       "no target tools detected and none specified — nothing compiled. " +
-        "Pass --targets claude-code,codex,opencode,cursor,antigravity,command-code to force it."
+        "Pass --targets claude-code,codex,opencode,cursor,antigravity,command-code,copilot to force it."
     );
   }
 

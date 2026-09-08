@@ -29,6 +29,8 @@ export interface SkillInstallOptions extends FileWriteOptions {
   pluginName?: string;
   /** Also mirror the skill into .commandcode/skills/ for Command Code. */
   commandCode?: boolean;
+  /** Also mirror the skill into .github/skills/ for GitHub Copilot. */
+  copilot?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export interface SkillInstallOptions extends FileWriteOptions {
  * Installs to .agents/skills/ and optionally into the agent plugin's
  * skills/ directory under .agents/plugins/<pluginName>/skills/.
  * When `commandCode` is set, also mirrors to .commandcode/skills/.
+ * When `copilot` is set, also mirrors to .github/skills/.
  * No Claude-specific directories (.claude/skills/) are created.
  */
 export async function installSkill(
@@ -54,6 +57,9 @@ export async function installSkill(
   }
   if (options.commandCode) {
     targets.push(path.join(repoRoot, ".commandcode", "skills", skillName));
+  }
+  if (options.copilot) {
+    targets.push(path.join(repoRoot, ".github", "skills", skillName));
   }
 
   for (const target of targets) {

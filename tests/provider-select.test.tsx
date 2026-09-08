@@ -32,6 +32,7 @@ test("ProviderSelectPrompt renders checkmarks and handles keyboard interaction",
   assert.match(frame, /Cursor/);
   assert.match(frame, /Antigravity/);
   assert.match(frame, /Command Code/);
+  assert.match(frame, /GitHub Copilot/);
   assert.match(frame, /\[x\] Claude Code/);
 
   // Press space to toggle first item off
@@ -42,6 +43,6 @@ test("ProviderSelectPrompt renders checkmarks and handles keyboard interaction",
   instance.stdin.write("\r");
   await waitUntil(() => selectedResult !== undefined);
 
-  assert.deepEqual(selectedResult, ["codex", "opencode", "cursor", "antigravity", "command-code"]);
+  assert.deepEqual(selectedResult, ["codex", "opencode", "cursor", "antigravity", "command-code", "copilot"]);
   instance.unmount();
 });
