@@ -77,6 +77,14 @@
       "calls": "pr-description"
     },
     {
+      "name": "spellweaver",
+      "type": "ward",
+      "file": "wards/spellweaver.md",
+      "description": "Automatically categorizes any authored convention as a ward, incantation, or curse",
+      "trigger": "on-spell-authoring",
+      "calls": "devlog-bullet"
+    },
+    {
       "name": "sync-memory-on-arch-change",
       "type": "ward",
       "file": "wards/sync-memory-on-arch-change.md",

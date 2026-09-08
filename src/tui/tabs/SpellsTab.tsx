@@ -79,8 +79,12 @@ export function SpellsTab() {
                 <Text color={palette.dim}>
                   {' · '}
                   <Text color={palette.green}>{s.trigger}</Text>
-                  {' → '}
-                  <Text color={palette.violet}>{s.calls}</Text>
+                  {s.calls && (
+                    <>
+                      {' → '}
+                      <Text color={palette.violet}>{s.calls}</Text>
+                    </>
+                  )}
                 </Text>
               )}
               {s.type === 'curse' && (

@@ -14,8 +14,8 @@ export const IncantationFrontmatterSchema = z.object({
 export const WardFrontmatterSchema = z.object({
   name: z.string().min(1),
   type: z.literal("ward"),
-  trigger: z.string().min(1),
-  calls: z.string().min(1),
+  trigger: z.string().min(1).default("after-task-complete"),
+  calls: z.string().min(1).optional(),
   description: z.string().optional(),
 });
 
@@ -35,6 +35,71 @@ export const SpellFrontmatterSchema = z.discriminatedUnion("type", [
 export type IncantationFrontmatter = z.infer<typeof IncantationFrontmatterSchema>;
 export type WardFrontmatter = z.infer<typeof WardFrontmatterSchema>;
 export type CurseFrontmatter = z.infer<typeof CurseFrontmatterSchema>;
+
+export interface CategorizeSpellInput {
+  name?: string;
+  type?: string;
+  trigger?: string;
+  calls?: string;
+  severity?: string;
+  body?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Automatically categorizes a spell into 'incantation', 'ward', or 'curse'
+ * based on its properties, naming patterns, and content semantics.
+ */
+export function categorizeSpell(input: CategorizeSpellInput): "incantation" | "ward" | "curse" {
+  if (input.type === "incantation" || input.type === "ward" || input.type === "curse") {
+    return input.type;
+  }
+
+  // Explicit lifecycle trigger or target call -> ward
+  if (input.trigger || input.calls) {
+    return "ward";
+  }
+
+  // Guardrail severity indicator -> curse
+  if (input.severity === "hard" || input.severity === "soft") {
+    return "curse";
+  }
+
+  const name = (input.name ?? "").toLowerCase();
+  const body = (input.body ?? "").toLowerCase();
+
+  // Negative constraint prefixes or keywords -> curse
+  const cursePrefixes = ["no-", "never-", "dont-", "prevent-", "forbid-", "block-"];
+  if (cursePrefixes.some((p) => name.startsWith(p))) {
+    return "curse";
+  }
+
+  const curseKeywords = [
+    "never commit", "never push", "do not", "must not", "forbidden",
+    "strictly prohibited", "hard stop", "soft stop", "disallow", "guardrail",
+    "catch block", "unauthorized", "block committing", "forbid",
+  ];
+  if (curseKeywords.some((k) => body.includes(k) || name.includes(k))) {
+    return "curse";
+  }
+
+  // Lifecycle event prefixes or keywords -> ward
+  const wardPrefixes = ["on-", "after-", "before-", "pre-", "post-"];
+  if (wardPrefixes.some((p) => name.startsWith(p))) {
+    return "ward";
+  }
+
+  const wardKeywords = [
+    "trigger:", "after-task", "before-task", "on-pr", "on-test", "on-release",
+    "lifecycle", "automated trigger", "auto-commit", "when a task", "hook",
+  ];
+  if (wardKeywords.some((k) => body.includes(k) || name.includes(k))) {
+    return "ward";
+  }
+
+  // Default to incantation (templates, formats, schemas)
+  return "incantation";
+}
 
 export type IncantationSpell = IncantationFrontmatter & {
   sourcePath: string;
@@ -91,15 +156,25 @@ export async function readSpells(spellsDir: string): Promise<Spell[]> {
     const fullPath = path.join(spellsDir, relPath);
     try {
       const raw = await readFile(fullPath, "utf8");
+      if (!raw.trim().startsWith("---")) {
+        continue;
+      }
       const { data, content } = matter(raw);
 
-      // Infer type from directory if missing from frontmatter
+      // Infer type from directory if missing from frontmatter, or categorize automatically
       const dirName = path.dirname(relPath).toLowerCase();
       let inferredType = data.type;
       if (!inferredType) {
         if (dirName.includes("incantation")) inferredType = "incantation";
         else if (dirName.includes("ward")) inferredType = "ward";
         else if (dirName.includes("curse")) inferredType = "curse";
+        else {
+          inferredType = categorizeSpell({
+            name: data.name ?? path.basename(relPath, ".md"),
+            ...data,
+            body: content,
+          });
+        }
       }
 
       const mergedData = {
@@ -150,7 +225,7 @@ export async function writeSpellsManifest(
     if (s.description) base.description = s.description;
     if (s.type === "ward") {
       base.trigger = s.trigger;
-      base.calls = s.calls;
+      if (s.calls) base.calls = s.calls;
     } else if (s.type === "curse") {
       base.severity = s.severity;
     }

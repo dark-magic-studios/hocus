@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
-import { readSpells, writeSpellsManifest } from "../src/schema/spell.js";
+import { readSpells, writeSpellsManifest, categorizeSpell } from "../src/schema/spell.js";
 import { installSpells } from "../src/commands/init.js";
 import { PROJECT_SPELLS_DIR } from "../src/utils/paths.js";
 
@@ -131,11 +131,12 @@ test("installSpells copies bundled starter spells and writes manifest.json", asy
     assert.ok(installed >= 3);
 
     const spells = await readSpells(PROJECT_SPELLS_DIR(dir));
-    assert.equal(installed, 19);
-    assert.equal(spells.length, 19);
+    assert.equal(installed, 20);
+    assert.equal(spells.length, 20);
     assert.ok(spells.some((s) => s.name === "commit-message" && s.type === "incantation"));
     assert.ok(spells.some((s) => s.name === "pr-description" && s.type === "incantation"));
     assert.ok(spells.some((s) => s.name === "commit-on-done" && s.type === "ward"));
+    assert.ok(spells.some((s) => s.name === "spellweaver" && s.type === "ward"));
     assert.ok(spells.some((s) => s.name === "pr-on-open" && s.type === "ward"));
     assert.ok(spells.some((s) => s.name === "no-db-file-commits" && s.type === "curse"));
     assert.ok(spells.some((s) => s.name === "no-secrets-or-env-commits" && s.type === "curse"));
@@ -152,8 +153,57 @@ test("spellweaver skill is bundled and has valid instructions", async () => {
   assert.ok(fs.existsSync(skillFile));
   const raw = fs.readFileSync(skillFile, "utf8");
   assert.match(raw, /name:\s*spellweaver/);
+  assert.match(raw, /Automatic Spell Categorization/);
   assert.match(raw, /Emoji & Visual Formatting/);
   assert.match(raw, /Tone & Formality/);
   assert.match(raw, /Guardrail Severity/);
+});
+
+test("categorizeSpell automatically categorizes spells into incantations, wards, and curses", async () => {
+  // Explicit type preserved
+  assert.equal(categorizeSpell({ type: "incantation" }), "incantation");
+  assert.equal(categorizeSpell({ type: "ward" }), "ward");
+  assert.equal(categorizeSpell({ type: "curse" }), "curse");
+
+  // Lifecycle triggers / hooks -> ward
+  assert.equal(categorizeSpell({ trigger: "after-task-complete" }), "ward");
+  assert.equal(categorizeSpell({ calls: "commit-message" }), "ward");
+  assert.equal(categorizeSpell({ name: "on-pr-opened" }), "ward");
+  assert.equal(categorizeSpell({ body: "Trigger: runs automatically when a task finishes" }), "ward");
+
+  // Negative constraints / severity -> curse
+  assert.equal(categorizeSpell({ severity: "hard" }), "curse");
+  assert.equal(categorizeSpell({ name: "no-broken-code" }), "curse");
+  assert.equal(categorizeSpell({ body: "Never commit database dump files" }), "curse");
+
+  // Formats and templates -> incantation
+  assert.equal(categorizeSpell({ name: "linear-ticket-format", body: "Format: {title}" }), "incantation");
+
+  // Automatic categorization during readSpells for unclassified root files
+  const dir = makeEmptyRepo();
+  const spellsDir = path.join(dir, "_spells");
+  try {
+    fs.mkdirSync(spellsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(spellsDir, "no-secret-keys.md"),
+      ["---", "name: no-secret-keys", "---", "", "Never push secret API keys", ""].join("\n"),
+    );
+    fs.writeFileSync(
+      path.join(spellsDir, "auto-deploy.md"),
+      ["---", "name: auto-deploy", "trigger: on-merge", "---", "", "Deploy on merge", ""].join("\n"),
+    );
+    fs.writeFileSync(
+      path.join(spellsDir, "daily-standup.md"),
+      ["---", "name: daily-standup", "---", "", "Format: {updates}", ""].join("\n"),
+    );
+
+    const spells = await readSpells(spellsDir);
+    assert.equal(spells.length, 3);
+    assert.ok(spells.some((s) => s.name === "no-secret-keys" && s.type === "curse"));
+    assert.ok(spells.some((s) => s.name === "auto-deploy" && s.type === "ward"));
+    assert.ok(spells.some((s) => s.name === "daily-standup" && s.type === "incantation"));
+  } finally {
+    cleanupRepo(dir);
+  }
 });
 

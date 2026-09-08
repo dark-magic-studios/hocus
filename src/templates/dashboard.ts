@@ -105,7 +105,7 @@ function renderPotionCard(potion: Potion, personas: SoulFile[], nameLookup: Reco
 function renderSpellCard(spell: Spell): string {
   const meta =
     spell.type === "ward"
-      ? `<p class="spell-meta">trigger: <b>${escapeHtml(spell.trigger)}</b> · calls: <b>${escapeHtml(spell.calls)}</b></p>`
+      ? `<p class="spell-meta">trigger: <b>${escapeHtml(spell.trigger)}</b>${spell.calls ? ` · calls: <b>${escapeHtml(spell.calls)}</b>` : ""}</p>`
       : spell.type === "curse"
         ? `<p class="spell-meta">severity: <b>${escapeHtml(spell.severity)}</b></p>`
         : `<p class="spell-meta">template</p>`;
