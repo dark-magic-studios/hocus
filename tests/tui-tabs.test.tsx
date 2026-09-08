@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import { render } from "ink-testing-library";
 import { DeckProvider } from "../src/tui/state/DeckContext.js";
-import { SpellsTab } from "../src/tui/tabs/SpellsTab.js";
+import { PotionsTab } from "../src/tui/tabs/PotionsTab.js";
 import { SoulsTab } from "../src/tui/tabs/SoulsTab.js";
 import { CovenTab } from "../src/tui/tabs/CovenTab.js";
 import { GrimoireTab } from "../src/tui/tabs/GrimoireTab.js";
@@ -19,7 +19,7 @@ async function waitUntil(fn: () => boolean, timeoutMs = 1500, intervalMs = 20): 
 }
 
 const TABS: Array<{ name: string; Tab: React.ComponentType; emptyText: string; populatedText: string }> = [
-  { name: "SpellsTab", Tab: SpellsTab, emptyText: "no spells in", populatedText: "Test Feature" },
+  { name: "PotionsTab", Tab: PotionsTab, emptyText: "no potions in", populatedText: "Test Feature" },
   { name: "SoulsTab", Tab: SoulsTab, emptyText: "no souls bound", populatedText: "Test Agent" },
   { name: "CovenTab", Tab: CovenTab, emptyText: "coven is empty", populatedText: "Test Agent" },
   { name: "GrimoireTab", Tab: GrimoireTab, emptyText: "grimoire is empty", populatedText: "test-skill" },

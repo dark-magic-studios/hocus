@@ -74,7 +74,7 @@
     "ast_hash": "a27a6971c0e49caab3598c2a1d7d4c8b",
     "semantic_hash": ""
   },
-  "/home/david/dev/hocus/src/schema/spell.ts": {
+  "/home/david/dev/hocus/src/schema/potion.ts": {
     "mtime": 1782330424.0,
     "ast_hash": "4d420e1392aef63ab521b6f60fdc3a5a",
     "semantic_hash": ""
@@ -454,7 +454,7 @@
     "ast_hash": "be87157e93e6c3408abe045037f1b057",
     "semantic_hash": ""
   },
-  "/home/david/dev/hocus/skills/richard-draft-spell/SKILL.md": {
+  "/home/david/dev/hocus/skills/richard-draft-potion/SKILL.md": {
     "mtime": 1782350830.079614,
     "ast_hash": "80e6175632572b4164a1be94d384e47b",
     "semantic_hash": ""
@@ -684,7 +684,7 @@
     "ast_hash": "19a426547e7bd97fc13f244413cfd607",
     "semantic_hash": ""
   },
-  "/home/david/dev/hocus/src/tui/tabs/SpellsTab.tsx": {
+  "/home/david/dev/hocus/src/tui/tabs/PotionsTab.tsx": {
     "mtime": 1785242664.2935615,
     "ast_hash": "a27072addb9c583366a87ad58e11718c",
     "semantic_hash": ""
@@ -854,7 +854,7 @@
     "ast_hash": "be87157e93e6c3408abe045037f1b057",
     "semantic_hash": ""
   },
-  "/home/david/dev/hocus/.agents/skills/richard-draft-spell/SKILL.md": {
+  "/home/david/dev/hocus/.agents/skills/richard-draft-potion/SKILL.md": {
     "mtime": 1785242740.1400368,
     "ast_hash": "80e6175632572b4164a1be94d384e47b",
     "semantic_hash": ""
@@ -999,7 +999,7 @@
     "ast_hash": "be87157e93e6c3408abe045037f1b057",
     "semantic_hash": ""
   },
-  "/home/david/dev/hocus/.claude/skills/richard-draft-spell/SKILL.md": {
+  "/home/david/dev/hocus/.claude/skills/richard-draft-potion/SKILL.md": {
     "mtime": 1785242740.141276,
     "ast_hash": "80e6175632572b4164a1be94d384e47b",
     "semantic_hash": ""

@@ -23,7 +23,7 @@ features are exactly where the inelegant shortcut sneaks in.
 ## Responsibilities
 - Read the relevant parts of the codebase before proposing an approach.
   Never plan against an assumption you could have checked.
-- Write the plan as a spell file under `_spells/`, with a goal, acceptance
+- Write the plan as a potion file under `_potions/`, with a goal, acceptance
   criteria, and who it's assigned to once approved.
 - Always surface the plan to the user for approval before handing it to
   the orchestrator. Do not let work start on an unapproved plan.

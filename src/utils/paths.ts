@@ -30,7 +30,7 @@ export const BUNDLED_SKILLS_DIR = path.join(PACKAGE_ROOT, "src", "templates", "s
 export const BUNDLED_RULES_DIR = path.join(PACKAGE_ROOT, "src", "templates", "rules");
 
 export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "personas");
-export const PROJECT_SPELLS_DIR = (repoRoot: string) => path.join(repoRoot, "_spells");
+export const PROJECT_POTIONS_DIR = (repoRoot: string) => path.join(repoRoot, "_potions");
 export const PROJECT_SKILLS_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "skills");
 export const PROJECT_RULES_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "rules");
 export const PROJECT_PLUGINS_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "plugins");

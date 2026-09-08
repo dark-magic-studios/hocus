@@ -16,7 +16,7 @@ export interface Agent {
   aliases?: { valley?: string; occult?: string };
 }
 
-export interface Spell {
+export interface Potion {
   id: string;
   name: string;
   aka: string;
@@ -56,7 +56,7 @@ export interface LedgerEntry {
 
 export interface DeckData {
   agents: Agent[];
-  spells: Spell[];
+  potions: Potion[];
   skills: Skill[];
   wards: Ward[];
   ledger: LedgerEntry[];

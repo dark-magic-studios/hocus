@@ -167,7 +167,7 @@ skill
 
 program
   .command("sync")
-  .description("regenerate dashboard.html from the current personas and _spells/ — no recompilation")
+  .description("regenerate dashboard.html from the current personas and _potions/ — no recompilation")
   .option("-n, --name <name>", "project name (defaults to the directory name)")
   .action(async (opts: { name?: string }) => {
     await runSync({ repoRoot: process.cwd(), projectName: opts.name });

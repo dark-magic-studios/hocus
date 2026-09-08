@@ -5,7 +5,7 @@ import type { BootTask } from './boot/useBootTasks.js';
 import { Frame } from './components/Frame.js';
 import { DeckProvider } from './state/DeckContext.js';
 import { useTabs, type TabId } from './hooks/useTabs.js';
-import { SpellsTab } from './tabs/SpellsTab.js';
+import { PotionsTab } from './tabs/PotionsTab.js';
 import { SoulsTab } from './tabs/SoulsTab.js';
 import { CovenTab } from './tabs/CovenTab.js';
 import { GrimoireTab } from './tabs/GrimoireTab.js';
@@ -13,7 +13,7 @@ import { ScryingTab } from './tabs/ScryingTab.js';
 import { SeanceTab } from './tabs/SeanceTab.js';
 
 const PANES: Record<TabId, React.ComponentType> = {
-  spells: SpellsTab,
+  potions: PotionsTab,
   souls: SoulsTab,
   coven: CovenTab,
   grimoire: GrimoireTab,
@@ -22,7 +22,7 @@ const PANES: Record<TabId, React.ComponentType> = {
 };
 
 const HINTS: Record<TabId, string[]> = {
-  spells: ['↑↓ navigate', '⏎ open', 'a assign', '? keys', 'q quit'],
+  potions: ['↑↓ navigate', '⏎ open', 'a assign', '? keys', 'q quit'],
   souls: ['↑↓ navigate', '⏎ edit', 'w write', 'r recompile', 'q quit'],
   coven: ['↑↓ navigate', '⏎ inspect', 'n spawn familiar', 'x dismiss', 'q quit'],
   grimoire: ['↑↓ navigate', 'space toggle', 'i install pack', 'q quit'],

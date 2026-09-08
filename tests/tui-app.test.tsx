@@ -13,13 +13,13 @@ async function waitUntil(fn: () => boolean, timeoutMs = 1500, intervalMs = 20): 
   }
 }
 
-test("App boots straight to the spells tab when silentBoot is set", async () => {
+test("App boots straight to the potions tab when silentBoot is set", async () => {
   const dir = makeEmptyRepo();
   try {
     const instance = render(
       <App cwd={dir} version="0.0.0-test" silentBoot bootTasks={[]} />,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
     instance.unmount();
   } finally {
     cleanupRepo(dir);
@@ -32,7 +32,7 @@ test("App switches tabs by digit index", async () => {
     const instance = render(
       <App cwd={dir} version="0.0.0-test" silentBoot bootTasks={[]} />,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
 
     instance.stdin.write("2");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[souls]"));
@@ -54,15 +54,15 @@ test("App switches tabs with tab and shift-tab", async () => {
     const instance = render(
       <App cwd={dir} version="0.0.0-test" silentBoot bootTasks={[]} />,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
 
     instance.stdin.write("\t");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[souls]"));
     assert.match(instance.lastFrame() ?? "", /\[souls]/);
 
     instance.stdin.write("[Z");
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
-    assert.match(instance.lastFrame() ?? "", /\[spells]/);
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
+    assert.match(instance.lastFrame() ?? "", /\[potions]/);
 
     instance.unmount();
   } finally {

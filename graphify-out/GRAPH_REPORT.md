@@ -558,7 +558,7 @@ Nodes (3): Instructions, Recruit Skill, When to use
 
 ### Community 83 - "Community 83"
 Cohesion: 0.50
-Nodes (3): Instructions, Richard Draft Spell, When to use
+Nodes (3): Instructions, Richard Draft Potion, When to use
 
 ### Community 84 - "Community 84"
 Cohesion: 0.50
@@ -682,7 +682,7 @@ Nodes (3): Instructions, Recruit Skill, When to use
 
 ### Community 115 - "Community 115"
 Cohesion: 0.50
-Nodes (3): Instructions, Richard Draft Spell, When to use
+Nodes (3): Instructions, Richard Draft Potion, When to use
 
 ### Community 116 - "Community 116"
 Cohesion: 0.50
@@ -798,7 +798,7 @@ Nodes (3): Instructions, Recruit Skill, When to use
 
 ### Community 144 - "Community 144"
 Cohesion: 0.50
-Nodes (3): Instructions, Richard Draft Spell, When to use
+Nodes (3): Instructions, Richard Draft Potion, When to use
 
 ### Community 145 - "Community 145"
 Cohesion: 0.50
@@ -914,7 +914,7 @@ Nodes (3): Instructions, Recruit Skill, When to use
 
 ### Community 173 - "Community 173"
 Cohesion: 0.50
-Nodes (3): Instructions, Richard Draft Spell, When to use
+Nodes (3): Instructions, Richard Draft Potion, When to use
 
 ### Community 174 - "Community 174"
 Cohesion: 0.50

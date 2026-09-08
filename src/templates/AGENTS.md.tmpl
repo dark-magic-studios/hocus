@@ -9,20 +9,20 @@ Read the files below before making changes.
    decision, not a bug.
 3. `TASKS.md` — what's next. Don't pick up work that isn't listed here
    without checking with the user first.
-4. `_spells/` — one active battle plan per in-flight feature, written by
+4. `_potions/` — one active battle plan per in-flight feature, written by
    the planner and kept current by the orchestrator.
 
 ## The cast
 
 This repo uses Hocus's persona harness — one logical cast of 13 roles — installed under a single naming convention chosen at `hocus init` and persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard" }`. Each agent's full identity is defined in its SOUL.md file under `.hocus/personas/` (or wherever this project's personas were installed) and compiled into this tool's native agent format. See `dashboard.html` for a live view of who's who.
 
-- **Silicon Valley cast** (`--cast valley`): personas are `richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, … with `display_name` like `Richard` / `Gilfoyle` / `Jared` and skills/slash-commands like `/richard-draft-spell`, `/gilfoyle-pr-review`, `/jared-orchestrate`.
-- **Wizard cast** (`--cast wizard`, the default for non-interactive/`--dry-run`): personas are `merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, … with `display_name` like `Merlin` / `Zoroaster` / `Roger Bacon` and skills/slash-commands like `/merlin-draft-spell`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`.
+- **Silicon Valley cast** (`--cast valley`): personas are `richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, … with `display_name` like `Richard` / `Gilfoyle` / `Jared` and skills/slash-commands like `/richard-draft-potion`, `/gilfoyle-pr-review`, `/jared-orchestrate`.
+- **Wizard cast** (`--cast wizard`, the default for non-interactive/`--dry-run`): personas are `merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, … with `display_name` like `Merlin` / `Zoroaster` / `Roger Bacon` and skills/slash-commands like `/merlin-draft-potion`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`.
 
 Consequences of the choice (see `README.md#choosing-a-cast-silicon-valley-vs-wizards` for the full table):
 
 - **Persona files**: filename, `character` slug, `display_name`, and `# Name —` heading under `.hocus/personas/` are rewritten for the chosen cast; `aliases: { valley, occult }` keeps both names so `dashboard.html?cast=valley` / `?cast=wizard` (legacy `?cast=occult`) can toggle display without touching files.
-- **Persona-bound skills (14)**: folder/`name` under `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.github/skills/` and frontmatter `description` leader are renamed (`richard-draft-spell` ↔ `merlin-draft-spell`, `gilfoyle-pr-review` ↔ `zoroaster-pr-review`, etc.; generic skills like `atomic-commits` are unaffected).
+- **Persona-bound skills (14)**: folder/`name` under `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.github/skills/` and frontmatter `description` leader are renamed (`richard-draft-potion` ↔ `merlin-draft-potion`, `gilfoyle-pr-review` ↔ `zoroaster-pr-review`, etc.; generic skills like `atomic-commits` are unaffected).
 - **Compiled outputs**: `.claude/agents/`, `.codex/agents/`, `.opencode/agent/`, `.cursor/rules/`, `.agents/agents/`, `.commandcode/agents/`, `.github/agents/` filenames and internal names follow the chosen `character`/`display_name`; re-run `hocus cast` after switching. Codex discovers repository skills from `.agents/skills/`.
 - **Init prompt**: the founder agent is instructed to use the chosen names consistently for all future personas/skills — mixing Valley and Wizard names is treated as a defect.
 - **Switching**: re-run `hocus init --cast <other>` to migrate personas (rename + frontmatter), remove stale opposite-cast skill folders, and update `.hocus/config.json`. This shows up as renames in `git status` — coordinate with open PRs.

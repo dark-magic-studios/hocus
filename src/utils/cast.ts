@@ -87,7 +87,7 @@ export const PERSONA_SKILL_IDS = new Set([
   "laurie-fix-conflict",
   "laurie-resolve-config",
   "peter-invoke",
-  "richard-draft-spell",
+  "richard-draft-potion",
   "russ-token-trim",
 ]);
 

@@ -14,7 +14,7 @@ export interface LaunchOptions {
 }
 
 function buildBootTasks(deck: DeckData, stack: DetectedStack): BootTask[] {
-  const activeSpells = deck.spells.filter((s) => s.status === 'casting' || s.status === 'blocked').length;
+  const activePotions = deck.potions.filter((s) => s.status === 'casting' || s.status === 'blocked').length;
   const detectedWards = deck.wards.filter((w) => w.detected).length;
   const stackSummary = [...stack.languages, ...stack.frameworks].join(', ');
   const wardsResult = stackSummary
@@ -25,9 +25,9 @@ function buildBootTasks(deck: DeckData, stack: DetectedStack): BootTask[] {
 
   return [
     {
-      id: 'spellbooks',
-      label: ' loading spellbooks',
-      run: async () => `${activeSpells} active`,
+      id: 'potions',
+      label: ' loading potions',
+      run: async () => `${activePotions} active`,
     },
     {
       id: 'souls',
@@ -51,7 +51,7 @@ function printPlainSummary(deck: DeckData, stack: DetectedStack): void {
   const stackSummary = [...stack.languages, ...stack.frameworks].join(', ') || 'none detected';
   const detectedWards = deck.wards.filter((w) => w.detected).length;
   const lines = [
-    `hocus — ${deck.agents.length} soul(s), ${deck.spells.length} spell(s), ${deck.skills.length} skill(s)`,
+    `hocus — ${deck.agents.length} soul(s), ${deck.potions.length} potion(s), ${deck.skills.length} skill(s)`,
     `stack: ${stackSummary}`,
     `wards: ${detectedWards}/${deck.wards.length} target(s) detected`,
     `ledger: ${deck.ledger.length} entr${deck.ledger.length === 1 ? 'y' : 'ies'}`,

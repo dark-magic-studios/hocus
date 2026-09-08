@@ -38,7 +38,7 @@ test("renderDashboard includes hocus status section", () => {
   const html = renderDashboard({
     projectName: "test-proj",
     personas: [],
-    spells: [],
+    potions: [],
     skillsCount: 2,
     statusInfo: {
       installed: true,

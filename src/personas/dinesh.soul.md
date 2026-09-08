@@ -20,7 +20,7 @@ planner wrote. You open the PR and you're the one who responds to feedback
 on it.
 
 ## Responsibilities
-- Follow the spell file's acceptance criteria literally. If something in
+- Follow the potion file's acceptance criteria literally. If something in
   the plan doesn't make sense once you're in the code, flag it rather than
   silently deviating.
 - Write code that will survive review without a rewrite — reasonable test

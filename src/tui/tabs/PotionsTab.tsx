@@ -11,17 +11,17 @@ import { StatusDot } from '../components/StatusDot.js';
 
 type Mode = 'browse' | 'assigning';
 
-export function SpellsTab() {
+export function PotionsTab() {
   const { data, reload } = useDeck();
-  const [selectedId, setSelectedId] = useState<string | undefined>(data.spells[0]?.id);
+  const [selectedId, setSelectedId] = useState<string | undefined>(data.potions[0]?.id);
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<Mode>('browse');
   const [status, setStatus] = useState<string | undefined>();
 
   const move = (delta: number) => {
-    if (data.spells.length === 0) return;
-    const idx = Math.max(0, data.spells.findIndex((s) => s.id === selectedId));
-    const next = data.spells[(idx + delta + data.spells.length) % data.spells.length];
+    if (data.potions.length === 0) return;
+    const idx = Math.max(0, data.potions.findIndex((s) => s.id === selectedId));
+    const next = data.potions[(idx + delta + data.potions.length) % data.potions.length];
     if (next) setSelectedId(next.id);
   };
 
@@ -47,17 +47,17 @@ export function SpellsTab() {
     () => setMode('browse'),
   );
 
-  const assign = async (spellId: string, agentId: string) => {
-    const spell = data.spells.find((s) => s.id === spellId);
-    if (!spell || !agentId.trim()) {
+  const assign = async (potionId: string, agentId: string) => {
+    const potion = data.potions.find((s) => s.id === potionId);
+    if (!potion || !agentId.trim()) {
       setMode('browse');
       return;
     }
-    const raw = await readFile(spell.path, 'utf8');
+    const raw = await readFile(potion.path, 'utf8');
     const { data: frontmatter, content } = matter(raw);
     frontmatter.assigned_to = agentId.trim();
-    await writeFile(spell.path, matter.stringify(content, frontmatter), 'utf8');
-    setStatus(`assigned ${spell.name} to ${agentId.trim()}`);
+    await writeFile(potion.path, matter.stringify(content, frontmatter), 'utf8');
+    setStatus(`assigned ${potion.name} to ${agentId.trim()}`);
     setMode('browse');
     reload();
   };
@@ -81,11 +81,11 @@ export function SpellsTab() {
     </Box>
   );
 
-  if (data.spells.length === 0) {
+  if (data.potions.length === 0) {
     return (
       <Box flexDirection="column">
         {statusHeader}
-        <Text color={palette.dim}>no spells in _spells/. run `hocus draft` to write the first one.</Text>
+        <Text color={palette.dim}>no potions in _potions/. run `hocus draft` to write the first one.</Text>
       </Box>
     );
   }
@@ -93,7 +93,7 @@ export function SpellsTab() {
   return (
     <Box flexDirection="column" gap={1}>
       {statusHeader}
-      {data.spells.map((s) => (
+      {data.potions.map((s) => (
         <Box key={s.id} flexDirection="column">
           <Text>
             <Text color={s.id === selectedId ? palette.green : palette.dim}>{s.id === selectedId ? '▸ ' : '  '}</Text>
@@ -120,7 +120,7 @@ export function SpellsTab() {
 
       {status ? <Text color={palette.amber}>{status}</Text> : null}
 
-      {data.warnings.filter((w) => w.includes('spell')).map((w) => (
+      {data.warnings.filter((w) => w.includes('potion')).map((w) => (
         <Text key={w} color={palette.amber}>{`! ${w}`}</Text>
       ))}
     </Box>

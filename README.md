@@ -55,7 +55,7 @@ In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <Wi
 | `laurie-fix-conflict` | `john-dee-fix-conflict` | config conflicts |
 | `laurie-resolve-config` | `john-dee-resolve-config` | config sync |
 | `peter-invoke` | `midas-invoke` | founder / harness setup |
-| `richard-draft-spell` | `merlin-draft-spell` | battle plan |
+| `richard-draft-potion` | `merlin-draft-potion` | battle plan |
 | `russ-token-trim` | `prospero-token-trim` | cost trimming |
 
 `getSkillIdForCast` (`src/utils/cast.ts:85`) and `transformSkillFrontmatterForCast` (`src/utils/cast.ts:115`) handle this:
@@ -64,7 +64,7 @@ In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <Wi
 - Frontmatter `name` is rewritten to the cast-appropriate skill ID.
 - Frontmatter `description` leading `<Name> — …` is rewritten to the cast's display name (e.g. `Gilfoyle — review PRs` → `Zoroaster — review PRs`).
 
-Slash-command names follow the folder/`name` — `/richard-draft-spell` vs `/merlin-draft-spell`, `/jared-orchestrate` vs `/roger-bacon-orchestrate`, etc. Mentions and autocomplete in the TUI Séance tab surface the same names.
+Slash-command names follow the folder/`name` — `/richard-draft-potion` vs `/merlin-draft-potion`, `/jared-orchestrate` vs `/roger-bacon-orchestrate`, etc. Mentions and autocomplete in the TUI Séance tab surface the same names.
 
 #### 3. Compiled agent outputs
 
@@ -87,7 +87,7 @@ The founder agent spawned at the end of `hocus init` receives a cast-specific sy
 - Valley: *“Confirm the naming convention is Silicon Valley … Use Silicon Valley names consistently … Do not mix in wizard names.”*
 - Wizard: *“Confirm the naming convention is Wizards … Use wizard names consistently … Do not mix in Silicon Valley names.”*
 
-All agents the founder then creates (5–10 tailored personas + project-specific skills) are instructed to follow that convention, and the orchestrator's spell files will reference the chosen names. Mixing conventions is treated as a defect — the prompt explicitly forbids it.
+All agents the founder then creates (5–10 tailored personas + project-specific skills) are instructed to follow that convention, and the orchestrator's potion files will reference the chosen names. Mixing conventions is treated as a defect — the prompt explicitly forbids it.
 
 #### 5. Dashboard (`dashboard.html`)
 
@@ -133,8 +133,8 @@ Skill prefix variants normalize hyphens/casing: `bighead` ↔ `big-head`/`baba-y
 
 ### Choosing guidance
 
-- **Pick Valley if** you want slash commands and agent names that match the original project vocabulary (`/richard-draft-spell`, `/gilfoyle-pr-review`, `/jared-orchestrate`), you have existing docs/scripts referencing those names, or your team knows the *Silicon Valley* roster.
-- **Pick Wizards if** you prefer the themed names that ship as the default in non-interactive installs and `README.md` examples (`/merlin-draft-spell`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`), or you want the `dashboard.html` default to show the mythic names.
+- **Pick Valley if** you want slash commands and agent names that match the original project vocabulary (`/richard-draft-potion`, `/gilfoyle-pr-review`, `/jared-orchestrate`), you have existing docs/scripts referencing those names, or your team knows the *Silicon Valley* roster.
+- **Pick Wizards if** you prefer the themed names that ship as the default in non-interactive installs and `README.md` examples (`/merlin-draft-potion`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`), or you want the `dashboard.html` default to show the mythic names.
 - Either choice can be previewed with `?cast=valley` / `?cast=wizard` on the dashboard before committing. Switching later is a file-rename migration that will show up as renames in `git status`; coordinate with open PRs to avoid merge conflicts on skill/persona paths.
 
 ---
@@ -157,7 +157,7 @@ Navigate between tabs using `Tab` / `Shift-Tab` or number keys `1`–`6`:
    - **Backend Selection**: Press `Ctrl+B` to cycle AI backends (Claude, Codex, Antigravity, custom).
    - **Autocomplete & Mentions**: Type `/` to trigger built-in commands and skills autocomplete; type `@` to mention repository files.
    - **Built-in Commands**: Execute `/status`, `/sync`, or package.json scripts directly from the chat prompt.
-2. **Spells (Active Feature Plans)**: Track in-flight feature specifications, architectural blueprints, and step-by-step battle plans in `_spells/`.
+2. **Potions (Active Feature Plans)**: Track in-flight feature specifications, architectural blueprints, and step-by-step battle plans in `_potions/`.
 3. **Souls (Persona Inspector)**: Browse installed `SOUL.md` personas in `.hocus/personas/`, inspect their metadata, view voice definitions, frontmatter schema validation, and triggers.
 4. **Coven (Agent Topology)**: Visualize agent parent-child hierarchy graphs, delegation structures, and orchestrator relationships.
 5. **Grimoire (Skill Management)**: View and manage open-standard `SKILL.md` files installed across `.agents/skills/` and `.claude/skills/`.
@@ -207,7 +207,7 @@ hocus --silent     # skip boot animation
 
 ### `hocus init`
 
-Run once in the repo where you want the harness. Writes main entrypoint files (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `MEMORY.md`, `TASKS.md`, `_spells/`), copies the persona cast into `.hocus/personas/` for per-project editing, installs bundled skills, and spawns an interactive initialization session with the founder persona using your preferred agent CLI.
+Run once in the repo where you want the harness. Writes main entrypoint files (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `MEMORY.md`, `TASKS.md`, `_potions/`), copies the persona cast into `.hocus/personas/` for per-project editing, installs bundled skills, and spawns an interactive initialization session with the founder persona using your preferred agent CLI.
 
 If you use Command Code, `hocus init` asks about it (or respects `--command-code` / `--no-command-code`); when enabled it also compiles the cast into `.commandcode/agents/`, mirrors skills into `.commandcode/skills/`, and bakes [Taste](https://commandcode.ai/docs/taste) compatibility instructions into every compiled agent. Outside a TTY it auto-detects an existing `.commandcode/` directory instead of asking.
 
@@ -281,7 +281,7 @@ hocus skill add db-migration-safety --from ../dms-skills/skills/db-migration-saf
 
 ### `hocus sync`
 
-Fast refresh of `dashboard.html` from `.hocus/personas/` and `_spells/` without recompiling agent files.
+Fast refresh of `dashboard.html` from `.hocus/personas/` and `_potions/` without recompiling agent files.
 
 ```bash
 hocus sync
@@ -349,12 +349,12 @@ src/
 ├── cli.ts                  # CLI entrypoint & commander configuration
 ├── commands/               # init, cast, skill add, sync handlers
 ├── personas/               # bundled SOUL.md cast (13 personas)
-├── schema/                 # SOUL.md & spell frontmatter validation schemas
+├── schema/                 # SOUL.md & potion frontmatter validation schemas
 ├── compilers/              # target compilers (claude-code, codex, opencode, cursor, antigravity)
 ├── scanners/               # repository tech stack detection engine
 ├── templates/              # main file templates, bundled rules & skills
 ├── tui/                    # interactive Ink/OpenTUI command deck & tabs
-│   ├── tabs/               # Séance, Spells, Souls, Coven, Grimoire, Scrying
+│   ├── tabs/               # Séance, Potions, Souls, Coven, Grimoire, Scrying
 │   ├── chat/               # prompt engine, slash commands, mentions
 │   └── boot/               # boot animation & theme definitions
 └── utils/

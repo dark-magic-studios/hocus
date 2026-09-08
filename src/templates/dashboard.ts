@@ -1,11 +1,11 @@
 import type { SoulFile } from "../schema/soul.js";
-import type { Spell } from "../schema/spell.js";
+import type { Potion } from "../schema/potion.js";
 import { BRAND_GLYPH } from "../theme.js";
 
 export interface DashboardParams {
   projectName: string;
   personas: SoulFile[];
-  spells: Spell[];
+  potions: Potion[];
   skillsCount?: number;
   statusInfo?: {
     installed: boolean;
@@ -74,37 +74,37 @@ function renderPersonaCard(soul: SoulFile): string {
       </article>`;
 }
 
-function renderSpellCard(spell: Spell, personas: SoulFile[], nameLookup: Record<string, string>): string {
-  const aka = spell.feature ? `<p class="spell-aka">a.k.a. ${escapeHtml(spell.feature)}</p>` : "";
-  const assigneeNames = spell.assigned_to ? castNamesFor(personas, spell.assigned_to) : null;
-  const draftedNames = spell.drafted_by ? castNamesFor(personas, spell.drafted_by) : null;
+function renderPotionCard(potion: Potion, personas: SoulFile[], nameLookup: Record<string, string>): string {
+  const aka = potion.feature ? `<p class="potion-aka">a.k.a. ${escapeHtml(potion.feature)}</p>` : "";
+  const assigneeNames = potion.assigned_to ? castNamesFor(personas, potion.assigned_to) : null;
+  const draftedNames = potion.drafted_by ? castNamesFor(personas, potion.drafted_by) : null;
   const assignee = assigneeNames
-    ? `assigned to <b class="cast-name" data-cast-default="${escapeHtml(assigneeNames.default)}" data-cast-valley="${escapeHtml(assigneeNames.valley)}" data-cast-occult="${escapeHtml(assigneeNames.occult)}">${escapeHtml(nameLookup[spell.assigned_to!] ?? assigneeNames.default)}</b>`
+    ? `assigned to <b class="cast-name" data-cast-default="${escapeHtml(assigneeNames.default)}" data-cast-valley="${escapeHtml(assigneeNames.valley)}" data-cast-occult="${escapeHtml(assigneeNames.occult)}">${escapeHtml(nameLookup[potion.assigned_to!] ?? assigneeNames.default)}</b>`
     : "not yet assigned";
   const draftedBy = draftedNames
-    ? `drafted by <b class="cast-name" data-cast-default="${escapeHtml(draftedNames.default)}" data-cast-valley="${escapeHtml(draftedNames.valley)}" data-cast-occult="${escapeHtml(draftedNames.occult)}">${escapeHtml(nameLookup[spell.drafted_by!] ?? draftedNames.default)}</b> · `
+    ? `drafted by <b class="cast-name" data-cast-default="${escapeHtml(draftedNames.default)}" data-cast-valley="${escapeHtml(draftedNames.valley)}" data-cast-occult="${escapeHtml(draftedNames.occult)}">${escapeHtml(nameLookup[potion.drafted_by!] ?? draftedNames.default)}</b> · `
     : "";
 
   return `
-      <div class="spell-card">
-        <div class="spell-top">
-          <span class="spell-status">${escapeHtml(spell.status)}</span>
+      <div class="potion-card">
+        <div class="potion-top">
+          <span class="potion-status">${escapeHtml(potion.status)}</span>
         </div>
-        <p class="spell-name">${escapeHtml(spell.spell)}</p>
+        <p class="potion-name">${escapeHtml(potion.potion)}</p>
         ${aka}
-        <p class="spell-meta">${draftedBy}${assignee}</p>
-        <div class="bar" role="progressbar" aria-valuenow="${spell.progress}" aria-valuemin="0" aria-valuemax="100">
-          <div class="bar-fill" style="width:${spell.progress}%"></div>
+        <p class="potion-meta">${draftedBy}${assignee}</p>
+        <div class="bar" role="progressbar" aria-valuenow="${potion.progress}" aria-valuemin="0" aria-valuemax="100">
+          <div class="bar-fill" style="width:${potion.progress}%"></div>
         </div>
-        <div class="bar-label"><span>progress</span><span>${spell.progress}%</span></div>
+        <div class="bar-label"><span>progress</span><span>${potion.progress}%</span></div>
       </div>`;
 }
 
-export function renderDashboard({ projectName, personas, spells, skillsCount = 0, statusInfo }: DashboardParams): string {
-  const activeSpells = spells.filter((s) => s.status === "casting" || s.status === "blocked");
+export function renderDashboard({ projectName, personas, potions, skillsCount = 0, statusInfo }: DashboardParams): string {
+  const activePotions = potions.filter((s) => s.status === "casting" || s.status === "blocked");
   const nameLookup = buildNameLookup(personas);
-  const spellsHtml = spells.length
-    ? spells.map((s) => renderSpellCard(s, personas, nameLookup)).join("\n")
+  const potionsHtml = potions.length
+    ? potions.map((s) => renderPotionCard(s, personas, nameLookup)).join("\n")
     : `<p class="empty-state">No battle plans yet. Ask the planner to draft one.</p>`;
 
   const rosterHtml = personas.length
@@ -164,15 +164,15 @@ export function renderDashboard({ projectName, personas, spells, skillsCount = 0
   .filetree-connector { color: var(--text-dim); }
   .filetree-name { color: var(--green); font-weight: 500; }
   .filetree-desc { color: var(--text-muted); font-size: 12.5px; font-family: var(--font-body); }
-  .spell-grid, .roster-grid { display: grid; gap: 14px; margin-top: 18px; }
-  .spell-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .potion-grid, .roster-grid { display: grid; gap: 14px; margin-top: 18px; }
+  .potion-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .roster-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
-  .spell-card, .agent-card { border: 1px solid var(--line); background: var(--bg-card); border-radius: 5px; padding: 18px; }
-  .spell-status { font-family: var(--font-display); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-  .spell-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--violet); margin: 8px 0 2px; }
-  .spell-aka { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
-  .spell-meta { font-size: 12px; color: var(--text-muted); margin: 0 0 12px; }
-  .spell-meta b { color: var(--text); font-weight: 500; }
+  .potion-card, .agent-card { border: 1px solid var(--line); background: var(--bg-card); border-radius: 5px; padding: 18px; }
+  .potion-status { font-family: var(--font-display); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+  .potion-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--violet); margin: 8px 0 2px; }
+  .potion-aka { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; }
+  .potion-meta { font-size: 12px; color: var(--text-muted); margin: 0 0 12px; }
+  .potion-meta b { color: var(--text); font-weight: 500; }
   .bar { height: 6px; border-radius: 3px; background: var(--bg-panel); border: 1px solid var(--line); overflow: hidden; }
   .bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--violet)); }
   .bar-label { font-size: 10.5px; color: var(--text-dim); margin-top: 6px; display: flex; justify-content: space-between; font-family: var(--font-display); }
@@ -206,7 +206,7 @@ export function renderDashboard({ projectName, personas, spells, skillsCount = 0
   <section class="hero">
     <p class="eyebrow">${escapeHtml(BRAND_GLYPH)} // command deck</p>
     <h1 class="wordmark"><span class="brand-mark">${escapeHtml(BRAND_GLYPH)}</span>${escapeHtml(projectName)}<span class="cursor">_</span></h1>
-    <p class="tagline">${personas.length} agent${personas.length === 1 ? "" : "s"} registered · ${statusObj.skillCount} skill${statusObj.skillCount === 1 ? "" : "s"} · ${activeSpells.length} active spell${activeSpells.length === 1 ? "" : "s"}</p>
+    <p class="tagline">${personas.length} agent${personas.length === 1 ? "" : "s"} registered · ${statusObj.skillCount} skill${statusObj.skillCount === 1 ? "" : "s"} · ${activePotions.length} active potion${activePotions.length === 1 ? "" : "s"}</p>
   </section>
 
   <section class="block">
@@ -234,16 +234,16 @@ export function renderDashboard({ projectName, personas, spells, skillsCount = 0
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">dashboard.html</span><span class="filetree-desc">you are here — regenerated by <code>hocus sync</code></span></div>
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">MEMORY.md</span><span class="filetree-desc">project chronology and decisions</span></div>
       <div class="filetree-row"><span class="filetree-connector">├──</span><span class="filetree-name">TASKS.md</span><span class="filetree-desc">what's next, synced from your tracker</span></div>
-      <div class="filetree-row"><span class="filetree-connector">└──</span><span class="filetree-name">_spells/</span><span class="filetree-desc">one battle plan per feature</span></div>
+      <div class="filetree-row"><span class="filetree-connector">└──</span><span class="filetree-name">_potions/</span><span class="filetree-desc">one battle plan per feature</span></div>
     </div>
   </section>
 
   <section class="block">
     <div class="section-head">
-      <h2>// _spells/active</h2>
+      <h2>// _potions/active</h2>
       <p>battle plans currently being cast.</p>
     </div>
-    <div class="spell-grid">${spellsHtml}</div>
+    <div class="potion-grid">${potionsHtml}</div>
   </section>
 
   <section class="block">

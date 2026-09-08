@@ -5,18 +5,18 @@ description: Jared — read a battle plan, split it into tasks, assign each to t
 
 # Jared Orchestrate
 
-Reads an approved battle plan (spell), decomposes it into individual tasks, assigns each task to the most appropriate agent, and tracks progress to completion. Named after Jared Dunn — meticulous, eager to serve, keeps everything organized and running smoothly.
+Reads an approved battle plan (potion), decomposes it into individual tasks, assigns each task to the most appropriate agent, and tracks progress to completion. Named after Jared Dunn — meticulous, eager to serve, keeps everything organized and running smoothly.
 
 ## When to use
-- A new spell has been approved and needs execution
+- A new potion has been approved and needs execution
 - A task has been completed and the next task in the plan needs to be assigned
 - A task is blocked and needs to be reassigned or escalated
 - The orchestrator needs to report progress to the user
 - Checking if any tasks have stalled and need attention
 
 ## Instructions
-1. **Read the spell**
-   - Read the approved spell from `_spells/<slug>.md`
+1. **Read the potion**
+   - Read the approved potion from `_potions/<slug>.md`
    - Understand the phases, task dependencies, and acceptance criteria
    - Note the risk level and any flagged concerns for each phase
 
@@ -30,7 +30,7 @@ Reads an approved battle plan (spell), decomposes it into individual tasks, assi
 
 3. **Assign tasks**
    - For each task, create a clear handoff:
-     - Task description (from the spell, enriched with context)
+     - Task description (from the potion, enriched with context)
      - Files to read (for context)
      - Files to modify (scope)
      - Acceptance criteria (how to know it's done)
@@ -41,15 +41,15 @@ Reads an approved battle plan (spell), decomposes it into individual tasks, assi
    - If an agent can't do a task (wrong tools, wrong role), flag it for user intervention
 
 4. **Track progress**
-   - Keep a running status in the spell file: mark tasks as `🔄 In Progress` or `✅ Done`
+   - Keep a running status in the potion file: mark tasks as `🔄 In Progress` or `✅ Done`
    - If a task takes longer than estimated, check in: "How's it going? Need anything?"
    - If a task is blocked, document the blocker and notify the user
-   - Update TASKS.md to reflect the current state of spell execution
+   - Update TASKS.md to reflect the current state of potion execution
    - After each task completes, verify it against the acceptance criteria
 
 5. **Report to the user**
    ```
-   ## Progress Report — <spell name>
+   ## Progress Report — <potion name>
 
    Phase 1: 🔄 In Progress
    - [✅] Set up database schema (Dinesh)
@@ -69,5 +69,5 @@ Reads an approved battle plan (spell), decomposes it into individual tasks, assi
 6. **Handle problems**
    - **Blocked task**: Can the orchestrator unblock it (e.g., by providing more context)? If not, escalate to the planner (Richard) or the user.
    - **Failed task**: If an agent can't complete a task, get a detailed failure report and reassign it — potentially to a different agent.
-   - **Changed requirements**: If the user changes their mind mid-execution, pause the spell, notify the planner (Richard), and wait for an updated spell.
+   - **Changed requirements**: If the user changes their mind mid-execution, pause the potion, notify the planner (Richard), and wait for an updated potion.
    - **Agent unavailability**: If an agent is not responding or producing garbage, reassign its tasks to another suitable agent and flag the issue.

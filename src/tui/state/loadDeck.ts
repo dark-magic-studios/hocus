@@ -3,7 +3,7 @@ import matter from "gray-matter";
 import fsExtra from "fs-extra";
 const { pathExists, readdir, readFile, stat } = fsExtra;
 import { parseSoulFile, SoulValidationError } from "../../schema/soul.js";
-import { readSpells } from "../../schema/spell.js";
+import { readPotions } from "../../schema/potion.js";
 import { detectStack } from "../../scanners/detect-stack.js";
 import { ALL_COMPILERS } from "../../compilers/index.js";
 import { OPENCODE_AGENT_DIR } from "../../compilers/opencode.js";
@@ -12,9 +12,9 @@ import {
   PROJECT_LEDGER_FILE,
   PROJECT_PERSONAS_DIR,
   PROJECT_SKILLS_DIR,
-  PROJECT_SPELLS_DIR,
+  PROJECT_POTIONS_DIR,
 } from "../../utils/paths.js";
-import type { Agent, DeckData, LedgerEntry, Skill, Spell, Tier, Ward } from "./types.js";
+import type { Agent, DeckData, LedgerEntry, Skill, Potion, Tier, Ward } from "./types.js";
 
 const LEDGER_TAIL = 200;
 
@@ -39,16 +39,16 @@ import { getHocusStatus } from "../../utils/status.js";
 export async function loadDeck(cwd: string): Promise<DeckData> {
   const warnings: string[] = [];
 
-  const [agents, spells, skills, wards, ledger, status] = await Promise.all([
+  const [agents, potions, skills, wards, ledger, status] = await Promise.all([
     loadAgents(cwd, warnings),
-    loadSpells(cwd, warnings),
+    loadPotions(cwd, warnings),
     loadSkills(cwd, warnings),
     loadWards(cwd),
     loadLedger(cwd, warnings),
     getHocusStatus(cwd),
   ]);
 
-  return { agents, spells, skills, wards, ledger, status, warnings };
+  return { agents, potions, skills, wards, ledger, status, warnings };
 }
 
 async function loadAgents(cwd: string, warnings: string[]): Promise<Agent[]> {
@@ -114,25 +114,25 @@ function hasCycle(start: Agent, byId: Map<string, Agent>): boolean {
   return false;
 }
 
-async function loadSpells(cwd: string, warnings: string[]): Promise<Spell[]> {
-  const dir = PROJECT_SPELLS_DIR(cwd);
+async function loadPotions(cwd: string, warnings: string[]): Promise<Potion[]> {
+  const dir = PROJECT_POTIONS_DIR(cwd);
   if (!(await pathExists(dir))) return [];
 
   const files = (await readdir(dir)).filter((f) => f.endsWith(".md"));
-  const parsed = await readSpells(dir);
+  const parsed = await readPotions(dir);
   const parsedPaths = new Set(parsed.map((s) => s.sourcePath));
 
   for (const file of files) {
     const fullPath = path.join(dir, file);
     if (!parsedPaths.has(fullPath)) {
-      warnings.push(`malformed spell file: ${path.relative(cwd, fullPath)} — skipped`);
+      warnings.push(`malformed potion file: ${path.relative(cwd, fullPath)} — skipped`);
     }
   }
 
   return parsed.map((s) => ({
     id: path.basename(s.sourcePath, ".md"),
-    name: s.feature ?? s.spell,
-    aka: s.spell,
+    name: s.feature ?? s.potion,
+    aka: s.potion,
     status: s.status === "done" ? "sealed" : s.status,
     progress: Math.round(s.progress),
     draftedBy: s.drafted_by ?? "unknown",

@@ -146,9 +146,9 @@ test("typing @ surfaces repo files for mentioning", async () => {
       </DeckProvider>,
     );
     await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
-    instance.stdin.write("@test-spell");
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("test-spell.md"), 4000);
-    assert.match(instance.lastFrame() ?? "", /test-spell\.md/);
+    instance.stdin.write("@test-potion");
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("test-potion.md"), 4000);
+    assert.match(instance.lastFrame() ?? "", /test-potion\.md/);
     instance.unmount();
   } finally {
     cleanupRepo(dir);

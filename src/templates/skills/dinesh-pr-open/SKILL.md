@@ -32,7 +32,7 @@ Opens pull requests with clean, well-structured implementation code. Competent a
 
    ## Related
    - Closes #<issue-number>
-   - Related spell: `_spells/<slug>.md`
+   - Related potion: `_potions/<slug>.md`
 
    ## Changes
    - <file>: <what changed and why>

@@ -24,10 +24,10 @@ export function makePopulatedRepo(): string {
     ].join("\n"),
   );
 
-  fs.mkdirSync(path.join(dir, "_spells"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "_potions"), { recursive: true });
   fs.writeFileSync(
-    path.join(dir, "_spells", "test-spell.md"),
-    ["---", "spell: DMS-1", "feature: Test Feature", "status: casting", "progress: 40", "---", "", "Body", ""].join(
+    path.join(dir, "_potions", "test-potion.md"),
+    ["---", "potion: DMS-1", "feature: Test Feature", "status: casting", "progress: 40", "---", "", "Body", ""].join(
       "\n",
     ),
   );

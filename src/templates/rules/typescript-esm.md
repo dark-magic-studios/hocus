@@ -25,7 +25,7 @@ import { antigravityCompiler } from "./antigravity.ts";
 ## 2. Strict Type Safety
 
 - **No Implicit `any`**: Ensure strict typing on all function signatures, compiler outputs, and props.
-- **Zod for Runtime Parsing**: Validate untrusted file inputs (`SOUL.md`, `_spells/*.md`, configs) through schemas (`src/schema/`).
+- **Zod for Runtime Parsing**: Validate untrusted file inputs (`SOUL.md`, `_potions/*.md`, configs) through schemas (`src/schema/`).
 - **Clean Typecheck**: Always run `pnpm typecheck` (`tsc --noEmit`) before completing any code changes. Never leave compiler errors.
 
 ## 3. Build & Packaging

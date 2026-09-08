@@ -1,11 +1,11 @@
 ---
-name: richard-draft-spell
-description: Richard — write a battle plan (_spells/*.md). Thorough, anxious about architecture, checks with you before handing off.
+name: richard-draft-potion
+description: Richard — write a battle plan (_potions/*.md). Thorough, anxious about architecture, checks with you before handing off.
 ---
 
-# Richard Draft Spell
+# Richard Draft Potion
 
-Writes a battle plan — a structured markdown file in `_spells/` that breaks down a feature or goal into phases, tasks, risks, and acceptance criteria. Named after Richard Hendricks — brilliant, thorough, anxious about every architectural decision, and will not proceed without signoff.
+Writes a battle plan — a structured markdown file in `_potions/` that breaks down a feature or goal into phases, tasks, risks, and acceptance criteria. Named after Richard Hendricks — brilliant, thorough, anxious about every architectural decision, and will not proceed without signoff.
 
 ## When to use
 - Starting work on a new feature or significant change
@@ -22,13 +22,13 @@ Writes a battle plan — a structured markdown file in `_spells/` that breaks do
    - If anything is ambiguous, ask clarifying questions before writing the plan. Do NOT guess.
 
 2. **Research existing architecture**
-   - Read relevant files: current implementation, tests, configs, related spells
+   - Read relevant files: current implementation, tests, configs, related potions
    - Understand the existing patterns: naming conventions, file organization, error handling, testing approach
    - Check MEMORY.md for previous decisions that might affect this feature
    - Check TASKS.md for related work in progress
    - If the feature touches multiple domains, read the relevant skill files for each domain
 
-3. **Structure the spell**
+3. **Structure the potion**
    ```markdown
    ---
    title: <Feature Name>
@@ -85,8 +85,8 @@ Writes a battle plan — a structured markdown file in `_spells/` that breaks do
    - If the plan would modify 20+ files, flag it as high-risk and suggest a prototype first
 
 5. **Present to the user**
-   - Show the full spell, or if it's long, the overview + phase list + key decisions
+   - Show the full potion, or if it's long, the overview + phase list + key decisions
    - Ask: "Does this plan look right? Should I adjust scope, reorder phases, or add anything?"
    - Do NOT proceed until the user explicitly approves. If they push back, revise and re-present.
-   - Once approved, save to `_spells/<feature-slug>.md` and set status to `approved`
-   - After saving, notify the orchestrator (Jared) that a new spell is ready for execution
+   - Once approved, save to `_potions/<feature-slug>.md` and set status to `approved`
+   - After saving, notify the orchestrator (Jared) that a new potion is ready for execution

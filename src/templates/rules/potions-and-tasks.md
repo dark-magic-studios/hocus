@@ -1,20 +1,20 @@
 ---
 trigger: model_decision
-globs: ["_spells/**/*", "TASKS.md", "PRODUCT.md", "MEMORY.md"]
-description: Workflow and schema for feature battle plans (_spells/*.md), task tracking in TASKS.md, and project memory persistence.
+globs: ["_potions/**/*", "TASKS.md", "PRODUCT.md", "MEMORY.md"]
+description: Workflow and schema for feature battle plans (_potions/*.md), task tracking in TASKS.md, and project memory persistence.
 ---
 
-# Feature Spells & Task Orchestration
+# Feature Potions & Task Orchestration
 
-Hocus uses a spell-based battle plan pattern to manage features and orchestrate agent handoffs.
+Hocus uses a potion-based battle plan pattern to manage features and orchestrate agent handoffs.
 
-## 1. Spell File Structure (`_spells/<spell-id>.md`)
+## 1. Potion File Structure (`_potions/<potion-id>.md`)
 
-Every non-trivial feature or refactor must be backed by a spell file:
+Every non-trivial feature or refactor must be backed by a potion file:
 
 ```markdown
 ---
-spell: DMS-42
+potion: DMS-42
 feature: Add Antigravity Subagent Support
 status: casting
 progress: 75
@@ -26,7 +26,7 @@ assigned_to: gilfoyle
 ...
 ```
 
-- `spell`: Ticket or unique identifier.
+- `potion`: Ticket or unique identifier.
 - `status`: Lifecycle phase:
   - `draft`: Plan being designed by the planner (Richard / Merlin).
   - `casting`: Active implementation in progress by orchestrator (Jared / Roger Bacon) and builders.
