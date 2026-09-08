@@ -6,6 +6,7 @@ import { Frame } from './components/Frame.js';
 import { DeckProvider } from './state/DeckContext.js';
 import { useTabs, type TabId } from './hooks/useTabs.js';
 import { PotionsTab } from './tabs/PotionsTab.js';
+import { SpellsTab } from './tabs/SpellsTab.js';
 import { SoulsTab } from './tabs/SoulsTab.js';
 import { CovenTab } from './tabs/CovenTab.js';
 import { GrimoireTab } from './tabs/GrimoireTab.js';
@@ -14,6 +15,7 @@ import { SeanceTab } from './tabs/SeanceTab.js';
 
 const PANES: Record<TabId, React.ComponentType> = {
   potions: PotionsTab,
+  spells: SpellsTab,
   souls: SoulsTab,
   coven: CovenTab,
   grimoire: GrimoireTab,
@@ -23,6 +25,7 @@ const PANES: Record<TabId, React.ComponentType> = {
 
 const HINTS: Record<TabId, string[]> = {
   potions: ['↑↓ navigate', '⏎ open', 'a assign', '? keys', 'q quit'],
+  spells: ['↑↓ navigate', '⏎ expand', '? keys', 'q quit'],
   souls: ['↑↓ navigate', '⏎ edit', 'w write', 'r recompile', 'q quit'],
   coven: ['↑↓ navigate', '⏎ inspect', 'n spawn familiar', 'x dismiss', 'q quit'],
   grimoire: ['↑↓ navigate', 'space toggle', 'i install pack', 'q quit'],

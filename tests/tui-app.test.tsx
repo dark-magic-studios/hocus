@@ -35,10 +35,14 @@ test("App switches tabs by digit index", async () => {
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
 
     instance.stdin.write("2");
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
+    assert.match(instance.lastFrame() ?? "", /\[spells]/);
+
+    instance.stdin.write("3");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[souls]"));
     assert.match(instance.lastFrame() ?? "", /\[souls]/);
 
-    instance.stdin.write("4");
+    instance.stdin.write("5");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[grimoire]"));
     assert.match(instance.lastFrame() ?? "", /\[grimoire]/);
 
@@ -57,10 +61,10 @@ test("App switches tabs with tab and shift-tab", async () => {
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
 
     instance.stdin.write("\t");
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("[souls]"));
-    assert.match(instance.lastFrame() ?? "", /\[souls]/);
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("[spells]"));
+    assert.match(instance.lastFrame() ?? "", /\[spells]/);
 
-    instance.stdin.write("[Z");
+    instance.stdin.write("\u001b[Z");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("[potions]"));
     assert.match(instance.lastFrame() ?? "", /\[potions]/);
 

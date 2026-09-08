@@ -2,13 +2,14 @@ import path from "node:path";
 import fsExtra from "fs-extra";
 const { readdir } = fsExtra;
 import { log } from "../utils/log.js";
-import { PROJECT_PERSONAS_DIR, PROJECT_POTIONS_DIR } from "../utils/paths.js";
+import { PROJECT_PERSONAS_DIR, PROJECT_POTIONS_DIR, PROJECT_SPELLS_DIR } from "../utils/paths.js";
 import { parseSoulFile, type SoulFile } from "../schema/soul.js";
 import { ALL_COMPILERS } from "../compilers/index.js";
 import type { Compiler, TargetId } from "../compilers/types.js";
 import { writeCompiledFile } from "../utils/files.js";
 import { detectStack } from "../scanners/detect-stack.js";
 import { readPotions } from "../schema/potion.js";
+import { readSpells, writeSpellsManifest } from "../schema/spell.js";
 import { renderDashboard } from "../templates/dashboard.js";
 import { getHocusStatus } from "../utils/status.js";
 
@@ -73,8 +74,13 @@ export async function runCast({ repoRoot, projectName, targets, dryRun = false }
 
   // the dashboard always gets refreshed, regardless of which compilers ran
   const potions = await readPotions(PROJECT_POTIONS_DIR(repoRoot));
+  const spellsDir = PROJECT_SPELLS_DIR(repoRoot);
+  const spells = await readSpells(spellsDir);
+  if (!dryRun && spells.length > 0) {
+    await writeSpellsManifest(spellsDir, spells);
+  }
   const statusInfo = await getHocusStatus(repoRoot);
-  const html = renderDashboard({ projectName: name, personas: souls, potions, skillsCount: statusInfo.skillCount, statusInfo });
+  const html = renderDashboard({ projectName: name, personas: souls, potions, spells, skillsCount: statusInfo.skillCount, statusInfo });
   await writeCompiledFile(repoRoot, { relPath: "dashboard.html", content: html }, { dryRun });
   log.ok("refreshed dashboard.html");
 }

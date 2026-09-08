@@ -150,18 +150,19 @@ hocus --silent   # Launch directly, skipping the boot animation
 
 ### Deck Tabs & Navigation
 
-Navigate between tabs using `Tab` / `Shift-Tab` or number keys `1`–`6`:
+Navigate between tabs using `Tab` / `Shift-Tab` or number keys `1`–`7`:
 
-1. **Séance (Agent Chat Deck)**: Interactive prompt interface.
-   - **Agent Switching**: Press `Tab` to cycle between active personas.
-   - **Backend Selection**: Press `Ctrl+B` to cycle AI backends (Claude, Codex, Antigravity, custom).
-   - **Autocomplete & Mentions**: Type `/` to trigger built-in commands and skills autocomplete; type `@` to mention repository files.
-   - **Built-in Commands**: Execute `/status`, `/sync`, or package.json scripts directly from the chat prompt.
-2. **Potions (Active Feature Plans)**: Track in-flight feature specifications, architectural blueprints, and step-by-step battle plans in `_potions/`.
+1. **Potions (Active Feature Plans)**: Track in-flight feature specifications, architectural blueprints, and step-by-step battle plans in `_potions/`.
+2. **Spells (Conventions & Guardrails)**: Inspect conventions in `_spells/`: incantations (output templates), wards (lifecycle hooks), and curses (stop-condition guardrails).
 3. **Souls (Persona Inspector)**: Browse installed `SOUL.md` personas in `.hocus/personas/`, inspect their metadata, view voice definitions, frontmatter schema validation, and triggers.
 4. **Coven (Agent Topology)**: Visualize agent parent-child hierarchy graphs, delegation structures, and orchestrator relationships.
 5. **Grimoire (Skill Management)**: View and manage open-standard `SKILL.md` files installed across `.agents/skills/` and `.claude/skills/`.
 6. **Scrying (Stack Scanner & Compilation Status)**: Automated repository stack scanner detecting languages, frameworks, and build systems, paired with live compilation status for target AI tools.
+7. **Séance (Agent Chat Deck)**: Interactive prompt interface.
+   - **Agent Switching**: Press `Tab` to cycle between active personas.
+   - **Backend Selection**: Press `Ctrl+B` to cycle AI backends (Claude, Codex, Antigravity, custom).
+   - **Autocomplete & Mentions**: Type `/` to trigger built-in commands and skills autocomplete; type `@` to mention repository files.
+   - **Built-in Commands**: Execute `/status`, `/sync`, or package.json scripts directly from the chat prompt.
 
 ---
 
@@ -207,7 +208,7 @@ hocus --silent     # skip boot animation
 
 ### `hocus init`
 
-Run once in the repo where you want the harness. Writes main entrypoint files (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `MEMORY.md`, `TASKS.md`, `_potions/`), copies the persona cast into `.hocus/personas/` for per-project editing, installs bundled skills, and spawns an interactive initialization session with the founder persona using your preferred agent CLI.
+Run once in the repo where you want the harness. Writes main entrypoint files (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `MEMORY.md`, `TASKS.md`, `_potions/`, `_spells/`), copies the persona cast into `.hocus/personas/` for per-project editing, installs bundled skills and starter spells, and spawns an interactive initialization session with the founder persona using your preferred agent CLI.
 
 If you use Command Code, `hocus init` asks about it (or respects `--command-code` / `--no-command-code`); when enabled it also compiles the cast into `.commandcode/agents/`, mirrors skills into `.commandcode/skills/`, and bakes [Taste](https://commandcode.ai/docs/taste) compatibility instructions into every compiled agent. Outside a TTY it auto-detects an existing `.commandcode/` directory instead of asking.
 
@@ -281,7 +282,7 @@ hocus skill add db-migration-safety --from ../dms-skills/skills/db-migration-saf
 
 ### `hocus sync`
 
-Fast refresh of `dashboard.html` from `.hocus/personas/` and `_potions/` without recompiling agent files.
+Fast refresh of `dashboard.html` from `.hocus/personas/`, `_potions/`, and `_spells/` without recompiling agent files.
 
 ```bash
 hocus sync
@@ -349,12 +350,12 @@ src/
 ├── cli.ts                  # CLI entrypoint & commander configuration
 ├── commands/               # init, cast, skill add, sync handlers
 ├── personas/               # bundled SOUL.md cast (13 personas)
-├── schema/                 # SOUL.md & potion frontmatter validation schemas
+├── schema/                 # SOUL.md, potion & spell validation schemas
 ├── compilers/              # target compilers (claude-code, codex, opencode, cursor, antigravity)
 ├── scanners/               # repository tech stack detection engine
-├── templates/              # main file templates, bundled rules & skills
+├── templates/              # main file templates, bundled rules, skills & starter spells
 ├── tui/                    # interactive Ink/OpenTUI command deck & tabs
-│   ├── tabs/               # Séance, Potions, Souls, Coven, Grimoire, Scrying
+│   ├── tabs/               # Séance, Potions, Spells, Souls, Coven, Grimoire, Scrying
 │   ├── chat/               # prompt engine, slash commands, mentions
 │   └── boot/               # boot animation & theme definitions
 └── utils/

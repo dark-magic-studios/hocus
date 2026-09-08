@@ -54,9 +54,23 @@ export interface LedgerEntry {
   costUsd: number;
 }
 
+export interface SpellItem {
+  id: string;
+  name: string;
+  type: 'incantation' | 'ward' | 'curse';
+  description?: string;
+  trigger?: string;
+  calls?: string;
+  severity?: 'hard' | 'soft';
+  body: string;
+  path: string;
+  relPath: string;
+}
+
 export interface DeckData {
   agents: Agent[];
   potions: Potion[];
+  spells: SpellItem[];
   skills: Skill[];
   wards: Ward[];
   ledger: LedgerEntry[];

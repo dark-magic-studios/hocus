@@ -13,8 +13,10 @@ import {
   PROJECT_PERSONAS_DIR,
   PROJECT_SKILLS_DIR,
   PROJECT_POTIONS_DIR,
+  PROJECT_SPELLS_DIR,
 } from "../../utils/paths.js";
-import type { Agent, DeckData, LedgerEntry, Skill, Potion, Tier, Ward } from "./types.js";
+import { readSpells } from "../../schema/spell.js";
+import type { Agent, DeckData, LedgerEntry, Skill, Potion, SpellItem, Tier, Ward } from "./types.js";
 
 const LEDGER_TAIL = 200;
 
@@ -39,16 +41,17 @@ import { getHocusStatus } from "../../utils/status.js";
 export async function loadDeck(cwd: string): Promise<DeckData> {
   const warnings: string[] = [];
 
-  const [agents, potions, skills, wards, ledger, status] = await Promise.all([
+  const [agents, potions, spells, skills, wards, ledger, status] = await Promise.all([
     loadAgents(cwd, warnings),
     loadPotions(cwd, warnings),
+    loadSpells(cwd, warnings),
     loadSkills(cwd, warnings),
     loadWards(cwd),
     loadLedger(cwd, warnings),
     getHocusStatus(cwd),
   ]);
 
-  return { agents, potions, skills, wards, ledger, status, warnings };
+  return { agents, potions, spells, skills, wards, ledger, status, warnings };
 }
 
 async function loadAgents(cwd: string, warnings: string[]): Promise<Agent[]> {
@@ -138,6 +141,25 @@ async function loadPotions(cwd: string, warnings: string[]): Promise<Potion[]> {
     draftedBy: s.drafted_by ?? "unknown",
     assignedTo: s.assigned_to ?? undefined,
     path: s.sourcePath,
+  }));
+}
+
+async function loadSpells(cwd: string, warnings: string[]): Promise<SpellItem[]> {
+  const dir = PROJECT_SPELLS_DIR(cwd);
+  if (!(await pathExists(dir))) return [];
+
+  const parsed = await readSpells(dir);
+  return parsed.map((s) => ({
+    id: s.name,
+    name: s.name,
+    type: s.type,
+    description: s.description,
+    trigger: s.type === "ward" ? s.trigger : undefined,
+    calls: s.type === "ward" ? s.calls : undefined,
+    severity: s.type === "curse" ? s.severity : undefined,
+    body: s.body,
+    path: s.sourcePath,
+    relPath: s.relPath,
   }));
 }
 

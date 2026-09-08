@@ -8,8 +8,10 @@ import {
   BUNDLED_PERSONAS_DIR,
   BUNDLED_SKILLS_DIR,
   BUNDLED_RULES_DIR,
+  BUNDLED_SPELLS_DIR,
   PROJECT_PERSONAS_DIR,
   PROJECT_RULES_DIR,
+  PROJECT_SPELLS_DIR,
 } from "../utils/paths.js";
 import { parseSoulFile } from "../schema/soul.js";
 import { installSkill, writeCompiledFile } from "../utils/files.js";
@@ -170,7 +172,7 @@ Only after the user has confirmed both the tech stack and product definition sho
       ? `3. **Confirm the naming convention is Silicon Valley.** The user has chosen the **Silicon Valley** cast — personas use Silicon Valley character names (Richard, Jared, Gilfoyle, Dinesh, Erlich, Gavin, Laurie, Monica, Peter Gregory, Russ, etc.) and skills are prefixed with those names (e.g. /richard-draft-potion, /jared-orchestrate, /gilfoyle-pr-review). Use Silicon Valley names consistently for all personas, skills, and references. Do not mix in wizard names.`
       : `3. **Confirm the naming convention is Wizards.** The user has chosen the **Wizard** cast — personas use wizard names (Merlin, Roger Bacon, Zoroaster, Flamel, Circe, The Apprentice, John Dee, Nostradamus, Midas, Prospero, etc.) and skills are prefixed with those names (e.g. /merlin-draft-potion, /roger-bacon-orchestrate, /zoroaster-pr-review). Use wizard names consistently for all personas, skills, and references. Do not mix in Silicon Valley names.`;
 
-  const tail = `Then create a team of 5-10 agents and skills and ask the user to accept/tweak each of them. each of them should have a soul based on a soul from this repository which will dictate the tone and output of the agent. also include specialized skills for this repository (for example a new-component or new-hook for frontend and new-controller or new-model for backend). the team must include an orchestrator agent whose job is to (1) maintain battle plans — structured markdown files that break down active goals into phases, tasks, and owners — and keep them up to date as work progresses, and (2) read the planner's task queue and delegate individual tasks to the appropriate specialized sub-agents by spawning them with the right context. create a hocus.md with the agents to be created, mark them as done once you've stopped working on them and after all are done build the initial dashboard.html for this the project. also set up the project's foundational documents: PRODUCT.md (product vision, goals, target users), AGENTS.md (registry of all created agents), MEMORY.md (persistent memory index), and TASKS.md (current work items). fill each with real content derived from the repository — not placeholder text. skills and MCP servers have been pre-installed in the agent plugin under .agents/plugins/ (following agent-plugins.org convention) and .agents/skills/ — reference them when creating agents, and create additional project-specific skills as needed. workspace rules and coding guidelines have been installed under .agents/rules/ (architecture, subagent conventions, token efficiency, commit hygiene, testing standards, etc.) — adhere to them and reference them when configuring the project and defining agent roles. RTK and graphify have also been configured across providers.`;
+  const tail = `Then create a team of 5-10 agents and skills and ask the user to accept/tweak each of them. each of them should have a soul based on a soul from this repository which will dictate the tone and output of the agent. also include specialized skills for this repository (for example a new-component or new-hook for frontend and new-controller or new-model for backend). the team must include an orchestrator agent whose job is to (1) maintain battle plans — structured markdown files that break down active goals into phases, tasks, and owners — and keep them up to date as work progresses, and (2) read the planner's task queue and delegate individual tasks to the appropriate specialized sub-agents by spawning them with the right context. create a hocus.md with the agents to be created, mark them as done once you've stopped working on them and after all are done build the initial dashboard.html for this the project. also set up the project's foundational documents: PRODUCT.md (product vision, goals, target users), AGENTS.md (registry of all created agents), MEMORY.md (persistent memory index), and TASKS.md (current work items). starter spells (atomic conventions, templates, hooks, and guardrails) have been installed under _spells/ (incantations/, wards/, curses/) — adhere to them and create additional spells as conventions emerge. fill each with real content derived from the repository — not placeholder text. skills and MCP servers have been pre-installed in the agent plugin under .agents/plugins/ (following agent-plugins.org convention) and .agents/skills/ — reference them when creating agents, and create additional project-specific skills as needed. workspace rules and coding guidelines have been installed under .agents/rules/ (architecture, subagent conventions, token efficiency, commit hygiene, testing standards, etc.) — adhere to them and reference them when configuring the project and defining agent roles. RTK and graphify have also been configured across providers.`;
 
   const commandCodeSection = commandCode
     ? `\n\nCommand Code support: this project uses Command Code (cmdc) as one of its agent harnesses. Native subagents are pre-compiled into .commandcode/agents/ and skills are mirrored into .commandcode/skills/ — maintain them when creating agents and skills (a Command Code subagent is a markdown file with name/description/tools frontmatter whose body is the system prompt). The user's learned preferences ("taste") live in .commandcode/taste/taste.md plus category packages in .commandcode/taste/<category>/taste.md (global ones in ~/.commandcode/taste/) — read them before starting work, treat them as requirements, never hand-edit them, and record any preference the user states using the taste tool. Document this in AGENTS.md so every agent stays taste-compatible.`
@@ -336,6 +338,43 @@ export async function installRules(
       await copy(path.join(BUNDLED_RULES_DIR, file), dest);
     }
     installedCount++;
+  }
+  return installedCount;
+}
+
+/**
+ * Install starter spells into _spells/ and generate manifest.json
+ */
+export async function installSpells(
+  repoRoot: string,
+  options: { dryRun?: boolean } = {},
+): Promise<number> {
+  const spellsDir = PROJECT_SPELLS_DIR(repoRoot);
+  if (!(await pathExists(BUNDLED_SPELLS_DIR))) {
+    return 0;
+  }
+  const fg = (await import("fast-glob")).default;
+  const files = await fg("**/*.md", { cwd: BUNDLED_SPELLS_DIR, onlyFiles: true });
+  let installedCount = 0;
+  for (const relFile of files) {
+    const dest = path.join(spellsDir, relFile);
+    if (await pathExists(dest)) continue;
+    if (options.dryRun) {
+      log.planned(path.relative(repoRoot, dest));
+    } else {
+      await ensureDir(path.dirname(dest));
+      await copy(path.join(BUNDLED_SPELLS_DIR, relFile), dest);
+    }
+    installedCount++;
+  }
+  if (!options.dryRun) {
+    const { readSpells, writeSpellsManifest } = await import("../schema/spell.js");
+    const spells = await readSpells(spellsDir);
+    if (spells.length > 0) {
+      await writeSpellsManifest(spellsDir, spells);
+    }
+  } else {
+    log.planned(path.join("_spells", "manifest.json"));
   }
   return installedCount;
 }
@@ -680,6 +719,10 @@ export async function runInit({
     const ruleCount = await installRules(repoRoot, { dryRun });
     log.ok(`installed ${ruleCount} workspace rules to .agents/rules/`);
   }
+
+  // 1h. Install starter spells into _spells/ (incantations, wards, curses)
+  const spellCount = await installSpells(repoRoot, { dryRun });
+  log.ok(`installed ${spellCount} spells to _spells/ (incantations, wards, curses)`);
 
   // 2. Parse the founder soul (transformed, cast-aware) and fire an interactive
   //    agent session with its body as the system prompt and the cast-aware init task.

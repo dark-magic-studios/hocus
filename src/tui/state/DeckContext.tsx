@@ -13,6 +13,7 @@ interface DeckState {
 const EMPTY: DeckData = {
   agents: [],
   potions: [],
+  spells: [],
   skills: [],
   wards: [],
   ledger: [],

@@ -32,6 +32,12 @@ export function makePopulatedRepo(): string {
     ),
   );
 
+  fs.mkdirSync(path.join(dir, "_spells", "incantations"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "_spells", "incantations", "test-spell.md"),
+    ["---", "name: test-spell", "type: incantation", "---", "", "Format: test", ""].join("\n"),
+  );
+
   fs.mkdirSync(path.join(dir, ".claude", "skills", "test-skill"), { recursive: true });
   fs.writeFileSync(
     path.join(dir, ".claude", "skills", "test-skill", "SKILL.md"),

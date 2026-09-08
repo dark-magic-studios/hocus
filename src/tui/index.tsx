@@ -30,6 +30,11 @@ function buildBootTasks(deck: DeckData, stack: DetectedStack): BootTask[] {
       run: async () => `${activePotions} active`,
     },
     {
+      id: 'spells',
+      label: ' loading spells',
+      run: async () => `${deck.spells.length} configured`,
+    },
+    {
       id: 'souls',
       label: ' loading souls',
       run: async () => `${deck.agents.length} bound`,
@@ -51,7 +56,7 @@ function printPlainSummary(deck: DeckData, stack: DetectedStack): void {
   const stackSummary = [...stack.languages, ...stack.frameworks].join(', ') || 'none detected';
   const detectedWards = deck.wards.filter((w) => w.detected).length;
   const lines = [
-    `hocus — ${deck.agents.length} soul(s), ${deck.potions.length} potion(s), ${deck.skills.length} skill(s)`,
+    `hocus — ${deck.agents.length} soul(s), ${deck.potions.length} potion(s), ${deck.spells.length} spell(s), ${deck.skills.length} skill(s)`,
     `stack: ${stackSummary}`,
     `wards: ${detectedWards}/${deck.wards.length} target(s) detected`,
     `ledger: ${deck.ledger.length} entr${deck.ledger.length === 1 ? 'y' : 'ies'}`,

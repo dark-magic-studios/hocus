@@ -16,6 +16,7 @@ test("empty repo loads a fully empty, error-free deck", async () => {
     const deck = await loadDeck(dir);
     assert.deepEqual(deck.agents, []);
     assert.deepEqual(deck.potions, []);
+    assert.deepEqual(deck.spells, []);
     assert.deepEqual(deck.ledger, []);
     assert.deepEqual(deck.warnings, []);
     // BUNDLED_SKILLS_DIR resolves to this package's own src/templates/skills/, not the
@@ -121,6 +122,8 @@ test("populated repo loads real counts across every section", async () => {
     const deck = await loadDeck(dir);
     assert.equal(deck.agents.length, 1);
     assert.equal(deck.potions.length, 1);
+    assert.equal(deck.spells.length, 1);
+    assert.equal(deck.spells[0]?.name, "test-spell");
     assert.equal(deck.ledger.length, 1);
     const localSkill = deck.skills.find((s) => s.id === "test-skill");
     assert.equal(localSkill?.source, "local");
