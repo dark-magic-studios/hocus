@@ -69,7 +69,7 @@ const SKILL_PREFIX_TO_VALLEY: Record<string, string> = {
   "merlin": "richard",
   "russ": "russ",
   "prospero": "russ",
-  // project-manager skills are generic (pm-sync-linear etc) — leave untouched
+  // project-manager skills are generic (scry-tasks etc) — leave untouched
 };
 
 // Skills that are persona-specific and should be renamed when cast switches.
