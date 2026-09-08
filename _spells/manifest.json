@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "spells": [
+    {
+      "name": "changelog-entry",
+      "type": "incantation",
+      "file": "incantations/changelog-entry.md",
+      "description": "Keep-A-Changelog compatible release entry"
+    },
+    {
+      "name": "commit-message",
+      "type": "incantation",
+      "file": "incantations/commit-message.md",
+      "description": "Standard git commit message format"
+    },
+    {
+      "name": "devlog-bullet",
+      "type": "incantation",
+      "file": "incantations/devlog-bullet.md",
+      "description": "Standard entry format for MEMORY.md and project logs"
+    },
+    {
+      "name": "failure-diagnosis",
+      "type": "incantation",
+      "file": "incantations/failure-diagnosis.md",
+      "description": "Incident or test regression triage template"
+    },
+    {
+      "name": "linear-issue-title",
+      "type": "incantation",
+      "file": "incantations/linear-issue-title.md",
+      "description": "Strict Linear and issue tracker title format"
+    },
+    {
+      "name": "pr-description",
+      "type": "incantation",
+      "file": "incantations/pr-description.md",
+      "description": "Standard pull request summary template"
+    },
+    {
+      "name": "test-plan",
+      "type": "incantation",
+      "file": "incantations/test-plan.md",
+      "description": "Pre-completion verification checklist and test plan"
+    },
+    {
+      "name": "changelog-on-release",
+      "type": "ward",
+      "file": "wards/changelog-on-release.md",
+      "description": "Generates changelog diff before tagging a new release",
+      "trigger": "pre-tag-release",
+      "calls": "changelog-entry"
+    },
+    {
+      "name": "commit-on-done",
+      "type": "ward",
+      "file": "wards/commit-on-done.md",
+      "description": "Auto-commit when task finishes and changes are staged",
+      "trigger": "after-task-complete",
+      "calls": "commit-message"
+    },
+    {
+      "name": "diagnose-on-test-fail",
+      "type": "ward",
+      "file": "wards/diagnose-on-test-fail.md",
+      "description": "Triages failing tests before making edits",
+      "trigger": "on-test-fail",
+      "calls": "failure-diagnosis"
+    },
+    {
+      "name": "pr-on-open",
+      "type": "ward",
+      "file": "wards/pr-on-open.md",
+      "description": "Automatically formats PR description when opening a pull request",
+      "trigger": "on-pr-open",
+      "calls": "pr-description"
+    },
+    {
+      "name": "sync-memory-on-arch-change",
+      "type": "ward",
+      "file": "wards/sync-memory-on-arch-change.md",
+      "description": "Persists major architectural decisions into MEMORY.md",
+      "trigger": "after-architecture-decision",
+      "calls": "devlog-bullet"
+    },
+    {
+      "name": "verify-before-done",
+      "type": "ward",
+      "file": "wards/verify-before-done.md",
+      "description": "Runs and outputs test plan before completing tasks",
+      "trigger": "before-task-complete",
+      "calls": "test-plan"
+    },
+    {
+      "name": "no-blind-catch-suppression",
+      "type": "curse",
+      "file": "curses/no-blind-catch-suppression.md",
+      "description": "Forbids empty catch blocks and unexplained error swallowing",
+      "severity": "hard"
+    },
+    {
+      "name": "no-db-file-commits",
+      "type": "curse",
+      "file": "curses/no-db-file-commits.md",
+      "description": "Block committing database and migration dump files",
+      "severity": "hard"
+    },
+    {
+      "name": "no-destructive-git-cleanup",
+      "type": "curse",
+      "file": "curses/no-destructive-git-cleanup.md",
+      "description": "Forbids destructive clean commands that permanently lose uncommitted work",
+      "severity": "hard"
+    },
+    {
+      "name": "no-force-push-main",
+      "type": "curse",
+      "file": "curses/no-force-push-main.md",
+      "description": "Hard stop against force pushing protected branches",
+      "severity": "hard"
+    },
+    {
+      "name": "no-secrets-or-env-commits",
+      "type": "curse",
+      "file": "curses/no-secrets-or-env-commits.md",
+      "description": "Hard stop against committing environment files or credentials",
+      "severity": "hard"
+    },
+    {
+      "name": "no-unconfirmed-package-installs",
+      "type": "curse",
+      "file": "curses/no-unconfirmed-package-installs.md",
+      "description": "Soft stop before adding new runtime dependencies",
+      "severity": "soft"
+    }
+  ]
+}

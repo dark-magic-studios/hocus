@@ -94,7 +94,7 @@
   <section class="hero">
     <p class="eyebrow">/^\ // command deck</p>
     <h1 class="wordmark"><span class="brand-mark">/^\</span>hocus<span class="cursor">_</span></h1>
-    <p class="tagline">13 agents registered · 0 skills · 0 active potions</p>
+    <p class="tagline">13 agents registered · 0 skills · 0 active potions · 19 spells</p>
   </section>
 
   <section class="block">
@@ -140,7 +140,177 @@
       <h2>// _spells/</h2>
       <p>atomic conventions, templates, hooks, and guardrails.</p>
     </div>
-    <div class="spell-grid"><p class="empty-state">No conventions configured yet in <code>_spells/</code>.</p></div>
+    <div class="spell-grid">
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">changelog-entry</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Keep-A-Changelog compatible release entry</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">commit-message</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Standard git commit message format</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">devlog-bullet</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Standard entry format for MEMORY.md and project logs</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">failure-diagnosis</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Incident or test regression triage template</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">linear-issue-title</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Strict Linear and issue tracker title format</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">pr-description</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Standard pull request summary template</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-incantation">incantation</span>
+        </div>
+        <p class="spell-name">test-plan</p>
+        <p class="spell-meta">template</p>
+        <p class="spell-desc">Pre-completion verification checklist and test plan</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">changelog-on-release</p>
+        <p class="spell-meta">trigger: <b>pre-tag-release</b> · calls: <b>changelog-entry</b></p>
+        <p class="spell-desc">Generates changelog diff before tagging a new release</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">commit-on-done</p>
+        <p class="spell-meta">trigger: <b>after-task-complete</b> · calls: <b>commit-message</b></p>
+        <p class="spell-desc">Auto-commit when task finishes and changes are staged</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">diagnose-on-test-fail</p>
+        <p class="spell-meta">trigger: <b>on-test-fail</b> · calls: <b>failure-diagnosis</b></p>
+        <p class="spell-desc">Triages failing tests before making edits</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">pr-on-open</p>
+        <p class="spell-meta">trigger: <b>on-pr-open</b> · calls: <b>pr-description</b></p>
+        <p class="spell-desc">Automatically formats PR description when opening a pull request</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">sync-memory-on-arch-change</p>
+        <p class="spell-meta">trigger: <b>after-architecture-decision</b> · calls: <b>devlog-bullet</b></p>
+        <p class="spell-desc">Persists major architectural decisions into MEMORY.md</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-ward">ward</span>
+        </div>
+        <p class="spell-name">verify-before-done</p>
+        <p class="spell-meta">trigger: <b>before-task-complete</b> · calls: <b>test-plan</b></p>
+        <p class="spell-desc">Runs and outputs test plan before completing tasks</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-blind-catch-suppression</p>
+        <p class="spell-meta">severity: <b>hard</b></p>
+        <p class="spell-desc">Forbids empty catch blocks and unexplained error swallowing</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-db-file-commits</p>
+        <p class="spell-meta">severity: <b>hard</b></p>
+        <p class="spell-desc">Block committing database and migration dump files</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-destructive-git-cleanup</p>
+        <p class="spell-meta">severity: <b>hard</b></p>
+        <p class="spell-desc">Forbids destructive clean commands that permanently lose uncommitted work</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-force-push-main</p>
+        <p class="spell-meta">severity: <b>hard</b></p>
+        <p class="spell-desc">Hard stop against force pushing protected branches</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-secrets-or-env-commits</p>
+        <p class="spell-meta">severity: <b>hard</b></p>
+        <p class="spell-desc">Hard stop against committing environment files or credentials</p>
+      </div>
+
+      <div class="spell-card">
+        <div class="spell-top">
+          <span class="spell-type badge-curse">curse</span>
+        </div>
+        <p class="spell-name">no-unconfirmed-package-installs</p>
+        <p class="spell-meta">severity: <b>soft</b></p>
+        <p class="spell-desc">Soft stop before adding new runtime dependencies</p>
+      </div></div>
   </section>
 
   <section class="block">

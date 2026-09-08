@@ -131,9 +131,14 @@ test("installSpells copies bundled starter spells and writes manifest.json", asy
     assert.ok(installed >= 3);
 
     const spells = await readSpells(PROJECT_SPELLS_DIR(dir));
+    assert.equal(installed, 19);
+    assert.equal(spells.length, 19);
     assert.ok(spells.some((s) => s.name === "commit-message" && s.type === "incantation"));
+    assert.ok(spells.some((s) => s.name === "pr-description" && s.type === "incantation"));
     assert.ok(spells.some((s) => s.name === "commit-on-done" && s.type === "ward"));
+    assert.ok(spells.some((s) => s.name === "pr-on-open" && s.type === "ward"));
     assert.ok(spells.some((s) => s.name === "no-db-file-commits" && s.type === "curse"));
+    assert.ok(spells.some((s) => s.name === "no-secrets-or-env-commits" && s.type === "curse"));
 
     const manifestPath = path.join(PROJECT_SPELLS_DIR(dir), "manifest.json");
     assert.ok(fs.existsSync(manifestPath));
@@ -141,3 +146,14 @@ test("installSpells copies bundled starter spells and writes manifest.json", asy
     cleanupRepo(dir);
   }
 });
+
+test("spellweaver skill is bundled and has valid instructions", async () => {
+  const skillFile = path.join(process.cwd(), "src", "templates", "skills", "spellweaver", "SKILL.md");
+  assert.ok(fs.existsSync(skillFile));
+  const raw = fs.readFileSync(skillFile, "utf8");
+  assert.match(raw, /name:\s*spellweaver/);
+  assert.match(raw, /Emoji & Visual Formatting/);
+  assert.match(raw, /Tone & Formality/);
+  assert.match(raw, /Guardrail Severity/);
+});
+
