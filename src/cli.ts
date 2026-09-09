@@ -10,6 +10,7 @@ import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
 import { runUpgrade } from "./commands/upgrade.js";
 import { runAbsorb } from "./commands/absorb.js";
+import { runRecast } from "./commands/recast-cast.js";
 import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
@@ -209,8 +210,37 @@ program
   });
 
 program
+  .command("recast [castName]")
+  .description("switch naming cast — renames personas, skills, and soul files (valley, wizard, or custom)")
+  .option("--list", "list available casts")
+  .option("--create", "create a new custom cast JSON template")
+  .option("--delete", "delete a custom cast definition")
+  .option("--label <label>", "human-readable label when creating a custom cast")
+  .option("--dry-run", "preview changes without modifying files")
+  .action(async (castName: string | undefined, opts: { list?: boolean; create?: boolean; delete?: boolean; label?: string; dryRun?: boolean }) => {
+    if (opts.list) {
+      await runRecast({ repoRoot: process.cwd(), castName: castName ?? "", list: true });
+      return;
+    }
+    if (opts.create) {
+      if (!castName) throw new Error("cast id required — e.g. hocus recast my-team --create");
+      await runRecast({ repoRoot: process.cwd(), castName, create: true, label: opts.label });
+      return;
+    }
+    if (opts.delete) {
+      if (!castName) throw new Error("cast id required — e.g. hocus recast my-team --delete");
+      await runRecast({ repoRoot: process.cwd(), castName, delete: true, dryRun: opts.dryRun });
+      return;
+    }
+    if (!castName) {
+      await runRecast({ repoRoot: process.cwd(), castName: "", list: true });
+      return;
+    }
+    await runRecast({ repoRoot: process.cwd(), castName, dryRun: opts.dryRun });
+  });
+
+program
   .command("absorb [persona]")
-  .alias("recast")
   .description("remove a persona and migrate its dependent agents to a replacement persona")
   .option("-i, --into <replacement>", "replacement persona to migrate agents into")
   .option("--dry-run", "print planned changes without modifying files")

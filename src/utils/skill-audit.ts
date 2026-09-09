@@ -6,47 +6,36 @@ import {
   PROJECT_PLUGINS_DIR,
   PROJECT_SKILLS_DIR,
 } from "./paths.js";
+import { normalizeCast, transformSkillFrontmatterForCast } from "./cast.js";
 import {
-  type Cast,
-  CAST_MAP,
-  getSkillIdForCast,
-  normalizeCast,
-  transformSkillFrontmatterForCast,
-} from "./cast.js";
+  getSkillIdForProjectCast,
+  isBuiltinCast,
+  loadCustomCast,
+  readProjectCastId,
+  transformSkillForProjectCast,
+  type ProjectCastId,
+} from "./cast-registry.js";
 
 export type SkillSyncStatus = "current" | "outdated" | "available" | "local";
 
-export async function detectProjectCast(repoRoot: string, override?: string): Promise<Cast> {
+export async function detectProjectCast(repoRoot: string, override?: string): Promise<ProjectCastId> {
   if (override) {
     const normalized = normalizeCast(override);
-    if (!normalized) throw new Error(`invalid cast "${override}" — expected "wizard" or "valley"`);
-    return normalized;
+    if (normalized) return normalized;
+    const custom = await loadCustomCast(repoRoot, override);
+    if (custom) return override;
+    throw new Error(`invalid cast "${override}" — expected "wizard", "valley", or a custom cast id`);
   }
-  const configPath = path.join(repoRoot, ".hocus", "config.json");
-  if (await pathExists(configPath)) {
-    try {
-      const parsed = JSON.parse(await readFile(configPath, "utf8"));
-      if (parsed.cast === "valley" || parsed.cast === "wizard") return parsed.cast as Cast;
-    } catch {}
-  }
-  const personasDir = path.join(repoRoot, ".hocus", "personas");
-  if (await pathExists(personasDir)) {
-    const files = (await readdir(personasDir).catch(() => [] as string[])).filter((f) =>
-      f.endsWith(".soul.md"),
-    );
-    let wizardCount = 0;
-    let valleyCount = 0;
-    const wizardSlugs = new Set(Object.values(CAST_MAP).map((v) => v.wizardSlug));
-    const valleySlugs = new Set(Object.keys(CAST_MAP));
-    for (const file of files) {
-      const slug = path.basename(file, ".soul.md");
-      if (wizardSlugs.has(slug)) wizardCount++;
-      if (valleySlugs.has(slug)) valleyCount++;
-    }
-    if (wizardCount > valleyCount) return "wizard";
-    if (valleyCount > wizardCount) return "valley";
-  }
-  return "wizard";
+  return readProjectCastId(repoRoot);
+}
+
+async function castContext(repoRoot: string, castId: ProjectCastId) {
+  const custom = isBuiltinCast(castId) ? undefined : await loadCustomCast(repoRoot, castId);
+  return { castId, custom };
+}
+
+function skillNameForCast(bundledId: string, castId: ProjectCastId, custom?: Awaited<ReturnType<typeof loadCustomCast>>): string {
+  return getSkillIdForProjectCast(bundledId, castId, custom);
 }
 
 async function detectPluginNames(repoRoot: string): Promise<string[]> {
@@ -84,14 +73,15 @@ async function findInstalledSkillPath(
 export async function bundledSkillNeedsUpdate(
   repoRoot: string,
   bundledSkillId: string,
-  cast: Cast,
+  castId: ProjectCastId,
   installedPath?: string,
 ): Promise<boolean> {
+  const { custom } = await castContext(repoRoot, castId);
   const src = path.join(BUNDLED_SKILLS_DIR, bundledSkillId);
   const s = await stat(src).catch(() => undefined);
   if (!s?.isDirectory()) return false;
 
-  const targetSkillName = getSkillIdForCast(bundledSkillId, cast);
+  const targetSkillName = skillNameForCast(bundledSkillId, castId, custom);
   const pluginNames = await detectPluginNames(repoRoot);
   const existingPath =
     installedPath ?? (await findInstalledSkillPath(repoRoot, targetSkillName, pluginNames));
@@ -99,7 +89,9 @@ export async function bundledSkillNeedsUpdate(
 
   const existingRaw = await readFile(path.join(existingPath, "SKILL.md"), "utf8").catch(() => "");
   const bundledRaw = await readFile(path.join(src, "SKILL.md"), "utf8").catch(() => "");
-  const transformedBundled = transformSkillFrontmatterForCast(bundledRaw, cast);
+  const transformedBundled = isBuiltinCast(castId)
+    ? transformSkillFrontmatterForCast(bundledRaw, castId)
+    : transformSkillForProjectCast(bundledRaw, castId, custom);
   if (existingRaw !== transformedBundled) return true;
 
   const bundledEntries = await readdir(src).catch(() => [] as string[]);
@@ -120,20 +112,22 @@ export async function bundledSkillNeedsUpdate(
 export async function resolveBundledSkillId(
   repoRoot: string,
   skillId: string,
-  cast: Cast,
+  castId: ProjectCastId,
 ): Promise<string | undefined> {
+  const { custom } = await castContext(repoRoot, castId);
   const bundledSkills = (await readdir(BUNDLED_SKILLS_DIR)).filter(
     (f) => !f.startsWith(".") && f !== "example-skill",
   );
   for (const bundledId of bundledSkills) {
-    if (getSkillIdForCast(bundledId, cast) === skillId) return bundledId;
+    if (skillNameForCast(bundledId, castId, custom) === skillId) return bundledId;
     if (bundledId === skillId) return bundledId;
   }
   return undefined;
 }
 
 export async function buildSkillSyncMap(repoRoot: string): Promise<Map<string, SkillSyncStatus>> {
-  const cast = await detectProjectCast(repoRoot);
+  const castId = await detectProjectCast(repoRoot);
+  const { custom } = await castContext(repoRoot, castId);
   const pluginNames = await detectPluginNames(repoRoot);
   const syncMap = new Map<string, SkillSyncStatus>();
 
@@ -142,13 +136,13 @@ export async function buildSkillSyncMap(repoRoot: string): Promise<Map<string, S
   );
 
   for (const bundledId of bundledSkills) {
-    const targetName = getSkillIdForCast(bundledId, cast);
+    const targetName = skillNameForCast(bundledId, castId, custom);
     const installedPath = await findInstalledSkillPath(repoRoot, targetName, pluginNames);
     if (!installedPath) {
       syncMap.set(bundledId, "available");
       continue;
     }
-    const outdated = await bundledSkillNeedsUpdate(repoRoot, bundledId, cast, installedPath);
+    const outdated = await bundledSkillNeedsUpdate(repoRoot, bundledId, castId, installedPath);
     syncMap.set(targetName, outdated ? "outdated" : "current");
     syncMap.set(bundledId, outdated ? "outdated" : "current");
   }
@@ -157,12 +151,13 @@ export async function buildSkillSyncMap(repoRoot: string): Promise<Map<string, S
 }
 
 export async function upgradeSingleSkill(repoRoot: string, skillId: string): Promise<boolean> {
-  const cast = await detectProjectCast(repoRoot);
-  const bundledId = await resolveBundledSkillId(repoRoot, skillId, cast);
+  const castId = await detectProjectCast(repoRoot);
+  const { custom } = await castContext(repoRoot, castId);
+  const bundledId = await resolveBundledSkillId(repoRoot, skillId, castId);
   if (!bundledId) return false;
 
   const src = path.join(BUNDLED_SKILLS_DIR, bundledId);
-  const targetSkillName = getSkillIdForCast(bundledId, cast);
+  const targetSkillName = skillNameForCast(bundledId, castId, custom);
   const pluginNames = await detectPluginNames(repoRoot);
   const hasCommandCode = await pathExists(path.join(repoRoot, ".commandcode"));
 
@@ -180,7 +175,9 @@ export async function upgradeSingleSkill(repoRoot: string, skillId: string): Pro
     const skillFile = path.join(target, "SKILL.md");
     if (await pathExists(skillFile)) {
       const raw = await readFile(skillFile, "utf8");
-      const patched = transformSkillFrontmatterForCast(raw, cast);
+      const patched = isBuiltinCast(castId)
+        ? transformSkillFrontmatterForCast(raw, castId)
+        : transformSkillForProjectCast(raw, castId, custom);
       if (patched !== raw) await writeFile(skillFile, patched, "utf8");
     }
   }

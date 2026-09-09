@@ -80,4 +80,7 @@ export interface DeckData {
   ledger: LedgerEntry[];
   status: HocusStatus;
   warnings: string[];
+  cast: string;
+  castLabel: string;
+  availableCasts: Array<{ id: string; label: string; builtin: boolean }>;
 }

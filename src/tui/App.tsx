@@ -26,7 +26,7 @@ const PANES: Record<TabId, React.ComponentType> = {
 const HINTS: Record<TabId, string[]> = {
   potions: ['↑↓ navigate', '⏎ open', 'a assign', 'x express', 'q quit'],
   spells: ['↑↓ navigate', '⏎ expand', 'q quit'],
-  souls: ['↑↓ navigate', '⏎ expand', 'a absorb', 'w write', 'r recompile', 'q quit'],
+  souls: ['↑↓ navigate', '⏎ expand', 'c cast', 'w role', 'r recompile', 'a absorb', 'q quit'],
   coven: ['↑↓ navigate', '⏎ inspect', 'n spawn familiar', 'x dismiss', 'q quit'],
   grimoire: ['↑↓ navigate', 'space install', 'u update', 'i from path', 'q quit'],
   scrying: ['↑↓ scroll', 'f follow', 'c clear', 'q quit'],

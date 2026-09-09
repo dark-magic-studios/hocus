@@ -9,3 +9,5 @@ graphify-out
 .agents/
 .mcp.json
 mcp_config.json
+_potions
+_spells

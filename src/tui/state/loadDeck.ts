@@ -32,6 +32,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
 
 import { getHocusStatus } from "../../utils/status.js";
 import { buildSkillSyncMap, resolveBundledSkillId, detectProjectCast } from "../../utils/skill-audit.js";
+import { listAvailableCasts, loadCustomCast, describeProjectCast, isBuiltinCast } from "../../utils/cast-registry.js";
 import type { SkillSyncStatus } from "./types.js";
 
 /**
@@ -43,7 +44,7 @@ import type { SkillSyncStatus } from "./types.js";
 export async function loadDeck(cwd: string): Promise<DeckData> {
   const warnings: string[] = [];
 
-  const [agents, potions, spells, rawSkills, wards, ledger, status, syncMap, cast] = await Promise.all([
+  const [agents, potions, spells, rawSkills, wards, ledger, status, syncMap, cast, availableCasts] = await Promise.all([
     loadAgents(cwd, warnings),
     loadPotions(cwd, warnings),
     loadSpells(cwd, warnings),
@@ -53,7 +54,11 @@ export async function loadDeck(cwd: string): Promise<DeckData> {
     getHocusStatus(cwd),
     buildSkillSyncMap(cwd),
     detectProjectCast(cwd),
+    listAvailableCasts(cwd),
   ]);
+
+  const custom = isBuiltinCast(cast) ? undefined : await loadCustomCast(cwd, cast);
+  const castLabel = describeProjectCast(cast, custom);
 
   const skills = await Promise.all(
     rawSkills.map(async (skill) => {
@@ -71,7 +76,7 @@ export async function loadDeck(cwd: string): Promise<DeckData> {
     }),
   );
 
-  return { agents, potions, spells, skills, wards, ledger, status, warnings };
+  return { agents, potions, spells, skills, wards, ledger, status, warnings, cast, castLabel, availableCasts };
 }
 
 async function loadAgents(cwd: string, warnings: string[]): Promise<Agent[]> {

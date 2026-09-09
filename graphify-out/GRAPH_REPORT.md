@@ -1,16 +1,16 @@
 # Graph Report - hocus  (2026-09-09)
 
 ## Corpus Check
-- 201 files · ~209,095 words
+- 183 files · ~178,279 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1495 nodes · 2049 edges · 257 communities (244 shown, 13 thin omitted)
+- 1571 nodes · 2275 edges · 267 communities (254 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ebb52e38`
+- Built from commit: `89ba2fd1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -231,57 +231,52 @@
 - [[_COMMUNITY_Community 244|Community 244]]
 - [[_COMMUNITY_Community 245|Community 245]]
 - [[_COMMUNITY_Community 246|Community 246]]
-- [[_COMMUNITY_Community 247|Community 247]]
 - [[_COMMUNITY_Community 248|Community 248]]
 - [[_COMMUNITY_Community 249|Community 249]]
 - [[_COMMUNITY_Community 250|Community 250]]
 - [[_COMMUNITY_Community 251|Community 251]]
 - [[_COMMUNITY_Community 252|Community 252]]
-- [[_COMMUNITY_Community 253|Community 253]]
-- [[_COMMUNITY_Community 254|Community 254]]
-- [[_COMMUNITY_Community 255|Community 255]]
-- [[_COMMUNITY_Community 256|Community 256]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `runInit()` - 25 edges
-2. `PROJECT_PERSONAS_DIR()` - 24 edges
+1. `PROJECT_PERSONAS_DIR()` - 26 edges
+2. `runInit()` - 25 edges
 3. `SoulFile` - 23 edges
-4. `getSkillIdForCast()` - 17 edges
-5. `runCast()` - 16 edges
-6. `parseSoulFile()` - 16 edges
-7. `executeAbsorb()` - 16 edges
-8. `getHocusStatus()` - 16 edges
-9. `useDeck()` - 15 edges
-10. `palette` - 15 edges
+4. `isBuiltinCast()` - 21 edges
+5. `getSkillIdForCast()` - 19 edges
+6. `loadDeck()` - 18 edges
+7. `runCast()` - 16 edges
+8. `parseSoulFile()` - 16 edges
+9. `executeAbsorb()` - 16 edges
+10. `migrateProjectCast()` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `SeanceTabProps` --references--> `SpawnFn`  [EXTRACTED]
+  src/tui/tabs/SeanceTab.tsx → src/tui/chat/runBackend.ts
 - `AddOptions` --references--> `TargetId`  [EXTRACTED]
   src/commands/add.ts → src/compilers/types.ts
 - `getAgentTargetPath()` --calls--> `getCompiler()`  [EXTRACTED]
   src/commands/add.ts → src/compilers/index.ts
+- `findAgentSoul()` --calls--> `parseSoulFile()`  [EXTRACTED]
+  src/commands/add.ts → src/schema/soul.ts
 - `findAgentSoul()` --calls--> `PROJECT_PERSONAS_DIR()`  [EXTRACTED]
   src/commands/add.ts → src/utils/paths.ts
-- `runAdd()` --calls--> `getCompiler()`  [EXTRACTED]
-  src/commands/add.ts → src/compilers/index.ts
-- `runAdd()` --calls--> `detectStack()`  [EXTRACTED]
-  src/commands/add.ts → src/scanners/detect-stack.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (257 total, 13 thin omitted)
+## Communities (267 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.14
-Nodes (19): installSpells(), categorizeSpell(), CategorizeSpellInput, CurseFrontmatter, CurseFrontmatterSchema, CurseSpell, IncantationFrontmatter, IncantationFrontmatterSchema (+11 more)
+Cohesion: 0.06
+Nodes (67): BUILTIN_NAMES, BuiltinContext, BuiltinName, BuiltinResult, captureConsole(), getBuiltinCommands(), isBuiltinCommand(), runBuiltin() (+59 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
 Nodes (41): author, bin, hocus, dependencies, commander, fast-glob, fs-extra, gray-matter (+33 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.07
-Nodes (38): ANTIGRAVITY_TOOL_MAP, antigravityCompiler, DEFAULT_TOOLS, claudeCodeCompiler, DEFAULT_TOOLS, codexCompiler, commandCodeCompiler, DEFAULT_TOOLS (+30 more)
+Cohesion: 0.06
+Nodes (44): AddOptions, CastOptions, ANTIGRAVITY_TOOL_MAP, antigravityCompiler, DEFAULT_TOOLS, claudeCodeCompiler, DEFAULT_TOOLS, codexCompiler (+36 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.11
@@ -292,8 +287,8 @@ Cohesion: 0.06
 Nodes (31): 1. Persona files (`.hocus/personas/*.soul.md`), 2. Persona-bound skills, 3. Compiled agent outputs, 4. Init prompt / agent instructions, 5. Dashboard (`dashboard.html`), 6. Switching / migration, Choosing a cast: Silicon Valley vs. Wizards, Choosing guidance (+23 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.19
-Nodes (12): BrandMark(), BrandMarkProps, ProgressBar(), StatusDot(), Capabilities, useCapabilities(), BrandMarkColor, BrandMarkRow (+4 more)
+Cohesion: 0.05
+Nodes (56): BootSequence(), Props, BootLine, BootTask, useBootTasks(), BrandMark(), BrandMarkProps, Footer() (+48 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.33
@@ -520,8 +515,8 @@ Cohesion: 0.50
 Nodes (3): Big Head Dumb Test, Instructions, When to use
 
 ### Community 62 - "Community 62"
-Cohesion: 0.06
-Nodes (73): BackendResult, runBackend(), RunHandle, SpawnFn, findAgentSoul(), findRuleFiles(), findSkillDir(), getAgentTargetPath() (+65 more)
+Cohesion: 0.12
+Nodes (31): SpawnFn, AgentSpawnOptions, AgentSpawnSpec, buildInitPrompt(), combinedPrompt(), cursorModelWithEffort(), getAgentSpawnSpec(), INIT_PROMPT (+23 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.50
@@ -629,11 +624,11 @@ Nodes (3): Instructions, When to use, Whimsy Injector
 
 ### Community 90 - "Community 90"
 Cohesion: 0.10
-Nodes (31): ResolvedPrompt, detectStack(), FRAMEWORK_SIGNALS, PackageJsonShape, SoulValidationError, DeckContext, DeckState, EMPTY (+23 more)
+Nodes (29): detectStack(), FRAMEWORK_SIGNALS, PackageJsonShape, SoulValidationError, DeckContext, DeckState, EMPTY, collectSkills() (+21 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.22
-Nodes (14): Potion, Spell, borderTheme, theme, buildNameLookup(), castNamesFor(), DashboardParams, escapeHtml() (+6 more)
+Cohesion: 0.18
+Nodes (33): RecastOptions, runRecast(), CustomCastConfig, CustomCastPersona, loadDeck(), detectPluginNames(), MigrateCastOptions, migratePersonas() (+25 more)
 
 ### Community 92 - "Community 92"
 Cohesion: 0.50
@@ -992,20 +987,20 @@ Cohesion: 0.09
 Nodes (22): 10. Git Hygiene & Commit History 🌳, 1. Codebase Context, 1. Requirement Completeness & Edge Cases 🎯, 2. Code Readability & Clean Architecture 🏗️, 2. Requirements & Constraints, 3. Error Handling & Resilience 🛡️, 4. Testing Quality over Quantity 🧪, 5. State Management & Data Modeling 📊 (+14 more)
 
 ### Community 181 - "Community 181"
-Cohesion: 0.21
-Nodes (13): TextInputState, useTextInput(), useDeck(), CovenTab(), GrimoireTab(), Mode, SOURCE_COLOR, SYNC_COLOR (+5 more)
+Cohesion: 0.16
+Nodes (30): promptForCast(), resolveCast(), detectCast(), detectPluginNames(), runUpgrade(), UpgradeOptions, Cast, CAST_MAP (+22 more)
 
 ### Community 182 - "Community 182"
 Cohesion: 0.13
 Nodes (14): 1. Identify Source of Truth, 2. Verify Access or Delegate to `add-harness-mcp`, 3. Query the Source, 4. Read Local `TASKS.md`, 5. Compute the Reconciliation Diff, 6. Present Diff & Confirm with User, 7. Update `TASKS.md`, 8. Conflict Handling (+6 more)
 
 ### Community 183 - "Community 183"
-Cohesion: 0.18
-Nodes (5): DeckProvider(), cleanupRepo(), makeEmptyRepo(), makePopulatedRepo(), TABS
+Cohesion: 0.07
+Nodes (23): Backend, BACKENDS, ResolvedPrompt, resolvePrompt(), BackendResult, runBackend(), RunHandle, FileIndex (+15 more)
 
 ### Community 184 - "Community 184"
-Cohesion: 0.23
-Nodes (11): BootSequence(), Props, BootLine, BootTask, useBootTasks(), useTabs(), App(), AppProps (+3 more)
+Cohesion: 0.19
+Nodes (13): findAgentSoul(), findRuleFiles(), findSkillDir(), getAgentTargetPath(), getSkillTargetPath(), runAdd(), promptProviders(), PERSONA_SKILL_IDS (+5 more)
 
 ### Community 185 - "Community 185"
 Cohesion: 0.18
@@ -1016,12 +1011,12 @@ Cohesion: 0.18
 Nodes (10): 1. Inventory Existing Spells, 2. Style & Workflow Interview (Default 3–5 Questions), 3. Automatically Categorize & Formulate Spells, 4. Present Proposed Diffs, 5. Apply Changes & Resync Manifest, Automatic Spell Categorization, Categorization Rules:, Instructions (+2 more)
 
 ### Community 187 - "Community 187"
-Cohesion: 0.26
-Nodes (9): Frame(), ListWindowOptions, useListWindow(), useTerminalSize(), SpellsTab(), TYPE_BADGES, TYPE_COLORS, paneBoxHeight() (+1 more)
+Cohesion: 0.18
+Nodes (10): Aliases, Apply a custom cast, CLI, Custom casts, Custom casts, Delete a custom cast, Related commands, Schema (+2 more)
 
 ### Community 188 - "Community 188"
-Cohesion: 0.18
-Nodes (11): Backend, BACKENDS, resolvePrompt(), FileIndex, IGNORE, useFileIndex(), ChatMessage, Role (+3 more)
+Cohesion: 0.40
+Nodes (4): Added, Changed, Fixed, [{version}] - {YYYY-MM-DD}
 
 ### Community 189 - "Community 189"
 Cohesion: 0.25
@@ -1092,56 +1087,36 @@ Cohesion: 0.40
 Nodes (4): 1. Potion File Structure (`.hocus/_potions/<potion-id>.md`), 1. Potion File Structure (`_potions/<potion-id>.md`), 2. Project State Alignment, Feature Potions & Task Orchestration
 
 ### Community 206 - "Community 206"
-Cohesion: 0.50
-Nodes (3): $schema, spells, version
-
-### Community 244 - "Community 244"
-Cohesion: 0.28
-Nodes (11): runCast(), runSync(), SyncOptions, PotionFrontmatterSchema, readPotions(), loadPotions(), runExpressUpdate(), PROJECT_POTIONS_DIR() (+3 more)
-
-### Community 245 - "Community 245"
-Cohesion: 0.20
-Nodes (16): AbsorbCommandOptions, runAbsorb(), promptAbsorb(), args, AbsorbOptions, AbsorbResult, executeAbsorb(), findAgentsUsingPersona() (+8 more)
+Cohesion: 0.40
+Nodes (4): Key Changes, Verification, What, Why
 
 ### Community 246 - "Community 246"
-Cohesion: 0.21
-Nodes (10): detectRelevantCompilers(), runSkillAdd(), SkillAddOptions, __dirname, program, skill, FileWriteOptions, installSkill() (+2 more)
-
-### Community 247 - "Community 247"
-Cohesion: 0.29
-Nodes (9): BUILTIN_NAMES, BuiltinContext, BuiltinName, BuiltinResult, captureConsole(), getBuiltinCommands(), isBuiltinCommand(), runBuiltin() (+1 more)
+Cohesion: 0.24
+Nodes (9): runSkillAdd(), SkillAddOptions, __dirname, program, skill, FileWriteOptions, installSkill(), SkillInstallOptions (+1 more)
 
 ### Community 248 - "Community 248"
 Cohesion: 0.29
 Nodes (6): lastProcessedGenerationId, lastRunAtMs, lastTranscriptMtimeMs, trialStartedAtMs, turnsSinceLastRun, version
 
-### Community 253 - "Community 253"
-Cohesion: 0.24
-Nodes (8): AddOptions, CastOptions, TargetId, ALL_PROVIDER_OPTIONS, ProviderOption, ProviderSelectPrompt(), ProviderSelectPromptProps, AgentFileMatch
-
-### Community 254 - "Community 254"
-Cohesion: 0.36
-Nodes (6): Footer(), FrameProps, TabBar(), TAB_IDS, TabId, palette
-
 ## Knowledge Gaps
-- **717 isolated node(s):** `version`, `lastRunAtMs`, `turnsSinceLastRun`, `lastTranscriptMtimeMs`, `lastProcessedGenerationId` (+712 more)
+- **734 isolated node(s):** `version`, `lastRunAtMs`, `turnsSinceLastRun`, `lastTranscriptMtimeMs`, `lastProcessedGenerationId` (+729 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `palette` connect `Community 254` to `Community 256`, `Community 2`, `Community 5`, `Community 181`, `Community 184`, `Community 187`, `Community 188`, `Community 255`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `SoulFile` connect `Community 2` to `Community 245`, `Community 181`, `Community 246`, `Community 91`, `Community 62`?**
+- **Why does `palette` connect `Community 5` to `Community 2`, `Community 183`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `useDeck()` connect `Community 181` to `Community 256`, `Community 90`, `Community 187`, `Community 188`, `Community 255`?**
+- **Why does `useDeck()` connect `Community 5` to `Community 90`, `Community 183`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `SoulFile` connect `Community 2` to `Community 184`, `Community 0`, `Community 5`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **What connects `version`, `lastRunAtMs`, `turnsSinceLastRun` to the rest of the system?**
-  _717 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _734 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06018518518518518 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.06874717322478517 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05981981981981982 - nodes in this community are weakly interconnected._

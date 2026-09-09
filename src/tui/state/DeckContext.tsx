@@ -26,6 +26,12 @@ const EMPTY: DeckData = {
     targets: [],
   },
   warnings: [],
+  cast: 'wizard',
+  castLabel: 'Wizards (Merlin, Roger Bacon, Zoroaster...)',
+  availableCasts: [
+    { id: 'valley', label: 'Silicon Valley (Richard, Jared, Gilfoyle...)', builtin: true },
+    { id: 'wizard', label: 'Wizards (Merlin, Roger Bacon, Zoroaster...)', builtin: true },
+  ],
 };
 
 const DeckContext = createContext<DeckState | null>(null);
