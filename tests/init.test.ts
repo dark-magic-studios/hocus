@@ -1,11 +1,19 @@
 import path from "node:path";
 import fsExtra from "fs-extra";
 const { pathExists, readJson, readFile, readdir } = fsExtra;
-import { test } from "node:test";
+import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import matter from "gray-matter";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
 import { getAgentSpawnSpec, runInit } from "../src/commands/init.js";
+
+const origLog = console.log;
+beforeEach(() => {
+  console.log = () => {};
+});
+afterEach(() => {
+  console.log = origLog;
+});
 
 test("getAgentSpawnSpec resolves correct specs for known and custom agents", () => {
   const sys = "sys prompt";
