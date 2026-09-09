@@ -181,7 +181,7 @@ The five tools don't share a config format, but they've converged on common capa
 | Target | Where personas live | Notes |
 |---|---|---|
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown + YAML frontmatter, invoked via the Task tool or `@mention`. |
-| **OpenCode** | `.opencode/agent/<slug>.md` | Same shape, different frontmatter keys (`mode: subagent`). |
+| **OpenCode** | `.opencode/agent/<slug>.md` | Same shape, different frontmatter keys (`description`, optional `model`). |
 | **Codex** | `.codex/agents/<slug>.toml` | Native TOML custom-agent configuration; repository skills load from `.agents/skills/`. |
 | **Cursor** | `.cursor/agents/<slug>.md` | Native subagent markdown format with YAML frontmatter (`name`, `description`, optional `model`). |
 | **Antigravity** | `.agents/agents/<slug>/agent.md` | Native custom subagents discovered under `.agents/agents/<slug>/agent.md` with YAML frontmatter (`name`, `description`, `tools`, `model`, `subagent: true`) and Markdown system instructions. |

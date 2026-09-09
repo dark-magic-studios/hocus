@@ -27,7 +27,6 @@ export const openCodeCompiler: Compiler = {
   compile(soul: SoulFile, _ctx: RepoContext): CompiledFile {
     const frontmatter: Record<string, unknown> = {
       description: `${soul.display_name} — ${soul.role}. Use for: ${soul.triggers.join(", ")}.`,
-      mode: "subagent",
     };
     if (soul.model) frontmatter.model = soul.model;
 

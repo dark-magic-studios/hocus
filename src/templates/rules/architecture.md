@@ -25,7 +25,7 @@ Each compiler in `src/compilers/` transforms a `SoulFile` into a target-native f
 | :--- | :--- | :--- |
 | **Antigravity** | `.agents/agents/<slug>/agent.md` | Markdown with YAML frontmatter (`name`, `description`, `model`, `subagent: true`, `tools`) and `# Agent System Instructions`. |
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown with YAML frontmatter (`name`, `description`, `tools`, optional `model`). |
-| **OpenCode** | `.opencode/agent/<slug>.md` | Markdown with YAML frontmatter (`description`, `mode: subagent`, optional `model`). |
+| **OpenCode** | `.opencode/agent/<slug>.md` | Markdown with YAML frontmatter (`description`, optional `model`). |
 | **Codex** | `.codex/agents/<slug>.toml` | TOML custom-agent config (`name`, `description`, `developer_instructions`, optional `model`). Codex discovers repo skills from `.agents/skills/`. |
 | **Cursor** | `.cursor/agents/<slug>.md` | Markdown with YAML frontmatter (`name`, `description`, optional `model`). |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + Taste compatibility section baked into prompt. |
