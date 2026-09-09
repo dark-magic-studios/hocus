@@ -270,7 +270,7 @@ async function inspectAgentFile(
 const PERSONA_TO_SKILLS: Record<string, string[]> = {
   "big-head": ["bighead-dumb-test"],
   dinesh: ["dinesh-pr-feedback", "dinesh-pr-open"],
-  erlich: ["erlich-changelog", "erlich-update-product"],
+  erlich: ["erlich-changelog", "erlich-readme", "erlich-update-product"],
   gavin: ["gavin-render-dashboard"],
   gilfoyle: ["gilfoyle-pr-review"],
   jared: ["jared-orchestrate"],

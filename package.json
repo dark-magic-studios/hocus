@@ -27,7 +27,7 @@
     "tui": "bun src/cli.ts tui",
     "absorb": "tsx src/cli.ts absorb",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-concurrency=1 --import tsx tests/*.test.ts tests/*.test.tsx"
+    "test": "node --test --test-concurrency=1 --import tsx tests/*.test.ts && node --test --test-concurrency=1 --import tsx tests/*.test.tsx"
   },
   "dependencies": {
     "commander": "^12.1.0",

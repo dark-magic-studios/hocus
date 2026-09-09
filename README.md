@@ -39,7 +39,7 @@ In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <Wi
 
 #### 2. Persona-bound skills
 
-14 skills are persona-specific and are renamed to match the cast (`PERSONA_SKILL_IDS` in `src/utils/cast.ts:45`). Generic skills (`atomic-commits`, `graphify`, `harness-report`, `project-update`, etc.) are **not** renamed and are identical in both casts.
+15 skills are persona-specific and are renamed to match the cast (`PERSONA_SKILL_IDS` in `src/utils/cast.ts:45`). Generic skills (`atomic-commits`, `graphify`, `harness-report`, `project-update`, etc.) are **not** renamed and are identical in both casts.
 
 | Valley skill ID | Wizard skill ID | Role |
 |---|---|---|
@@ -47,6 +47,7 @@ In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <Wi
 | `dinesh-pr-feedback` | `flamel-pr-feedback` | PR feedback |
 | `dinesh-pr-open` | `flamel-pr-open` | open PR |
 | `erlich-changelog` | `circe-changelog` | changelog |
+| `erlich-readme` | `circe-readme` | human-readable README |
 | `erlich-update-product` | `circe-update-product` | product docs |
 | `gavin-render-dashboard` | `the-apprentice-render-dashboard` | dashboard |
 | `gilfoyle-pr-review` | `zoroaster-pr-review` | review |

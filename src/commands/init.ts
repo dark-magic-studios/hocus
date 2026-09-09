@@ -669,7 +669,16 @@ export async function runInit({
             if (await pathExists(skillFile)) {
               const raw = await readFile(skillFile, "utf8");
               // Only transform persona-bound skills; generic skills have no valley prefix.
-              if (raw.includes("Richard") || raw.includes("Merlin") || raw.includes("Jared") || raw.includes("Roger Bacon") || raw.includes("Gilfoyle") || raw.includes("Zoroaster")) {
+              if (
+                raw.includes("Richard") ||
+                raw.includes("Merlin") ||
+                raw.includes("Jared") ||
+                raw.includes("Roger Bacon") ||
+                raw.includes("Gilfoyle") ||
+                raw.includes("Zoroaster") ||
+                raw.includes("Erlich") ||
+                raw.includes("Circe")
+              ) {
                 const patched = transformSkillFrontmatterForCast(raw, cast);
                 if (patched !== raw) await writeFile(skillFile, patched, "utf8");
               }
