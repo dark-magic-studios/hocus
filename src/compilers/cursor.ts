@@ -14,31 +14,24 @@ export const cursorCompiler: Compiler = {
   },
 
   compile(soul: SoulFile, _ctx: RepoContext): CompiledFile {
-    // Cursor doesn't have a named-subagent abstraction. The closest
-    // equivalent is an "Agent Requested" rule: alwaysApply is false, and
-    // Cursor's agent decides to load it based on the description matching
-    // the current task. We say so explicitly in the body so nobody mistakes
-    // this for an invokable subagent the way the Claude Code / OpenCode
-    // output is.
-    const frontmatter = {
-      description: `${soul.display_name} (${soul.role}). Apply when working on: ${soul.triggers.join(", ")}.`,
-      alwaysApply: false,
+    const frontmatter: Record<string, unknown> = {
+      name: soul.character,
+      description: `${soul.display_name} — ${soul.role}. ${firstSentence(soul.body)} Use for: ${soul.triggers.join(", ")}.`,
     };
+    if (soul.model) frontmatter.model = soul.model;
 
-    const body = [
-      `> This rule represents the **${soul.display_name}** persona (${soul.role}).`,
-      `> Cursor has no native subagent you can delegate to directly — when this`,
-      `> rule is active, adopt the voice and responsibilities below for the`,
-      `> current task.`,
-      "",
-      soul.body,
-    ].join("\n");
-
-    const content = matter.stringify(body, frontmatter);
+    const body = soul.body.trim();
+    const content = matter.stringify(`${body}\n`, frontmatter);
 
     return {
-      relPath: path.join(".cursor", "rules", `${soul.character}.mdc`),
+      relPath: path.join(".cursor", "agents", `${soul.character}.md`),
       content,
     };
   },
 };
+
+function firstSentence(body: string): string {
+  const stripped = body.replace(/^#.*$/m, "").trim();
+  const match = stripped.match(/[^.\n]+[.]/);
+  return (match ? match[0] : stripped.slice(0, 120)).trim();
+}

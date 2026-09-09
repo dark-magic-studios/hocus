@@ -17,7 +17,7 @@ Reconciles configuration across all four AI tool targets. Detects when Cursor ha
 
 ## Instructions
 1. **Read all four configs**
-   - Cursor: `.cursor/rules/*.mdc` (agents as rules), `.cursor/mcp.json` (MCPs)
+   - Cursor: `.cursor/agents/*.md` (agents), `.cursor/rules/*.mdc` (rules), `.cursor/mcp.json` (MCPs)
    - Claude Code: `.claude/agents/*.md` (agents), `.claude/skills/*/SKILL.md` (skills), `.claude/settings.local.json` (MCPs + provider)
    - OpenCode: `.opencode/agent/*.md` or `opencode.jsonc` (agents + config)
    - Antigravity: `.agents/agents/*/agent.md` (agents), `.agents/skills/*/SKILL.md` (skills), `.agents/mcp_config.json` (MCPs)

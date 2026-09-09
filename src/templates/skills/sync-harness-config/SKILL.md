@@ -16,7 +16,7 @@ Ensures the AI tool configurations (Cursor, Claude Code, OpenCode, Antigravity) 
 
 ## Instructions
 1. **Detect which configs are present**
-   - Cursor: `.cursor/rules/`, `.cursor/mcp.json`
+   - Cursor: `.cursor/agents/`, `.cursor/rules/`, `.cursor/mcp.json`
    - Claude Code: `.claude/agents/`, `.claude/skills/`, `.claude/settings.local.json` (or `.claude.json`)
    - OpenCode: `.opencode/` or `opencode.jsonc`
    - Antigravity: `.agents/`

@@ -27,7 +27,7 @@ Each compiler in `src/compilers/` transforms a `SoulFile` into a target-native f
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown with YAML frontmatter (`name`, `description`, `tools`, optional `model`). |
 | **OpenCode** | `.opencode/agent/<slug>.md` | Markdown with YAML frontmatter (`description`, `mode: subagent`, optional `model`). |
 | **Codex** | `.codex/agents/<slug>.toml` | TOML custom-agent config (`name`, `description`, `developer_instructions`, optional `model`). Codex discovers repo skills from `.agents/skills/`. |
-| **Cursor** | `.cursor/rules/<slug>.mdc` | MDC format (`alwaysApply: false`, agent requested rule loaded by task description). |
+| **Cursor** | `.cursor/agents/<slug>.md` | Markdown with YAML frontmatter (`name`, `description`, optional `model`). |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + Taste compatibility section baked into prompt. |
 | **GitHub Copilot** | `.github/agents/<slug>.agent.md` | Markdown with YAML frontmatter (`name`, `description`, `tools`, optional `model`). Skills live in `.github/skills/`. |
 

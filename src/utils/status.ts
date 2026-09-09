@@ -25,7 +25,7 @@ const WARD_AGENT_DIR: Record<string, string> = {
   "claude-code": path.join(".claude", "agents"),
   codex: path.join(".codex", "agents"),
   opencode: path.join(".opencode", OPENCODE_AGENT_DIR),
-  cursor: path.join(".cursor", "rules"),
+  cursor: path.join(".cursor", "agents"),
   antigravity: path.join(".agents", "agents"),
   "command-code": path.join(".commandcode", "agents"),
   copilot: path.join(".github", "agents"),

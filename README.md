@@ -77,7 +77,7 @@ Slash-command names follow the folder/`name` — `/richard-draft-potion` vs `/me
 - `.claude/agents/<slug>.md` (`claude-code.ts`)
 - `.codex/agents/<slug>.toml` (`codex.ts`; skills are discovered from `.agents/skills/`)
 - `.opencode/agent/<slug>.md` (`opencode.ts`)
-- `.cursor/rules/<slug>.mdc` (`cursor.ts`)
+- `.cursor/agents/<slug>.md` (`cursor.ts`)
 - `.agents/agents/<slug>/agent.md` (`antigravity.ts`)
 - `.commandcode/agents/<slug>.md` (`command-code.ts`, with Taste compatibility baked in)
 - `.github/agents/<slug>.agent.md` (`copilot.ts`)
@@ -183,7 +183,7 @@ The five tools don't share a config format, but they've converged on common capa
 | **Claude Code** | `.claude/agents/<slug>.md` | Markdown + YAML frontmatter, invoked via the Task tool or `@mention`. |
 | **OpenCode** | `.opencode/agent/<slug>.md` | Same shape, different frontmatter keys (`mode: subagent`). |
 | **Codex** | `.codex/agents/<slug>.toml` | Native TOML custom-agent configuration; repository skills load from `.agents/skills/`. |
-| **Cursor** | `.cursor/rules/<slug>.mdc` | Cursor has no native subagent concept. Compiled as an "Agent Requested" rule instead — conditionally loaded by description, not directly invokable. |
+| **Cursor** | `.cursor/agents/<slug>.md` | Native subagent markdown format with YAML frontmatter (`name`, `description`, optional `model`). |
 | **Antigravity** | `.agents/agents/<slug>/agent.md` | Native custom subagents discovered under `.agents/agents/<slug>/agent.md` with YAML frontmatter (`name`, `description`, `tools`, `model`, `subagent: true`) and Markdown system instructions. |
 | **Command Code** | `.commandcode/agents/<slug>.md` | Markdown + YAML frontmatter (`name`, `description`, `tools`, optional `model`); the body is the system prompt. Every compiled agent gets [Taste](https://commandcode.ai/docs/taste) compatibility instructions baked in, so Command Code's learned preferences are honored by the whole cast. |
 
@@ -295,6 +295,24 @@ Fast refresh of `dashboard.html` from `.hocus/personas/`, `_potions/`, and `_spe
 ```bash
 hocus sync
 hocus sync --name my-project
+```
+
+### `hocus affix [agent] [soul]`
+
+Affix a Hocus persona soul (from `.hocus/personas/`) to an existing custom subagent. This is the primary way to install Hocus personalities in projects that already have well-structured and maintained custom subagents.
+
+Interactively detects existing custom subagents across all supported tools (Claude Code, Cursor native subagents in `.cursor/agents/`, Antigravity, OpenCode, Command Code, GitHub Copilot, Codex) and presents a CLI wizard to choose which soul to affix. When confirmed, it touches **only** those specific agent files, cleanly inserting a soul reference immediately after the frontmatter while preserving all existing instructions and configuration.
+
+```bash
+# Interactive CLI wizard
+hocus affix
+
+# Affix a specific subagent directly
+hocus affix orchestrator jared
+hocus affix -a custom-reviewer -s gilfoyle
+
+# Preview without modifying files
+hocus affix --dry-run
 ```
 
 ---

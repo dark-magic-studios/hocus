@@ -62,7 +62,7 @@ const KNOWN_AGENT_DIRS: { dir: string; provider: TargetId | "persona" }[] = [
   { dir: path.join(".codex", "agents"), provider: "codex" },
   { dir: path.join(".opencode", "agent"), provider: "opencode" },
   { dir: path.join(".opencode", "agents"), provider: "opencode" },
-  { dir: path.join(".cursor", "rules"), provider: "cursor" },
+  { dir: path.join(".cursor", "agents"), provider: "cursor" },
   { dir: path.join(".commandcode", "agents"), provider: "command-code" },
   { dir: path.join(".github", "agents"), provider: "copilot" },
   { dir: path.join(".hocus", "personas"), provider: "persona" },

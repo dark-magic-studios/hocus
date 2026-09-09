@@ -16,7 +16,7 @@ Generates a detailed report of the project's AI harness configuration: which pro
 
 ## Instructions
 1. **Scan all config locations**
-   - Cursor: `.cursor/rules/`, `.cursor/mcp.json`
+   - Cursor: `.cursor/agents/`, `.cursor/rules/`, `.cursor/mcp.json`
    - Claude Code: `.claude/agents/`, `.claude/skills/`, `.claude/settings.local.json`
    - OpenCode: `.opencode/` or `opencode.jsonc`
    - Antigravity: `.agents/`

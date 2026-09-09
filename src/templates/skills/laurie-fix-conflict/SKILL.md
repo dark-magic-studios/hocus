@@ -37,9 +37,9 @@ Resolves conflicts between the four AI tool configuration formats when they have
    - Identify the equivalent field names in each tool's schema
    - Map them:
      - MCP servers: `.claude/settings.local.json.mcpServers` → `.cursor/mcp.json` (different nesting)
-     - Agent definitions: `.claude/agents/*.md` frontmatter → `.cursor/rules/*.mdc` frontmatter → `.opencode/agent/*.md` frontmatter
+     - Agent definitions: `.claude/agents/*.md` frontmatter → `.cursor/agents/*.md` frontmatter → `.opencode/agent/*.md` frontmatter
    - Transform from one format to another where the schema differs
-   - If a tool doesn't support a feature (e.g., Cursor rules don't have a `tools` field like Claude agents do), drop the unsupported field rather than leaving a broken entry
+   - If a tool doesn't support a feature, drop the unsupported field rather than leaving a broken entry
 
 4. **Merge conflicts (git)**
    - If the conflict arose from a git merge, read both sides (theirs and ours)

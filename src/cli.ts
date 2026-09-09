@@ -10,6 +10,7 @@ import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
 import { runUpgrade } from "./commands/upgrade.js";
 import { runAbsorb } from "./commands/absorb.js";
+import { runAffix } from "./commands/affix.js";
 import { runRecast } from "./commands/recast-cast.js";
 import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
@@ -254,6 +255,27 @@ program
       remove: opts.remove !== false,
     });
   });
+
+program
+  .command("affix [agent] [soul]")
+  .description("affix a soul persona (from .hocus/personas/) to an existing custom subagent")
+  .option("-a, --agent <agent>", "agent id or path to affix")
+  .option("-s, --soul <soul>", "soul persona to affix (character slug or name)")
+  .option("--dry-run", "preview planned changes without modifying files")
+  .action(
+    async (
+      agentArg: string | undefined,
+      soulArg: string | undefined,
+      opts: { agent?: string; soul?: string; dryRun?: boolean },
+    ) => {
+      await runAffix({
+        repoRoot: process.cwd(),
+        agent: opts.agent ?? agentArg,
+        soul: opts.soul ?? soulArg,
+        dryRun: opts.dryRun,
+      });
+    },
+  );
 
 program
   .command("tui")

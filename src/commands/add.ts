@@ -45,7 +45,7 @@ export function getAgentTargetPath(
       case "opencode":
         return path.join(homeDir, ".config", "opencode", "agent", `${soul.character}.md`);
       case "cursor":
-        return path.join(homeDir, ".cursor", "rules", `${soul.character}.mdc`);
+        return path.join(homeDir, ".cursor", "agents", `${soul.character}.md`);
       case "antigravity":
         return path.join(homeDir, ".gemini", "config", "agents", soul.character, "agent.md");
       case "command-code":

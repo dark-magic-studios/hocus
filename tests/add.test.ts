@@ -22,7 +22,7 @@ test("runAdd installs agent locally to all target providers", async () => {
 
     assert.equal(await pathExists(path.join(repoRoot, ".claude", "agents", "dinesh.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".opencode", "agent", "dinesh.md")), true);
-    assert.equal(await pathExists(path.join(repoRoot, ".cursor", "rules", "dinesh.mdc")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".cursor", "agents", "dinesh.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".agents", "agents", "dinesh", "agent.md")), true);
     assert.equal(await pathExists(path.join(repoRoot, ".commandcode", "agents", "dinesh.md")), true);
 
@@ -67,7 +67,7 @@ test("runAdd supports both --agent and --skill simultaneously with --global flag
     // Global agent files
     assert.equal(await pathExists(path.join(fakeHome, ".claude", "agents", "gilfoyle.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".config", "opencode", "agent", "gilfoyle.md")), true);
-    assert.equal(await pathExists(path.join(fakeHome, ".cursor", "rules", "gilfoyle.mdc")), true);
+    assert.equal(await pathExists(path.join(fakeHome, ".cursor", "agents", "gilfoyle.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".gemini", "config", "agents", "gilfoyle", "agent.md")), true);
     assert.equal(await pathExists(path.join(fakeHome, ".commandcode", "agents", "gilfoyle.md")), true);
 
@@ -99,7 +99,7 @@ test("runAdd respects explicit --providers list", async () => {
 
     // Should install to claude-code & cursor
     assert.equal(await pathExists(path.join(repoRoot, ".claude", "agents", "erlich.md")), true);
-    assert.equal(await pathExists(path.join(repoRoot, ".cursor", "rules", "erlich.mdc")), true);
+    assert.equal(await pathExists(path.join(repoRoot, ".cursor", "agents", "erlich.md")), true);
 
     // Should NOT install to opencode & antigravity
     assert.equal(await pathExists(path.join(repoRoot, ".opencode", "agent", "erlich.md")), false);
