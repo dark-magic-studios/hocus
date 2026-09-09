@@ -1,55 +1,55 @@
 import React, { useState } from "react";
-import { Box, Text, useInput, render } from "ink";
+import { Box, Text, useInput, useApp, render } from "ink";
 import type { SoulFile } from "../../schema/soul.js";
-import type { SubagentGroup } from "../../utils/affix.js";
+import type { DetectedSubagent } from "../../utils/affix.js";
 import { palette } from "../theme.js";
 
 export interface AffixPromptProps {
   availableSouls: SoulFile[];
-  subagents: SubagentGroup[];
+  subagentFiles: DetectedSubagent[]; // ONE entry per file
   onConfirm: (assignments: Record<string, string>) => void;
   onCancel: () => void;
   isActive?: boolean;
 }
 
+const MAX_VISIBLE_ROWS = 10;
+
 export const AffixPrompt: React.FC<AffixPromptProps> = ({
   availableSouls,
-  subagents,
+  subagentFiles,
   onConfirm,
   onCancel,
   isActive = true,
 }) => {
+  const { exit } = useApp();
+
   // Option list for cycling: "none" followed by all available souls
   const soulOptions = ["none", ...availableSouls.map((s) => s.character)];
 
   const [assignments, setAssignments] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
-    for (const sa of subagents) {
+    for (const f of subagentFiles) {
       // Default to current soul if already affixed, or "none"
-      init[sa.id] = sa.currentSoul || "none";
+      init[f.relPath] = f.currentSoul || "none";
     }
     return init;
   });
 
-  // Focus indices: 0..subagents.length - 1 are subagents
-  // subagents.length is [ Affix Souls ]
-  // subagents.length + 1 is [ Cancel ]
-  const totalFocusable = subagents.length + 2;
+  // Focus indices: 0..subagentFiles.length - 1 are individual files
+  // subagentFiles.length is [ Affix Souls ]
+  // subagentFiles.length + 1 is [ Cancel ]
+  const totalFocusable = subagentFiles.length + 2;
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const cycleSoul = (agentId: string, delta: number) => {
+  const cycleSoul = (fileKey: string, delta: number) => {
     if (soulOptions.length === 0) return;
-    const currentSlug = assignments[agentId] || "none";
-    const currentIdx = Math.max(
-      0,
-      soulOptions.indexOf(currentSlug),
-    );
-    const nextIdx =
-      (currentIdx + delta + soulOptions.length) % soulOptions.length;
+    const currentSlug = assignments[fileKey] || "none";
+    const currentIdx = Math.max(0, soulOptions.indexOf(currentSlug));
+    const nextIdx = (currentIdx + delta + soulOptions.length) % soulOptions.length;
     const nextSlug = soulOptions[nextIdx] ?? "none";
     setAssignments((prev) => ({
       ...prev,
-      [agentId]: nextSlug,
+      [fileKey]: nextSlug,
     }));
   };
 
@@ -57,8 +57,9 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
     (input, key) => {
       if (!isActive) return;
 
-      if (key.escape || (input === "q" && selectedIndex >= subagents.length)) {
+      if (key.escape || (input === "q" && selectedIndex >= subagentFiles.length)) {
         onCancel();
+        exit();
         return;
       }
 
@@ -67,32 +68,45 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
       } else if (key.downArrow) {
         setSelectedIndex((prev) => (prev < totalFocusable - 1 ? prev + 1 : 0));
       } else if (key.leftArrow) {
-        if (selectedIndex < subagents.length) {
-          const sa = subagents[selectedIndex];
-          if (sa) cycleSoul(sa.id, -1);
-        } else if (selectedIndex === subagents.length + 1) {
-          setSelectedIndex(subagents.length);
+        if (selectedIndex < subagentFiles.length) {
+          const f = subagentFiles[selectedIndex];
+          if (f) cycleSoul(f.relPath, -1);
+        } else if (selectedIndex === subagentFiles.length + 1) {
+          setSelectedIndex(subagentFiles.length);
         }
       } else if (key.rightArrow) {
-        if (selectedIndex < subagents.length) {
-          const sa = subagents[selectedIndex];
-          if (sa) cycleSoul(sa.id, 1);
-        } else if (selectedIndex === subagents.length) {
-          setSelectedIndex(subagents.length + 1);
+        if (selectedIndex < subagentFiles.length) {
+          const f = subagentFiles[selectedIndex];
+          if (f) cycleSoul(f.relPath, 1);
+        } else if (selectedIndex === subagentFiles.length) {
+          setSelectedIndex(subagentFiles.length + 1);
         }
       } else if (key.return) {
-        if (selectedIndex === subagents.length) {
+        if (selectedIndex === subagentFiles.length) {
           onConfirm(assignments);
-        } else if (selectedIndex === subagents.length + 1) {
+          exit();
+        } else if (selectedIndex === subagentFiles.length + 1) {
           onCancel();
+          exit();
         } else {
-          // Pressing enter on an agent row advances to next row
-          setSelectedIndex((prev) => Math.min(prev + 1, subagents.length));
+          // Pressing enter on a file row advances focus to next row
+          setSelectedIndex((prev) => Math.min(prev + 1, subagentFiles.length));
         }
       }
     },
     { isActive },
   );
+
+  // Compute scroll window if list exceeds MAX_VISIBLE_ROWS
+  const totalFiles = subagentFiles.length;
+  let startIndex = 0;
+  if (totalFiles > MAX_VISIBLE_ROWS) {
+    startIndex = Math.min(
+      Math.max(0, selectedIndex - Math.floor(MAX_VISIBLE_ROWS / 2)),
+      totalFiles - MAX_VISIBLE_ROWS,
+    );
+  }
+  const visibleFiles = subagentFiles.slice(startIndex, startIndex + MAX_VISIBLE_ROWS);
 
   return (
     <Box flexDirection="column" paddingY={1} paddingX={1} borderStyle="single" borderColor={palette.violet}>
@@ -101,11 +115,11 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
           Affix Hocus Souls to Subagents
         </Text>
         <Text color={palette.dim}>
-          Select a soul personality (.hocus/personas/) to affix to each detected agent or subagent.
+          Select a soul personality (.hocus/souls/) to affix to each detected agent file.
         </Text>
       </Box>
 
-      {subagents.length === 0 ? (
+      {subagentFiles.length === 0 ? (
         <Box flexDirection="column" marginY={1}>
           <Text color={palette.amber}>
             No custom agents or subagents detected in this project.
@@ -117,29 +131,33 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
       ) : (
         <Box flexDirection="column" marginY={1}>
           <Text color={palette.violet} bold>
-            Detected Agents &amp; Subagents:
+            Detected Agent Files (1 entry per file):
           </Text>
-          {subagents.map((sa, index) => {
-            const isFocused = index === selectedIndex;
-            const chosenSlug = assignments[sa.id] || "none";
+
+          {startIndex > 0 && (
+            <Text color={palette.dim}>
+              ▲ ({startIndex} more above)
+            </Text>
+          )}
+
+          {visibleFiles.map((file, offset) => {
+            const actualIndex = startIndex + offset;
+            const isFocused = actualIndex === selectedIndex;
+            const chosenSlug = assignments[file.relPath] || "none";
             const chosenSoul = availableSouls.find((s) => s.character === chosenSlug);
             const soulLabel = chosenSoul
               ? `${chosenSoul.display_name} (${chosenSoul.character})`
               : "— none (skip) —";
 
-            const providerLabels = Array.from(
-              new Set(sa.files.map((f) => f.provider)),
-            ).join(", ");
-
             return (
-              <Box key={sa.id} marginY={0}>
+              <Box key={file.relPath} marginY={0}>
                 <Text color={isFocused ? palette.green : palette.dim}>
                   {isFocused ? "▸ " : "  "}
                 </Text>
                 <Text color={palette.text} bold={isFocused}>
-                  {sa.id.padEnd(24)}
+                  {file.relPath.padEnd(38)}
                 </Text>
-                <Text color={palette.dim}>[{providerLabels.padEnd(12)}] </Text>
+                <Text color={palette.dim}>[{file.provider.padEnd(11)}] </Text>
                 <Text color={palette.text}> → </Text>
                 <Text color={isFocused ? palette.green : palette.greenDim} bold={isFocused}>
                   ◀ {soulLabel} ▶
@@ -147,6 +165,12 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
               </Box>
             );
           })}
+
+          {startIndex + MAX_VISIBLE_ROWS < totalFiles && (
+            <Text color={palette.dim}>
+              ▼ ({totalFiles - (startIndex + MAX_VISIBLE_ROWS)} more below)
+            </Text>
+          )}
         </Box>
       )}
 
@@ -154,23 +178,23 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
       <Box marginTop={1} gap={2}>
         <Text
           color={
-            selectedIndex === subagents.length
+            selectedIndex === subagentFiles.length
               ? palette.green
               : palette.dim
           }
-          bold={selectedIndex === subagents.length}
+          bold={selectedIndex === subagentFiles.length}
         >
-          {selectedIndex === subagents.length ? "▸ [ Affix Souls ]" : "  [ Affix Souls ]"}
+          {selectedIndex === subagentFiles.length ? "▸ [ Affix Souls ]" : "  [ Affix Souls ]"}
         </Text>
         <Text
           color={
-            selectedIndex === subagents.length + 1
+            selectedIndex === subagentFiles.length + 1
               ? palette.amber
               : palette.dim
           }
-          bold={selectedIndex === subagents.length + 1}
+          bold={selectedIndex === subagentFiles.length + 1}
         >
-          {selectedIndex === subagents.length + 1 ? "▸ [ Cancel ]" : "  [ Cancel ]"}
+          {selectedIndex === subagentFiles.length + 1 ? "▸ [ Cancel ]" : "  [ Cancel ]"}
         </Text>
       </Box>
 
@@ -185,12 +209,12 @@ export const AffixPrompt: React.FC<AffixPromptProps> = ({
 
 export async function promptAffix(
   availableSouls: SoulFile[],
-  subagents: SubagentGroup[],
+  subagentFiles: DetectedSubagent[],
 ): Promise<Record<string, string> | null> {
   if (!process.stdout.isTTY) {
     const res: Record<string, string> = {};
-    for (const sa of subagents) {
-      res[sa.id] = sa.currentSoul || "none";
+    for (const f of subagentFiles) {
+      res[f.relPath] = f.currentSoul || "none";
     }
     return res;
   }
@@ -199,7 +223,7 @@ export async function promptAffix(
   const { waitUntilExit } = render(
     <AffixPrompt
       availableSouls={availableSouls}
-      subagents={subagents}
+      subagentFiles={subagentFiles}
       onConfirm={(assignments) => {
         result = assignments;
       }}

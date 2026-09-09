@@ -31,6 +31,7 @@ export const BUNDLED_RULES_DIR = path.join(PACKAGE_ROOT, "src", "templates", "ru
 export const BUNDLED_SPELLS_DIR = path.join(PACKAGE_ROOT, "src", "templates", "spells");
 
 export const PROJECT_PERSONAS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "personas");
+export const PROJECT_SOULS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "souls");
 export const PROJECT_CASTS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "casts");
 export const PROJECT_CONFIG_FILE = (repoRoot: string) => path.join(repoRoot, ".hocus", "config.json");
 export const PROJECT_POTIONS_DIR = (repoRoot: string) => path.join(repoRoot, ".hocus", "_potions");

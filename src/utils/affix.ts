@@ -6,6 +6,7 @@ import type { TargetId } from "../compilers/types.js";
 import { parseSoulFile, type SoulFile } from "../schema/soul.js";
 import {
   PROJECT_PERSONAS_DIR,
+  PROJECT_SOULS_DIR,
   BUNDLED_PERSONAS_DIR,
 } from "./paths.js";
 
@@ -16,7 +17,7 @@ export interface DetectedSubagent {
   relPath: string; // repo-relative path, e.g. ".cursor/agents/orchestrator.md"
   provider: TargetId | "generic";
   currentSoul?: string; // soul character slug if already affixed
-  currentSoulPath?: string; // e.g. ".hocus/personas/jared.soul.md"
+  currentSoulPath?: string; // e.g. ".hocus/souls/jared.soul.md"
 }
 
 export interface SubagentGroup {
@@ -29,8 +30,9 @@ export interface SubagentGroup {
 export interface AffixResult {
   affixedAgents: {
     agentId: string;
+    filePath: string;
+    relPath: string;
     soul: string;
-    filesUpdated: string[];
   }[];
 }
 
@@ -49,29 +51,44 @@ export const SOUL_BLOCK_REGEX = /<!--\s*hocus:soul:start\s*-->[\s\S]*?<!--\s*hoc
 export const SOUL_LEGACY_COMMENT_REGEX = /<!--\s*soul:\s*([^\s>]+)\s*-->\r?\n?(?:>[^\n]*\r?\n?)*/g;
 
 /**
- * Ensures .hocus/personas/ exists and returns all available SoulFile definitions.
- * If .hocus/personas/ does not exist or is empty, initializes it from bundled personas.
+ * Ensures .hocus/souls/ (and .hocus/personas/) exists and returns all available SoulFile definitions.
+ * If .hocus/souls/ does not exist, syncs or initializes from .hocus/personas/ or bundled personas.
  */
 export async function findAvailableSouls(repoRoot: string): Promise<SoulFile[]> {
-  const dir = PROJECT_PERSONAS_DIR(repoRoot);
-  if (!(await pathExists(dir))) {
-    await ensureDir(dir);
+  const soulsDir = PROJECT_SOULS_DIR(repoRoot);
+  const personasDir = PROJECT_PERSONAS_DIR(repoRoot);
+
+  await ensureDir(soulsDir);
+  await ensureDir(personasDir);
+
+  let soulsFiles = (await readdir(soulsDir).catch(() => [])).filter((f) => f.endsWith(".soul.md") || f.endsWith(".md"));
+  let personasFiles = (await readdir(personasDir).catch(() => [])).filter((f) => f.endsWith(".soul.md") || f.endsWith(".md"));
+
+  // If personas exist but soulsDir is empty, copy personas to soulsDir
+  if (!soulsFiles.length && personasFiles.length) {
+    for (const pf of personasFiles) {
+      await copy(path.join(personasDir, pf), path.join(soulsDir, pf)).catch(() => {});
+    }
+    soulsFiles = (await readdir(soulsDir).catch(() => [])).filter((f) => f.endsWith(".soul.md") || f.endsWith(".md"));
   }
 
-  let files = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith(".soul.md"));
-
-  if (!files.length && (await pathExists(BUNDLED_PERSONAS_DIR))) {
+  // If both empty, copy from bundled personas to both
+  if (!soulsFiles.length && (await pathExists(BUNDLED_PERSONAS_DIR))) {
     const bundledFiles = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
     for (const bf of bundledFiles) {
-      await copy(path.join(BUNDLED_PERSONAS_DIR, bf), path.join(dir, bf));
+      await copy(path.join(BUNDLED_PERSONAS_DIR, bf), path.join(soulsDir, bf)).catch(() => {});
+      await copy(path.join(BUNDLED_PERSONAS_DIR, bf), path.join(personasDir, bf)).catch(() => {});
     }
-    files = (await readdir(dir).catch(() => [])).filter((f) => f.endsWith(".soul.md"));
+    soulsFiles = (await readdir(soulsDir).catch(() => [])).filter((f) => f.endsWith(".soul.md") || f.endsWith(".md"));
   }
 
+  const sourceDir = soulsFiles.length ? soulsDir : personasDir;
+  const activeFiles = soulsFiles.length ? soulsFiles : personasFiles;
+
   const souls: SoulFile[] = [];
-  for (const file of files) {
+  for (const file of activeFiles) {
     try {
-      const fullPath = path.join(dir, file);
+      const fullPath = path.join(sourceDir, file);
       const soul = parseSoulFile(fullPath);
       souls.push(soul);
     } catch {
@@ -98,30 +115,63 @@ export function resolveSoulSlug(input: string, availableSouls: SoulFile[]): stri
 
 /**
  * Extracts currently affixed soul slug and path from file content.
+ * Detects .hocus/souls/ links, .hocus/personas/ links, and hocus:soul delimiter blocks.
  */
 export function extractAffixedSoul(content: string): { soulSlug?: string; soulPath?: string } {
-  // Check hocus:soul:start block
-  const blockMatch = content.match(/<!--\s*hocus:soul:start\s*-->[\s\S]*?<!--\s*soul:\s*([^\s>]+)\s*-->[\s\S]*?<!--\s*hocus:soul:end\s*-->/);
-  if (blockMatch && blockMatch[1]) {
-    const soulPath = blockMatch[1].trim();
-    const slug = path.basename(soulPath, ".soul.md");
-    return { soulSlug: slug, soulPath };
+  // 1. Check hocus:soul:start block
+  const blockMatch = content.match(
+    /<!--\s*hocus:soul:start\s*-->[\s\S]*?<!--\s*hocus:soul:end\s*-->/,
+  );
+  if (blockMatch) {
+    const inner = blockMatch[0];
+    const match =
+      inner.match(/\.hocus\/(?:souls|personas)\/([a-zA-Z0-9_-]+)(?:\.soul)?\.md/) ||
+      inner.match(/<!--\s*soul:\s*([^\s>]+)\s*-->/);
+    if (match && match[1]) {
+      const slug = path.basename(match[1].trim(), ".soul.md").replace(/\.md$/, "");
+      return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
+    }
   }
 
-  // Check simple <!-- soul: path --> comment
-  const simpleMatch = content.match(/<!--\s*soul:\s*([^\s>]+)\s*-->/);
-  if (simpleMatch && simpleMatch[1]) {
-    const soulPath = simpleMatch[1].trim();
-    const slug = path.basename(soulPath, ".soul.md");
-    return { soulSlug: slug, soulPath };
+  // 2. Check markdown link href pointing to .hocus/souls/ or .hocus/personas/
+  const linkHrefMatch = content.match(
+    /\[[^\]]*\]\([^)]*?\.hocus\/(?:souls|personas)\/([a-zA-Z0-9_-]+)(?:\.soul)?\.md[^)]*\)/,
+  );
+  if (linkHrefMatch && linkHrefMatch[1]) {
+    const slug = linkHrefMatch[1].trim();
+    return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
   }
 
-  // Check TOML # soul: path comment
+  // 3. Check markdown link text pointing to .hocus/souls/ or .hocus/personas/
+  const linkTextMatch = content.match(
+    /\[[^\]]*?\.hocus\/(?:souls|personas)\/([a-zA-Z0-9_-]+)(?:\.soul)?\.md[^\]]*\]\([^)]+\)/,
+  );
+  if (linkTextMatch && linkTextMatch[1]) {
+    const slug = linkTextMatch[1].trim();
+    return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
+  }
+
+  // 4. Check simple <!-- soul: path --> comment
+  const commentMatch = content.match(/<!--\s*soul:\s*([^\s>]+)\s*-->/);
+  if (commentMatch && commentMatch[1]) {
+    const soulPath = commentMatch[1].trim();
+    const slug = path.basename(soulPath, ".soul.md").replace(/\.md$/, "");
+    return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
+  }
+
+  // 5. Check plain text mention: .hocus/souls/<slug>.soul.md
+  const textMatch = content.match(/\.hocus\/(?:souls|personas)\/([a-zA-Z0-9_-]+)(?:\.soul)?\.md/);
+  if (textMatch && textMatch[1]) {
+    const slug = textMatch[1].trim();
+    return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
+  }
+
+  // 6. Check TOML comment # soul: ...
   const tomlMatch = content.match(/^#\s*soul:\s*([^\s#\n]+)/m);
   if (tomlMatch && tomlMatch[1]) {
     const soulPath = tomlMatch[1].trim();
-    const slug = path.basename(soulPath, ".soul.md");
-    return { soulSlug: slug, soulPath };
+    const slug = path.basename(soulPath, ".soul.md").replace(/\.md$/, "");
+    return { soulSlug: slug, soulPath: `.hocus/souls/${slug}.soul.md` };
   }
 
   return {};
@@ -129,6 +179,7 @@ export function extractAffixedSoul(content: string): { soulSlug?: string; soulPa
 
 /**
  * Detects all existing custom agents and subagents that the user already has.
+ * Returns ONE entry per file.
  */
 export async function findExistingSubagents(repoRoot: string): Promise<DetectedSubagent[]> {
   const results: DetectedSubagent[] = [];
@@ -228,7 +279,7 @@ async function inspectSubagentFile(
 }
 
 /**
- * Groups detected subagents by their agent identifier.
+ * Groups detected subagents by their agent identifier (used when grouping is desired).
  */
 export function groupSubagents(subagents: DetectedSubagent[]): SubagentGroup[] {
   const groupsMap = new Map<string, SubagentGroup>();
@@ -255,13 +306,14 @@ export function groupSubagents(subagents: DetectedSubagent[]): SubagentGroup[] {
 
 /**
  * Builds the soul reference block to insert after frontmatter.
+ * References .hocus/souls/${soul.character}.soul.md.
  */
 export function buildSoulReferenceBlock(
   agentFilePath: string,
   soul: SoulFile,
   repoRoot: string,
 ): string {
-  const relSoulPath = path.posix.join(".hocus", "personas", `${soul.character}.soul.md`);
+  const relSoulPath = path.posix.join(".hocus", "souls", `${soul.character}.soul.md`);
   const fullSoulPath = path.join(repoRoot, relSoulPath);
   const relLink = path.posix.normalize(
     path.relative(path.dirname(agentFilePath), fullSoulPath).replace(/\\/g, "/"),
@@ -270,13 +322,14 @@ export function buildSoulReferenceBlock(
   return [
     "<!-- hocus:soul:start -->",
     `<!-- soul: ${relSoulPath} -->`,
-    `> **Soul**: Adopt the persona and behavioral guidelines defined in [${relSoulPath}](${relLink}).`,
+    `> **Soul**: Adopt the persona defined in [${relSoulPath}](${relLink}).`,
     "<!-- hocus:soul:end -->",
   ].join("\n");
 }
 
 /**
- * Touches ONLY the specified agent file and adds or updates the soul reference after frontmatter.
+ * Touches ONLY the specified agent file and adds or replaces the soul reference after frontmatter.
+ * Looks for any existing .hocus/souls or .hocus/personas references and cleanly replaces them.
  * Preserves all existing frontmatter and instructions completely untouched.
  */
 export async function affixSoulToFile(
@@ -289,9 +342,37 @@ export async function affixSoulToFile(
   const raw = await readFile(agentFilePath, "utf8");
   const { soulSlug: previousSoul } = extractAffixedSoul(raw);
 
+  const relSoulPath = path.posix.join(".hocus", "souls", `${soul.character}.soul.md`);
+
+  // Ensure the target soul file exists in .hocus/souls/
+  const fullSoulPath = path.join(repoRoot, relSoulPath);
+  if (!(await pathExists(fullSoulPath))) {
+    await ensureDir(path.dirname(fullSoulPath));
+    const personaPath = path.join(repoRoot, ".hocus", "personas", `${soul.character}.soul.md`);
+    const bundledPath = path.join(BUNDLED_PERSONAS_DIR, `${soul.character}.soul.md`);
+    if (await pathExists(personaPath)) {
+      await copy(personaPath, fullSoulPath).catch(() => {});
+    } else if (soul.sourcePath && (await pathExists(soul.sourcePath))) {
+      await copy(soul.sourcePath, fullSoulPath).catch(() => {});
+    } else if (await pathExists(bundledPath)) {
+      await copy(bundledPath, fullSoulPath).catch(() => {});
+    } else {
+      const frontmatter: Record<string, unknown> = {
+        character: soul.character,
+        display_name: soul.display_name,
+        role: soul.role,
+        voice: soul.voice,
+        glyph: soul.glyph,
+        triggers: soul.triggers,
+      };
+      if (soul.aliases) frontmatter.aliases = soul.aliases;
+      const content = matter.stringify(soul.body || "", frontmatter);
+      await writeFile(fullSoulPath, content, "utf8");
+    }
+  }
+
   if (ext === ".toml") {
     // Codex TOML agent: add/update # soul: comment
-    const relSoulPath = path.posix.join(".hocus", "personas", `${soul.character}.soul.md`);
     let updated = raw;
     if (/^#\s*soul:.*$/m.test(updated)) {
       updated = updated.replace(/^#\s*soul:.*$/m, `# soul: ${relSoulPath}`);
@@ -310,12 +391,17 @@ export async function affixSoulToFile(
 
   let updated = raw;
 
-  // 1. If an existing soul block or comment exists, remove it first
+  // 1. Remove existing soul blocks and legacy soul comments/blockquotes
   if (SOUL_BLOCK_REGEX.test(updated)) {
     updated = updated.replace(SOUL_BLOCK_REGEX, "");
-  } else if (SOUL_LEGACY_COMMENT_REGEX.test(updated)) {
+  }
+  if (SOUL_LEGACY_COMMENT_REGEX.test(updated)) {
     updated = updated.replace(SOUL_LEGACY_COMMENT_REGEX, "");
   }
+
+  // Also remove standalone blockquotes referencing .hocus/souls or .hocus/personas
+  updated = updated.replace(/^>\s*\*\*Soul\*\*:[^\n]*\.hocus\/(?:souls|personas)\/[^\n]*\r?\n?/gm, "");
+  updated = updated.replace(/^\[[^\]]*\]\([^)]*?\.hocus\/(?:souls|personas)\/[^)]*\)\r?\n?/gm, "");
 
   // 2. Insert the reference block immediately after frontmatter
   const frontmatterMatch = updated.match(/^(---\r?\n[\s\S]*?\r?\n---)(\r?\n|$)/);
@@ -338,7 +424,8 @@ export async function affixSoulToFile(
 }
 
 /**
- * Executes affixing across assigned subagents.
+ * Executes affixing across assigned subagent files.
+ * Supports assignments keyed by file relPath, filePath, or agentId.
  */
 export async function executeAffix({
   repoRoot,
@@ -348,7 +435,7 @@ export async function executeAffix({
   dryRun = false,
 }: {
   repoRoot: string;
-  assignments: Record<string, string>; // agentId -> soulSlug
+  assignments: Record<string, string>; // file relPath or agentId -> soulSlug
   availableSouls: SoulFile[];
   subagentFiles: DetectedSubagent[];
   dryRun?: boolean;
@@ -362,30 +449,26 @@ export async function executeAffix({
     soulMap.set(soul.character.toLowerCase(), soul);
   }
 
-  for (const [agentId, soulSlug] of Object.entries(assignments)) {
+  for (const file of subagentFiles) {
+    // Check if assigned by exact relPath, filePath, or agent id
+    const soulSlug =
+      assignments[file.relPath] ??
+      assignments[file.filePath] ??
+      assignments[file.id];
+
     if (!soulSlug || soulSlug === "none") continue;
 
     const soul = soulMap.get(soulSlug.toLowerCase());
     if (!soul) continue;
 
-    // Find all files matching this agentId
-    const matchingFiles = subagentFiles.filter(
-      (f) => f.id === agentId || f.filePath === agentId || f.relPath === agentId,
-    );
+    await affixSoulToFile(file.filePath, soul, repoRoot, dryRun);
 
-    const filesUpdated: string[] = [];
-    for (const file of matchingFiles) {
-      await affixSoulToFile(file.filePath, soul, repoRoot, dryRun);
-      filesUpdated.push(file.relPath);
-    }
-
-    if (filesUpdated.length > 0) {
-      result.affixedAgents.push({
-        agentId,
-        soul: soul.character,
-        filesUpdated,
-      });
-    }
+    result.affixedAgents.push({
+      agentId: file.id,
+      filePath: file.filePath,
+      relPath: file.relPath,
+      soul: soul.character,
+    });
   }
 
   return result;

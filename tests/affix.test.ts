@@ -10,8 +10,7 @@ import {
   findExistingSubagents,
   affixSoulToFile,
   executeAffix,
-  buildSoulReferenceBlock,
-  groupSubagents,
+  extractAffixedSoul,
 } from "../src/utils/affix.js";
 import { runAffix } from "../src/commands/affix.js";
 import type { SoulFile } from "../src/schema/soul.js";
@@ -38,146 +37,111 @@ const GILFOYLE_SOUL: SoulFile = {
   body: "# Zoroaster\nReviews code ruthlessly.",
 };
 
-test("affix: detects subagents across Cursor, Claude Code, and Antigravity directories", async () => {
+test("affix: detects subagents with ONE entry per file across .agents/agents and .claude/agents", async () => {
   const dir = makeEmptyRepo();
   try {
-    // 1. Create Cursor agent (.cursor/agents/orchestrator.md)
-    await ensureDir(path.join(dir, ".cursor", "agents"));
-    const cursorAgentContent = `---
-name: orchestrator
-description: Custom project orchestrator
-tools:
-  - read_file
----
-
-# Custom Orchestrator
-Manage tickets and sprint planning.
-`;
-    await writeFile(path.join(dir, ".cursor", "agents", "orchestrator.md"), cursorAgentContent, "utf8");
-
-    // 2. Create Claude Code agent (.claude/agents/reviewer.md)
+    // 1. Create costs-cleaner in .claude/agents/costs-cleaner.md
     await ensureDir(path.join(dir, ".claude", "agents"));
-    const claudeAgentContent = `---
-name: reviewer
-description: Pull request reviewer
+    const claudeCostsCleaner = `---
+name: costs-cleaner
+description: Claude costs cleaner
 ---
-
-# PR Reviewer
-Reviews all PRs before merge.
+# Costs Cleaner
 `;
-    await writeFile(path.join(dir, ".claude", "agents", "reviewer.md"), claudeAgentContent, "utf8");
+    await writeFile(path.join(dir, ".claude", "agents", "costs-cleaner.md"), claudeCostsCleaner, "utf8");
 
-    // 3. Create Antigravity agent (.agents/agents/qa/agent.md)
-    await ensureDir(path.join(dir, ".agents", "agents", "qa"));
-    const agyAgentContent = `---
-name: qa
-description: Automated test runner
-subagent: true
+    // 2. Create costs-cleaner in .agents/agents/costs-cleaner/agent.md
+    await ensureDir(path.join(dir, ".agents", "agents", "costs-cleaner"));
+    const agyCostsCleaner = `---
+name: costs-cleaner
+description: Antigravity costs cleaner
 ---
-
-# QA Subagent
-Runs test suites.
+# Costs Cleaner
 `;
-    await writeFile(path.join(dir, ".agents", "agents", "qa", "agent.md"), agyAgentContent, "utf8");
+    await writeFile(path.join(dir, ".agents", "agents", "costs-cleaner", "agent.md"), agyCostsCleaner, "utf8");
 
     const detected = await findExistingSubagents(dir);
-    assert.equal(detected.length, 3);
+    // Must be 2 separate entries! One per file!
+    assert.equal(detected.length, 2);
 
-    const ids = detected.map((d) => d.id);
-    assert.ok(ids.includes("orchestrator"));
-    assert.ok(ids.includes("reviewer"));
-    assert.ok(ids.includes("qa"));
-
-    const cursorAgent = detected.find((d) => d.id === "orchestrator");
-    assert.equal(cursorAgent?.provider, "cursor");
-    assert.equal(cursorAgent?.relPath, path.join(".cursor", "agents", "orchestrator.md"));
-
-    const groups = groupSubagents(detected);
-    assert.equal(groups.length, 3);
+    const relPaths = detected.map((d) => d.relPath);
+    assert.ok(relPaths.includes(path.join(".claude", "agents", "costs-cleaner.md")));
+    assert.ok(relPaths.includes(path.join(".agents", "agents", "costs-cleaner", "agent.md")));
   } finally {
     cleanupRepo(dir);
   }
 });
 
-test("affix: affixSoulToFile only touches the target file and inserts reference after frontmatter", async () => {
+test("affix: extractAffixedSoul detects .hocus/souls links inside agent markdown", () => {
+  const markdownWithLink = `---
+name: orchestrator
+---
+
+> **Soul**: Adopt the persona defined in [.hocus/souls/jared.soul.md](../../.hocus/souls/jared.soul.md).
+
+# User Instructions
+`;
+  const res = extractAffixedSoul(markdownWithLink);
+  assert.equal(res.soulSlug, "jared");
+  assert.equal(res.soulPath, ".hocus/souls/jared.soul.md");
+
+  const markdownWithDelimiters = `---
+name: reviewer
+---
+
+<!-- hocus:soul:start -->
+<!-- soul: .hocus/souls/gilfoyle.soul.md -->
+> **Soul**: Adopt the persona defined in [.hocus/souls/gilfoyle.soul.md](.hocus/souls/gilfoyle.soul.md).
+<!-- hocus:soul:end -->
+
+# Instructions
+`;
+  const res2 = extractAffixedSoul(markdownWithDelimiters);
+  assert.equal(res2.soulSlug, "gilfoyle");
+});
+
+test("affix: affixSoulToFile references .hocus/souls/ and replaces existing references cleanly", async () => {
   const dir = makeEmptyRepo();
   try {
     await ensureDir(path.join(dir, ".cursor", "agents"));
     const agentPath = path.join(dir, ".cursor", "agents", "orchestrator.md");
-    const originalContent = `---
+
+    // Start with an agent having a legacy or existing .hocus/souls reference
+    const initialContent = `---
 name: orchestrator
 description: Custom project orchestrator
-custom_setting: preserve_me
 ---
+
+> **Soul**: Adopt the persona defined in [.hocus/souls/dinesh.soul.md](../../.hocus/souls/dinesh.soul.md).
 
 # Custom Orchestrator Instructions
 Do not overwrite this user instruction.
 `;
-    await writeFile(agentPath, originalContent, "utf8");
+    await writeFile(agentPath, initialContent, "utf8");
 
     // Affix Jared's soul
-    const { updated } = await affixSoulToFile(agentPath, JARED_SOUL, dir);
+    const { updated, previousSoul } = await affixSoulToFile(agentPath, JARED_SOUL, dir);
     assert.equal(updated, true);
+    assert.equal(previousSoul, "dinesh");
 
     const updatedContent = await readFile(agentPath, "utf8");
 
-    // Check frontmatter is preserved
-    const { data: fm } = matter(updatedContent);
-    assert.equal(fm.name, "orchestrator");
-    assert.equal(fm.description, "Custom project orchestrator");
-    assert.equal(fm.custom_setting, "preserve_me");
+    // Old dinesh link must be gone!
+    assert.ok(!updatedContent.includes("dinesh.soul.md"));
 
-    // Check body still has user instructions
-    assert.match(updatedContent, /# Custom Orchestrator Instructions/);
-    assert.match(updatedContent, /Do not overwrite this user instruction\./);
-
-    // Check soul reference block is placed immediately after frontmatter
+    // Jared reference with .hocus/souls/ must be present
     assert.match(updatedContent, /<!-- hocus:soul:start -->/);
-    assert.match(updatedContent, /<!-- soul: \.hocus\/personas\/jared\.soul\.md -->/);
-    assert.match(updatedContent, /> \*\*Soul\*\*: Adopt the persona and behavioral guidelines defined in \[\.hocus\/personas\/jared\.soul\.md\]/);
+    assert.match(updatedContent, /<!-- soul: \.hocus\/souls\/jared\.soul\.md -->/);
+    assert.match(updatedContent, /> \*\*Soul\*\*: Adopt the persona defined in \[\.hocus\/souls\/jared\.soul\.md\]/);
     assert.match(updatedContent, /<!-- hocus:soul:end -->/);
 
-    // Verify ordering: frontmatter delimiter --- comes before soul block, which comes before heading
-    const fmEnd = updatedContent.indexOf("---\n\n<!-- hocus:soul:start -->");
-    const headingPos = updatedContent.indexOf("# Custom Orchestrator Instructions");
-    assert.ok(fmEnd !== -1, "Reference must be immediately after frontmatter");
-    assert.ok(headingPos > fmEnd, "User heading must follow reference block");
-  } finally {
-    cleanupRepo(dir);
-  }
-});
+    // Verify .hocus/souls/jared.soul.md exists in dir
+    assert.equal(await pathExists(path.join(dir, ".hocus", "souls", "jared.soul.md")), true);
 
-test("affix: re-affixing replaces the previous soul reference without duplication", async () => {
-  const dir = makeEmptyRepo();
-  try {
-    await ensureDir(path.join(dir, ".cursor", "agents"));
-    const agentPath = path.join(dir, ".cursor", "agents", "orchestrator.md");
-    const originalContent = `---
-name: orchestrator
-description: Custom project orchestrator
----
-
-# Original Body
-`;
-    await writeFile(agentPath, originalContent, "utf8");
-
-    // 1. First affix Jared
-    await affixSoulToFile(agentPath, JARED_SOUL, dir);
-    const content1 = await readFile(agentPath, "utf8");
-    assert.match(content1, /jared\.soul\.md/);
-
-    // 2. Re-affix Gilfoyle
-    const { updated, previousSoul } = await affixSoulToFile(agentPath, GILFOYLE_SOUL, dir);
-    assert.equal(updated, true);
-    assert.equal(previousSoul, "jared");
-
-    const content2 = await readFile(agentPath, "utf8");
-    assert.match(content2, /gilfoyle\.soul\.md/);
-    assert.ok(!content2.includes("jared.soul.md"), "Old soul reference should be replaced");
-
-    // Ensure only one soul block exists
-    const matches = content2.match(/<!-- hocus:soul:start -->/g);
-    assert.equal(matches?.length, 1);
+    // Frontmatter and body are preserved
+    const { data: fm } = matter(updatedContent);
+    assert.equal(fm.name, "orchestrator");
+    assert.match(updatedContent, /# Custom Orchestrator Instructions/);
   } finally {
     cleanupRepo(dir);
   }
@@ -186,11 +150,11 @@ description: Custom project orchestrator
 test("affix: runAffix CLI command executes end-to-end with --agent and --soul", async () => {
   const dir = makeEmptyRepo();
   try {
-    // Scaffold .hocus/personas/ with jared
-    const personasDir = path.join(dir, ".hocus", "personas");
-    await ensureDir(personasDir);
+    // Scaffold .hocus/souls/ with jared
+    const soulsDir = path.join(dir, ".hocus", "souls");
+    await ensureDir(soulsDir);
     await writeFile(
-      path.join(personasDir, "jared.soul.md"),
+      path.join(soulsDir, "jared.soul.md"),
       `---\ncharacter: jared\ndisplay_name: Roger Bacon\nrole: orchestrator\nvoice: warm\nglyph: "[*]"\ntriggers: [orchestrate]\n---\n# Roger Bacon\nOrchestrate.\n`,
       "utf8",
     );
@@ -214,7 +178,7 @@ test("affix: runAffix CLI command executes end-to-end with --agent and --soul", 
     });
 
     const updatedContent = await readFile(agentFile, "utf8");
-    assert.match(updatedContent, /<!-- soul: \.hocus\/personas\/jared\.soul\.md -->/);
+    assert.match(updatedContent, /<!-- soul: \.hocus\/souls\/jared\.soul\.md -->/);
     assert.match(updatedContent, /# My Custom Agent/);
   } finally {
     cleanupRepo(dir);

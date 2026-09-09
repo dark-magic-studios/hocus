@@ -3,13 +3,12 @@ import { log } from "../utils/log.js";
 import {
   findAvailableSouls,
   findExistingSubagents,
-  groupSubagents,
   resolveSoulSlug,
   executeAffix,
   type DetectedSubagent,
 } from "../utils/affix.js";
 import { promptAffix } from "../tui/components/AffixPrompt.js";
-import { PROJECT_PERSONAS_DIR } from "../utils/paths.js";
+import { PROJECT_SOULS_DIR, PROJECT_PERSONAS_DIR } from "../utils/paths.js";
 
 export interface AffixCommandOptions {
   repoRoot: string;
@@ -26,11 +25,12 @@ export async function runAffix({
   dryRun = false,
   interactive = true,
 }: AffixCommandOptions): Promise<void> {
+  const soulsDir = PROJECT_SOULS_DIR(repoRoot);
   const personasDir = PROJECT_PERSONAS_DIR(repoRoot);
   const availableSouls = await findAvailableSouls(repoRoot);
 
   if (!availableSouls.length) {
-    log.error(`no personas found in ${personasDir} — could not load or initialize souls`);
+    log.error(`no souls found in ${soulsDir} or ${personasDir} — could not load or initialize souls`);
     return;
   }
 
@@ -53,7 +53,7 @@ export async function runAffix({
       log.error(
         `agent "${agent}" not found in project. Detected agents: ${
           detectedFiles.length
-            ? detectedFiles.map((f) => f.id).join(", ")
+            ? detectedFiles.map((f) => f.relPath).join(", ")
             : "none"
         }`,
       );
@@ -68,7 +68,7 @@ export async function runAffix({
     const resolvedSoul = resolveSoulSlug(soul, availableSouls);
     if (!resolvedSoul) {
       log.error(
-        `soul "${soul}" not found in ${personasDir}. Available souls: ${availableSouls
+        `soul "${soul}" not found. Available souls: ${availableSouls
           .map((s) => s.character)
           .join(", ")}`,
       );
@@ -76,9 +76,8 @@ export async function runAffix({
     }
 
     // Affix the resolved soul to all matched target files
-    const targetGroups = groupSubagents(targetFiles);
-    for (const g of targetGroups) {
-      assignments[g.id] = resolvedSoul;
+    for (const f of targetFiles) {
+      assignments[f.relPath] = resolvedSoul;
     }
   } else {
     if (!detectedFiles.length) {
@@ -89,10 +88,9 @@ export async function runAffix({
       return;
     }
 
-    const groups = groupSubagents(targetFiles);
-
     if (interactive) {
-      const prompted = await promptAffix(availableSouls, groups);
+      // Pass targetFiles directly: ONE ENTRY PER FILE!
+      const prompted = await promptAffix(availableSouls, targetFiles);
       if (!prompted) {
         log.info("affix cancelled — no changes made");
         return;
@@ -115,7 +113,7 @@ export async function runAffix({
     log.info("dry run — no files will be modified");
   }
 
-  log.heading("affixing souls to subagents...");
+  log.heading("affixing souls to subagent files...");
 
   const result = await executeAffix({
     repoRoot,
@@ -129,11 +127,9 @@ export async function runAffix({
     for (const item of result.affixedAgents) {
       const soulObj = availableSouls.find((s) => s.character === item.soul);
       const soulDisplay = soulObj ? `${soulObj.display_name} (${item.soul})` : item.soul;
-      log.ok(
-        `affixed soul "${soulDisplay}" to "${item.agentId}" → ${item.filesUpdated.join(", ")}`,
-      );
+      log.ok(`affixed soul "${soulDisplay}" to ${item.relPath}`);
     }
-    log.ok(`successfully affixed ${result.affixedAgents.length} subagent(s)!`);
+    log.ok(`successfully affixed ${result.affixedAgents.length} subagent file(s)!`);
   } else {
     log.info("no files were updated");
   }

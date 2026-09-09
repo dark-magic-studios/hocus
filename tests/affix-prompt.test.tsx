@@ -4,7 +4,7 @@ import React from "react";
 import { render } from "ink-testing-library";
 import { AffixPrompt } from "../src/tui/components/AffixPrompt.js";
 import type { SoulFile } from "../src/schema/soul.js";
-import type { SubagentGroup } from "../src/utils/affix.js";
+import type { DetectedSubagent } from "../src/utils/affix.js";
 
 async function waitUntil(fn: () => boolean, timeoutMs = 1500, intervalMs = 20): Promise<void> {
   const start = Date.now();
@@ -36,23 +36,24 @@ const GILFOYLE_SOUL: SoulFile = {
   body: "Instructions",
 };
 
-test("AffixPrompt renders subagents and supports keyboard navigation & cycling souls", async () => {
+test("AffixPrompt renders one entry per file and supports keyboard navigation & cycling souls", async () => {
   let confirmedAssignments: Record<string, string> | undefined;
   let cancelled = false;
 
-  const subagents: SubagentGroup[] = [
+  const subagentFiles: DetectedSubagent[] = [
     {
       id: "orchestrator",
       displayName: "Custom Orchestrator",
-      files: [
-        {
-          id: "orchestrator",
-          displayName: "Custom Orchestrator",
-          filePath: "/repo/.cursor/agents/orchestrator.md",
-          relPath: ".cursor/agents/orchestrator.md",
-          provider: "cursor",
-        },
-      ],
+      filePath: "/repo/.cursor/agents/orchestrator.md",
+      relPath: ".cursor/agents/orchestrator.md",
+      provider: "cursor",
+    },
+    {
+      id: "orchestrator",
+      displayName: "Custom Orchestrator",
+      filePath: "/repo/.claude/agents/orchestrator.md",
+      relPath: ".claude/agents/orchestrator.md",
+      provider: "claude-code",
     },
   ];
 
@@ -61,7 +62,7 @@ test("AffixPrompt renders subagents and supports keyboard navigation & cycling s
   const instance = render(
     <AffixPrompt
       availableSouls={availableSouls}
-      subagents={subagents}
+      subagentFiles={subagentFiles}
       onConfirm={(res) => {
         confirmedAssignments = res;
       }}
@@ -74,15 +75,22 @@ test("AffixPrompt renders subagents and supports keyboard navigation & cycling s
   await waitUntil(() => (instance.lastFrame() ?? "").includes("Affix Hocus Souls to Subagents"));
 
   const frame1 = instance.lastFrame() ?? "";
-  assert.match(frame1, /orchestrator/);
-  assert.match(frame1, /— none \(skip\) —/);
+  // Check both file paths appear as distinct entries
+  assert.match(frame1, /\.cursor\/agents\/orchestrator\.md/);
+  assert.match(frame1, /\.claude\/agents\/orchestrator\.md/);
 
-  // Cycle soul right -> Roger Bacon (jared)
+  // Cycle soul right for first file -> Roger Bacon (jared)
   instance.stdin.write("\u001B[C"); // Right arrow
   await waitUntil(() => (instance.lastFrame() ?? "").includes("Roger Bacon (jared)"));
 
-  // Cycle soul right again -> Zoroaster (gilfoyle)
-  instance.stdin.write("\u001B[C"); // Right arrow
+  // Move down to second file
+  instance.stdin.write("\u001B[B"); // Down arrow
+  await waitUntil(() => (instance.lastFrame() ?? "").includes("▸ .claude/agents/orchestrator.md"));
+
+  // Cycle soul right twice for second file -> Zoroaster (gilfoyle)
+  instance.stdin.write("\u001B[C");
+  await waitUntil(() => (instance.lastFrame() ?? "").includes("Roger Bacon (jared)"));
+  instance.stdin.write("\u001B[C");
   await waitUntil(() => (instance.lastFrame() ?? "").includes("Zoroaster (gilfoyle)"));
 
   // Press down arrow to move to [ Affix Souls ] button
@@ -94,7 +102,8 @@ test("AffixPrompt renders subagents and supports keyboard navigation & cycling s
   await waitUntil(() => confirmedAssignments !== undefined);
 
   assert.deepEqual(confirmedAssignments, {
-    orchestrator: "gilfoyle",
+    ".cursor/agents/orchestrator.md": "jared",
+    ".claude/agents/orchestrator.md": "gilfoyle",
   });
 
   instance.unmount();
@@ -106,7 +115,7 @@ test("AffixPrompt handles escape to cancel", async () => {
   const instance = render(
     <AffixPrompt
       availableSouls={[JARED_SOUL]}
-      subagents={[]}
+      subagentFiles={[]}
       onConfirm={() => {}}
       onCancel={() => {
         cancelled = true;
