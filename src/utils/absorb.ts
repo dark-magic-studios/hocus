@@ -272,7 +272,7 @@ const PERSONA_TO_SKILLS: Record<string, string[]> = {
   dinesh: ["dinesh-pr-feedback", "dinesh-pr-open"],
   erlich: ["erlich-changelog", "erlich-readme", "erlich-update-product"],
   gavin: ["gavin-render-dashboard"],
-  gilfoyle: ["gilfoyle-pr-review"],
+  gilfoyle: ["gilfoyle-pr-review", "gilfoyle-codebase-review"],
   jared: ["jared-orchestrate"],
   "jian-yang": ["jianyang-smart-test"],
   laurie: ["laurie-fix-conflict", "laurie-resolve-config"],

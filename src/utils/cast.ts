@@ -82,6 +82,7 @@ export const PERSONA_SKILL_IDS = new Set([
   "erlich-readme",
   "erlich-update-product",
   "gavin-render-dashboard",
+  "gilfoyle-codebase-review",
   "gilfoyle-pr-review",
   "jared-orchestrate",
   "jianyang-smart-test",

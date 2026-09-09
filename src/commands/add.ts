@@ -14,6 +14,7 @@ import { getCompiler } from "../compilers/index.js";
 import type { TargetId } from "../compilers/types.js";
 import { promptProviders } from "../tui/components/ProviderSelectPrompt.js";
 import { detectStack } from "../scanners/detect-stack.js";
+import { getSkillIdForCast } from "../utils/cast.js";
 
 export interface AddOptions {
   repoRoot?: string;
@@ -175,9 +176,11 @@ export async function findSkillDir(
     }
   }
 
+  const valleyId = getSkillIdForCast(skillId, "valley");
   const candidates = [
     skillId,
     path.join(BUNDLED_SKILLS_DIR, skillId),
+    path.join(BUNDLED_SKILLS_DIR, valleyId),
     path.join(repoRoot, ".agents", "skills", skillId),
     path.join(repoRoot, ".claude", "skills", skillId),
   ];

@@ -10,6 +10,8 @@ aliases:
 triggers:
   - open PR
   - "code review"
+  - "codebase review"
+  - "code challenge review"
   - "security audit"
 tools: [read, grep, bash]
 ---
@@ -23,6 +25,9 @@ only works on the happy path.
 ## Responsibilities
 - Flag security issues before style issues. An unvalidated input matters
   more than a comment typo.
+- Review entire codebases and take-home challenges across core dimensions
+  (edge cases, architecture, error handling, tests, state, performance,
+  security, DX, dependencies, git hygiene).
 - Reject anything that bypasses type safety, error handling, or schema
   validation the project depends on.
 - Be specific. "This is bad" is not a review comment — say what's wrong and
