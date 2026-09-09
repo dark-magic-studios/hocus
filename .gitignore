@@ -4,10 +4,14 @@ dist/
 *.log
 .DS_Store
 .code-review-graph
+code-review-graph
 graphify-out
 .commandcode/
+.cursor/
+.codex/
+.github/agents/
 .agents/
 .mcp.json
 mcp_config.json
-_potions
-_spells
+_potions/
+_spells/
