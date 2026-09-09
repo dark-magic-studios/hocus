@@ -29,6 +29,8 @@ export interface Potion {
   path: string;
 }
 
+export type SkillSyncStatus = 'current' | 'outdated' | 'available' | 'local';
+
 export interface Skill {
   id: string;
   name: string;
@@ -36,6 +38,8 @@ export interface Skill {
   enabledFor: string[];
   description: string;
   path: string;
+  syncStatus: SkillSyncStatus;
+  bundledId?: string;
 }
 
 export interface Ward {

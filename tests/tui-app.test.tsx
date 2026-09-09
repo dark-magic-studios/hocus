@@ -13,6 +13,20 @@ async function waitUntil(fn: () => boolean, timeoutMs = 1500, intervalMs = 20): 
   }
 }
 
+test("App shows hocus version in the frame header", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const instance = render(
+      <App cwd={dir} version="1.2.3-test" silentBoot bootTasks={[]} />,
+    );
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("v1.2.3-test"));
+    assert.match(instance.lastFrame() ?? "", /hocus v1\.2\.3-test/);
+    instance.unmount();
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
 test("App boots straight to the potions tab when silentBoot is set", async () => {
   const dir = makeEmptyRepo();
   try {

@@ -31,6 +31,8 @@ const WARD_AGENT_DIR: Record<string, string> = {
 };
 
 import { getHocusStatus } from "../../utils/status.js";
+import { buildSkillSyncMap, resolveBundledSkillId, detectProjectCast } from "../../utils/skill-audit.js";
+import type { SkillSyncStatus } from "./types.js";
 
 /**
  * Reads the on-disk state the TUI renders. Never throws — a malformed file
@@ -41,7 +43,7 @@ import { getHocusStatus } from "../../utils/status.js";
 export async function loadDeck(cwd: string): Promise<DeckData> {
   const warnings: string[] = [];
 
-  const [agents, potions, spells, skills, wards, ledger, status] = await Promise.all([
+  const [agents, potions, spells, rawSkills, wards, ledger, status, syncMap, cast] = await Promise.all([
     loadAgents(cwd, warnings),
     loadPotions(cwd, warnings),
     loadSpells(cwd, warnings),
@@ -49,7 +51,25 @@ export async function loadDeck(cwd: string): Promise<DeckData> {
     loadWards(cwd),
     loadLedger(cwd, warnings),
     getHocusStatus(cwd),
+    buildSkillSyncMap(cwd),
+    detectProjectCast(cwd),
   ]);
+
+  const skills = await Promise.all(
+    rawSkills.map(async (skill) => {
+      const bundledId =
+        skill.source === "bundled"
+          ? skill.id
+          : await resolveBundledSkillId(cwd, skill.id, cast);
+      let syncStatus: SkillSyncStatus =
+        syncMap.get(skill.id) ??
+        (skill.source === "bundled" ? "available" : "local");
+      if (skill.source === "bundled" && syncStatus === "current") {
+        syncStatus = "available";
+      }
+      return { ...skill, syncStatus, bundledId };
+    }),
+  );
 
   return { agents, potions, spells, skills, wards, ledger, status, warnings };
 }
@@ -237,6 +257,7 @@ async function collectSkills(
         enabledFor: [],
         description,
         path: skillFile,
+        syncStatus: source === "bundled" ? "available" : "local",
       });
     } catch (e) {
       warnings.push(`malformed SKILL.md: ${path.relative(cwd, skillFile)} — ${String(e)}`);

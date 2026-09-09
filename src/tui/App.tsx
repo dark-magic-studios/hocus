@@ -24,11 +24,11 @@ const PANES: Record<TabId, React.ComponentType> = {
 };
 
 const HINTS: Record<TabId, string[]> = {
-  potions: ['↑↓ navigate', '⏎ open', 'a assign', '? keys', 'q quit'],
-  spells: ['↑↓ navigate', '⏎ expand', '? keys', 'q quit'],
+  potions: ['↑↓ navigate', '⏎ open', 'a assign', 'x express', 'q quit'],
+  spells: ['↑↓ navigate', '⏎ expand', 'q quit'],
   souls: ['↑↓ navigate', '⏎ expand', 'a absorb', 'w write', 'r recompile', 'q quit'],
   coven: ['↑↓ navigate', '⏎ inspect', 'n spawn familiar', 'x dismiss', 'q quit'],
-  grimoire: ['↑↓ navigate', 'space toggle', 'i install pack', 'q quit'],
+  grimoire: ['↑↓ navigate', 'space install', 'u update', 'i from path', 'q quit'],
   scrying: ['↑↓ scroll', 'f follow', 'c clear', 'q quit'],
   seance: ['⏎ send', 'tab cycle agent', 'ctrl+b backend', '/ or @ mention', 'esc cancel/clear', 'ctrl+←/→ switch tab'],
 };
@@ -88,7 +88,7 @@ export function App({ cwd, version, silentBoot, bootTasks }: AppProps) {
 
   return (
     <DeckProvider cwd={cwd}>
-      <Frame active={active} clock={clock} hints={HINTS[active]}>
+      <Frame active={active} clock={clock} version={version} hints={HINTS[active]}>
         <Pane />
       </Frame>
     </DeckProvider>

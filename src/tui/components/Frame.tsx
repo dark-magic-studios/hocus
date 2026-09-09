@@ -9,18 +9,19 @@ import type { TabId } from '../hooks/useTabs.js';
 interface FrameProps {
   active: TabId;
   clock: string;
+  version: string;
   hints: string[];
   children: React.ReactNode;
 }
 
-export function Frame({ active, clock, hints, children }: FrameProps) {
+export function Frame({ active, clock, version, hints, children }: FrameProps) {
   const { columns } = useTerminalSize();
   const width = Math.min(columns - 2, 100);
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor={palette.greenDim} width={width}>
       <Box paddingX={1} justifyContent="space-between">
-        <Text bold color={palette.text}>hocus</Text>
+        <Text bold color={palette.text}>{`hocus v${version}`}</Text>
         <Text color={palette.dim}>{clock}</Text>
       </Box>
       <TabBar active={active} />

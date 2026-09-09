@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { palette } from '../theme.js';
 import { useDeck } from '../state/DeckContext.js';
+import { useListWindow } from '../hooks/useListWindow.js';
 
 const TYPE_COLORS: Record<string, string> = {
   incantation: palette.violet,
@@ -15,17 +16,22 @@ const TYPE_BADGES: Record<string, string> = {
   curse: 'curse',
 };
 
+const BODY_PREVIEW_LINES = 6;
+
 export function SpellsTab() {
   const { data } = useDeck();
-  const [selectedId, setSelectedId] = useState<string | undefined>(data.spells[0]?.id);
   const [expanded, setExpanded] = useState(false);
 
-  const move = (delta: number) => {
-    if (data.spells.length === 0) return;
-    const idx = Math.max(0, data.spells.findIndex((s) => s.id === selectedId));
-    const next = data.spells[(idx + delta + data.spells.length) % data.spells.length];
-    if (next) setSelectedId(next.id);
-  };
+  const expandedRows = expanded ? BODY_PREVIEW_LINES + 3 : 0;
+  const {
+    selectedIndex,
+    windowStart,
+    visibleEnd,
+    move,
+    showingLabel,
+  } = useListWindow(data.spells.length, { reservedRows: 3 + expandedRows, linesPerItem: 1 });
+
+  const selectedId = data.spells[selectedIndex]?.id;
 
   useInput((_input, key) => {
     if (key.upArrow) move(-1);
@@ -61,10 +67,15 @@ export function SpellsTab() {
     );
   }
 
+  const visibleSpells = data.spells.slice(windowStart, visibleEnd);
+  const selected = data.spells[selectedIndex];
+
   return (
     <Box flexDirection="column" gap={1}>
       {statusHeader}
-      {data.spells.map((s) => {
+      <Text color={palette.dim}>{showingLabel}</Text>
+
+      {visibleSpells.map((s) => {
         const isSelected = s.id === selectedId;
         const color = TYPE_COLORS[s.type] ?? palette.text;
         const badge = TYPE_BADGES[s.type] ?? s.type;
@@ -95,18 +106,23 @@ export function SpellsTab() {
               )}
               {s.description && <Text color={palette.dim}>{` · ${s.description}`}</Text>}
             </Text>
-
-            {isSelected && expanded && (
-              <Box marginLeft={4} marginTop={1} flexDirection="column">
-                <Text color={palette.dim}>{`file: ${s.relPath}`}</Text>
-                <Box borderStyle="single" borderColor={palette.dim} paddingX={1} marginTop={1} flexDirection="column">
-                  <Text color={palette.text}>{s.body}</Text>
-                </Box>
-              </Box>
-            )}
           </Box>
         );
       })}
+
+      {expanded && selected ? (
+        <Box marginLeft={2} flexDirection="column">
+          <Text color={palette.dim}>{`file: ${selected.relPath}`}</Text>
+          <Box borderStyle="single" borderColor={palette.dim} paddingX={1} marginTop={1} flexDirection="column">
+            {selected.body.split('\n').slice(0, BODY_PREVIEW_LINES).map((line, i) => (
+              <Text key={`${selected.id}-${i}`} color={palette.text}>{line}</Text>
+            ))}
+            {selected.body.split('\n').length > BODY_PREVIEW_LINES ? (
+              <Text color={palette.dim}>…</Text>
+            ) : null}
+          </Box>
+        </Box>
+      ) : null}
     </Box>
   );
 }
