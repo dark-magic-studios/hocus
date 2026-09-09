@@ -9,6 +9,7 @@ import { runAdd } from "./commands/add.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
 import { runUpgrade } from "./commands/upgrade.js";
+import { runAbsorb } from "./commands/absorb.js";
 import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
@@ -204,6 +205,23 @@ program
       cast: opts.cast,
       personas: doPersonas,
       skills: doSkills,
+    });
+  });
+
+program
+  .command("absorb [persona]")
+  .alias("recast")
+  .description("remove a persona and migrate its dependent agents to a replacement persona")
+  .option("-i, --into <replacement>", "replacement persona to migrate agents into")
+  .option("--dry-run", "print planned changes without modifying files")
+  .option("--no-remove", "keep the source persona file in .hocus/personas/ instead of removing it")
+  .action(async (persona: string | undefined, opts: { into?: string; dryRun?: boolean; remove?: boolean }) => {
+    await runAbsorb({
+      repoRoot: process.cwd(),
+      persona,
+      into: opts.into,
+      dryRun: opts.dryRun,
+      remove: opts.remove !== false,
     });
   });
 

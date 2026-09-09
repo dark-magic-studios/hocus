@@ -37,3 +37,4 @@ export const PROJECT_SKILLS_DIR = (repoRoot: string) => path.join(repoRoot, ".ag
 export const PROJECT_RULES_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "rules");
 export const PROJECT_PLUGINS_DIR = (repoRoot: string) => path.join(repoRoot, ".agents", "plugins");
 export const PROJECT_LEDGER_FILE = (repoRoot: string) => path.join(repoRoot, ".hocus", "ledger.jsonl");
+export const PROJECT_MCP_CONFIG_FILE = (repoRoot: string) => path.join(repoRoot, ".agents", "mcp_config.json");

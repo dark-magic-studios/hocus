@@ -266,6 +266,31 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
       type: "stdio",
     });
 
+    // 3b. mcp_config.json following AGY CLI conventions
+    const agyWorkspaceMcpPath = path.join(dir, ".agents", "mcp_config.json");
+    assert.equal(await pathExists(agyWorkspaceMcpPath), true);
+    const agyWorkspaceConfig = await readJson(agyWorkspaceMcpPath);
+    assert.deepEqual(agyWorkspaceConfig.mcpServers.sequentialthinking, {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+    });
+    assert.deepEqual(agyWorkspaceConfig.mcpServers["code-review-graph"], {
+      command: "uvx",
+      args: ["code-review-graph", "serve"],
+    });
+    assert.deepEqual(agyWorkspaceConfig.mcpServers.context7, {
+      command: "npx",
+      args: ["@anthropic-ai/context7"],
+    });
+
+    const agyPluginMcpPath = path.join(pluginDir, "mcp_config.json");
+    assert.equal(await pathExists(agyPluginMcpPath), true);
+    const agyPluginConfig = await readJson(agyPluginMcpPath);
+    assert.deepEqual(agyPluginConfig.mcpServers.sequentialthinking, {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+    });
+
     // 4. RTK installed on all providers
     // Antigravity rule
     assert.equal(await pathExists(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md")), true);
@@ -478,6 +503,68 @@ test("runInit with copilot: false writes no .github directory", async () => {
     });
 
     assert.equal(await pathExists(path.join(dir, ".github")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit passes MCP configuration to agy CLI when agy is installed", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const spawnedCalls: Array<{ cmd: string; args: string[] }> = [];
+    const mockSpawnFn = (cmd: string, args: string[]) => {
+      spawnedCalls.push({ cmd, args });
+      if (cmd === "which" && args?.[0] === "agy") {
+        return { status: 0, error: undefined } as any;
+      }
+      return { status: 0, error: undefined } as any;
+    };
+
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      agent: "agy",
+      spawnFn: mockSpawnFn as any,
+    });
+
+    // Check that agy mcp add was called for configured servers
+    const agyMcpCalls = spawnedCalls.filter(
+      (c) => c.cmd === "agy" && c.args?.[0] === "mcp" && c.args?.[1] === "add",
+    );
+    assert.ok(agyMcpCalls.length >= 3, `expected at least 3 agy mcp add calls, got ${agyMcpCalls.length}`);
+
+    const seqCall = agyMcpCalls.find((c) => c.args?.[2] === "sequentialthinking");
+    assert.ok(seqCall, "expected sequentialthinking to be added to agy");
+    assert.deepEqual(seqCall?.args, [
+      "mcp",
+      "add",
+      "sequentialthinking",
+      "--",
+      "npx",
+      "-y",
+      "@modelcontextprotocol/server-sequential-thinking",
+    ]);
+
+    const crgCall = agyMcpCalls.find((c) => c.args?.[2] === "code-review-graph");
+    assert.ok(crgCall, "expected code-review-graph to be added to agy");
+    assert.deepEqual(crgCall?.args, [
+      "mcp",
+      "add",
+      "code-review-graph",
+      "uvx",
+      "code-review-graph",
+      "serve",
+    ]);
+
+    const ctx7Call = agyMcpCalls.find((c) => c.args?.[2] === "context7");
+    assert.ok(ctx7Call, "expected context7 to be added to agy");
+    assert.deepEqual(ctx7Call?.args, [
+      "mcp",
+      "add",
+      "context7",
+      "npx",
+      "@anthropic-ai/context7",
+    ]);
   } finally {
     cleanupRepo(dir);
   }

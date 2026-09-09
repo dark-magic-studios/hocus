@@ -6,3 +6,6 @@ dist/
 .code-review-graph
 graphify-out
 .commandcode/
+.agents/
+.mcp.json
+mcp_config.json

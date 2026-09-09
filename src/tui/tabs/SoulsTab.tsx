@@ -9,10 +9,17 @@ import { useTextInput } from '../hooks/useTextInput.js';
 import { detectStack } from '../../scanners/detect-stack.js';
 import { ALL_COMPILERS } from '../../compilers/index.js';
 import { writeCompiledFile } from '../../utils/files.js';
-import { parseSoulFile } from '../../schema/soul.js';
+import { parseSoulFile, type SoulFile } from '../../schema/soul.js';
+import { AbsorbPrompt } from '../components/AbsorbPrompt.js';
+import {
+  findAvailablePersonas,
+  findAgentsUsingPersona,
+  executeAbsorb,
+  type AgentGroup,
+} from '../../utils/absorb.js';
 import type { Agent } from '../state/types.js';
 
-type Mode = 'browse' | 'editing';
+type Mode = 'browse' | 'editing' | 'absorb';
 
 export function SoulsTab() {
   const { cwd, data, reload } = useDeck();
@@ -20,6 +27,11 @@ export function SoulsTab() {
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<Mode>('browse');
   const [status, setStatus] = useState<string | undefined>();
+  const [absorbData, setAbsorbData] = useState<{
+    targetSoul: SoulFile;
+    availablePersonas: SoulFile[];
+    agentGroups: AgentGroup[];
+  } | null>(null);
 
   const move = (delta: number) => {
     if (data.agents.length === 0) return;
@@ -41,9 +53,59 @@ export function SoulsTab() {
       if (input === 'r' && selectedId) {
         void recompile(selectedId);
       }
+      if (input === 'a' && selectedId) {
+        void startAbsorb(selectedId);
+      }
     },
     { isActive: mode === 'browse' },
   );
+
+  const startAbsorb = async (agentId: string) => {
+    const agent = data.agents.find((a) => a.id === agentId);
+    if (!agent) return;
+    try {
+      const allSouls = await findAvailablePersonas(cwd);
+      const targetSoul = allSouls.find((s) => s.character === agentId);
+      if (!targetSoul) {
+        setStatus(`cannot absorb: persona "${agent.name}" not found`);
+        return;
+      }
+      const otherSouls = allSouls.filter((s) => s.character !== agentId);
+      if (otherSouls.length === 0) {
+        setStatus("cannot absorb: need at least one other persona in .hocus/personas/");
+        return;
+      }
+      const agentGroups = await findAgentsUsingPersona(cwd, agentId);
+      setAbsorbData({
+        targetSoul,
+        availablePersonas: otherSouls,
+        agentGroups,
+      });
+      setMode('absorb');
+      setStatus(undefined);
+    } catch (e) {
+      setStatus(`failed to prepare absorb: ${String(e)}`);
+    }
+  };
+
+  const handleConfirmAbsorb = async (assignments: Record<string, string>) => {
+    if (!absorbData) return;
+    try {
+      const res = await executeAbsorb({
+        repoRoot: cwd,
+        targetPersona: absorbData.targetSoul.character,
+        assignments,
+      });
+      setStatus(`absorbed ${absorbData.targetSoul.display_name}: migrated ${res.migratedAgents.length} agent(s)`);
+      setMode('browse');
+      setAbsorbData(null);
+      reload();
+    } catch (e) {
+      setStatus(`absorb failed: ${String(e)}`);
+      setMode('browse');
+      setAbsorbData(null);
+    }
+  };
 
   const roleInput = useTextInput(
     mode === 'editing',
@@ -86,6 +148,21 @@ export function SoulsTab() {
 
   if (data.agents.length === 0) {
     return <Text color={palette.dim}>no souls bound. run `hocus cast` to compile the bundled cast.</Text>;
+  }
+
+  if (mode === 'absorb' && absorbData) {
+    return (
+      <AbsorbPrompt
+        targetPersona={absorbData.targetSoul}
+        availablePersonas={absorbData.availablePersonas}
+        agentGroups={absorbData.agentGroups}
+        onConfirm={(assignments) => void handleConfirmAbsorb(assignments)}
+        onCancel={() => {
+          setMode('browse');
+          setAbsorbData(null);
+        }}
+      />
+    );
   }
 
   const selected: Agent | undefined = data.agents.find((a) => a.id === selectedId);

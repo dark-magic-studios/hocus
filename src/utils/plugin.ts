@@ -1,12 +1,13 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import fsExtra from "fs-extra";
-const { ensureDir, writeFile, pathExists, copy } = fsExtra;
+const { ensureDir, writeFile, pathExists, copy, readFile } = fsExtra;
 import { log } from "./log.js";
 import { BUNDLED_SKILLS_DIR, PROJECT_PLUGINS_DIR } from "./paths.js";
 
 export interface PluginInitOptions {
   dryRun?: boolean;
+  spawnFn?: typeof spawnSync;
 }
 
 export interface IntegrationOptions {
@@ -31,6 +32,70 @@ export const MCP_SERVERS_CONFIG = {
     type: "stdio",
   },
 } as const;
+
+export const AGY_MCP_SERVERS_CONFIG = {
+  sequentialthinking: {
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+  },
+  "code-review-graph": {
+    command: "uvx",
+    args: ["code-review-graph", "serve"],
+  },
+  context7: {
+    command: "npx",
+    args: ["@anthropic-ai/context7"],
+  },
+} as const;
+
+export function commandExists(cmd: string, spawnFn: typeof spawnSync = spawnSync): boolean {
+  try {
+    const res = spawnFn("which", [cmd], { stdio: "ignore" });
+    return res.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+export function buildAgyMcpAddArgs(
+  name: string,
+  server: {
+    command?: string;
+    serverUrl?: string;
+    url?: string;
+    args?: readonly string[] | string[];
+    env?: Record<string, string>;
+    headers?: Record<string, string>;
+  },
+): string[] {
+  const cliArgs: string[] = ["mcp", "add"];
+  if (server.env && typeof server.env === "object") {
+    for (const [k, v] of Object.entries(server.env)) {
+      cliArgs.push("-e", `${k}=${v}`);
+    }
+  }
+  if (server.headers && typeof server.headers === "object") {
+    for (const [k, v] of Object.entries(server.headers)) {
+      cliArgs.push("--header", `${k}: ${v}`);
+    }
+  }
+  cliArgs.push(name);
+  if (server.command) {
+    const sArgs = Array.isArray(server.args) ? server.args : [];
+    const hasDash = sArgs.some((a) => a.startsWith("-"));
+    if (hasDash) {
+      cliArgs.push("--", server.command, ...sArgs);
+    } else {
+      cliArgs.push(server.command, ...sArgs);
+    }
+  } else {
+    const targetUrl = server.serverUrl || server.url;
+    if (targetUrl) {
+      cliArgs.push(targetUrl);
+    }
+  }
+  return cliArgs;
+}
 
 export function sanitizePluginName(rawName: string): string {
   let name = rawName
@@ -65,9 +130,34 @@ export async function initializeAgentPlugin(
     description: `Multi-agent harness plugin for ${baseName}`,
   };
 
+  // If repoRoot has an existing mcp_config.json, merge its servers
+  let rootMcpServers: Record<string, any> = {};
+  const rootMcpConfigPath = path.join(repoRoot, "mcp_config.json");
+  if (await pathExists(rootMcpConfigPath)) {
+    try {
+      const raw = await readFile(rootMcpConfigPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed?.mcpServers && typeof parsed.mcpServers === "object") {
+        rootMcpServers = parsed.mcpServers;
+      }
+    } catch {}
+  }
+
+  const agyMcpServers: Record<string, any> = {
+    ...AGY_MCP_SERVERS_CONFIG,
+    ...rootMcpServers,
+  };
+
+  const agyMcpConfig = {
+    mcpServers: agyMcpServers,
+  };
+
   const mcpConfig = {
     $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
-    mcpServers: MCP_SERVERS_CONFIG,
+    mcpServers: {
+      ...MCP_SERVERS_CONFIG,
+      ...rootMcpServers,
+    },
   };
 
   const cursorMcpConfig = {
@@ -84,25 +174,31 @@ export async function initializeAgentPlugin(
         command: "npx",
         args: ["@anthropic-ai/context7"],
       },
+      ...rootMcpServers,
     },
   };
 
   const manifestPath = path.join(pluginDir, "plugin.json");
   const mcpPath = path.join(pluginDir, "mcp.json");
+  const pluginMcpConfigPath = path.join(pluginDir, "mcp_config.json");
   const clientHooksDir = path.join(pluginDir, "com.example.client", "hooks");
   const cursorMcpPath = path.join(repoRoot, ".cursor", "mcp.json");
   const agentsMcpPath = path.join(repoRoot, ".agents", "mcp.json");
+  const agentsMcpConfigPath = path.join(repoRoot, ".agents", "mcp_config.json");
 
   if (options.dryRun) {
     log.planned(path.relative(repoRoot, manifestPath), "plugin manifest");
     log.planned(path.relative(repoRoot, mcpPath), "plugin mcp config");
+    log.planned(path.relative(repoRoot, pluginMcpConfigPath), "plugin AGY mcp config");
     log.planned(path.relative(repoRoot, path.join(clientHooksDir, ".gitkeep")), "client hooks directory");
     log.planned(path.relative(repoRoot, cursorMcpPath), "Cursor MCP config");
-    log.planned(path.relative(repoRoot, agentsMcpPath), "Antigravity MCP config");
+    log.planned(path.relative(repoRoot, agentsMcpPath), "agent-plugins MCP config");
+    log.planned(path.relative(repoRoot, agentsMcpConfigPath), "Antigravity AGY MCP config");
   } else {
     await ensureDir(pluginDir);
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
     await writeFile(mcpPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");
+    await writeFile(pluginMcpConfigPath, JSON.stringify(agyMcpConfig, null, 2) + "\n", "utf8");
 
     await ensureDir(clientHooksDir);
     await writeFile(path.join(clientHooksDir, ".gitkeep"), "", "utf8");
@@ -112,18 +208,34 @@ export async function initializeAgentPlugin(
 
     await ensureDir(path.dirname(agentsMcpPath));
     await writeFile(agentsMcpPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");
+    await writeFile(agentsMcpConfigPath, JSON.stringify(agyMcpConfig, null, 2) + "\n", "utf8");
+  }
+
+  // When scaffolding and the user has agy installed, pass the MCP configuration to AGY CLI
+  const spawnFn = options.spawnFn ?? spawnSync;
+  if (commandExists("agy", spawnFn)) {
+    let configuredCount = 0;
+    for (const [name, server] of Object.entries(agyMcpServers)) {
+      const addArgs = buildAgyMcpAddArgs(name, server);
+      if (addArgs.length > 2) {
+        if (options.dryRun) {
+          log.planned(`agy ${addArgs.join(" ")}`, "pass MCP config to agy CLI");
+        } else {
+          try {
+            spawnFn("agy", addArgs, { cwd: repoRoot, stdio: "ignore" });
+            configuredCount++;
+          } catch {
+            // Ignore CLI execution errors; fallback configuration files are written
+          }
+        }
+      }
+    }
+    if (!options.dryRun && configuredCount > 0) {
+      log.ok(`configured ${configuredCount} MCP servers for agy CLI`);
+    }
   }
 
   return { pluginDir, pluginName };
-}
-
-function commandExists(cmd: string, spawnFn: typeof spawnSync = spawnSync): boolean {
-  try {
-    const res = spawnFn("which", [cmd], { stdio: "ignore" });
-    return res.status === 0;
-  } catch {
-    return false;
-  }
 }
 
 export async function installRtk(

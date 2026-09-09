@@ -19,7 +19,7 @@ Adds a new MCP server to the project's configuration, giving agents access to ex
    - Cursor: `.cursor/mcp.json` (or per-project settings)
    - Claude Code: `.claude/settings.local.json` → `mcpServers` section
    - OpenCode: `opencode.jsonc` → MCP configuration
-   - Antigravity: `.agents/mcp.json` or tool-specific config
+   - Antigravity: `.agents/mcp_config.json` (workspace) or `~/.gemini/config/mcp_config.json` (global, via `agy mcp add`)
    - If unsure, add to all detected configs
 
 2. **Supported MCP types**
