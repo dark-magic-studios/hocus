@@ -79,7 +79,10 @@ export function App({ cwd, version, silentBoot, bootTasks }: AppProps) {
         version={version}
         tasks={bootTasks}
         silent={silentBoot}
-        onDone={() => setBooted(true)}
+        onDone={() => {
+          console.clear();
+          setBooted(true);
+        }}
       />
     );
   }

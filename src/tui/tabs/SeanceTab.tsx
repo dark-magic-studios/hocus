@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Box, Text, useInput, useStdin } from 'ink';
 import { palette } from '../theme.js';
-import { BRAND_GLYPH } from '../../theme.js';
+import { BrandMark } from '../components/BrandMark.js';
 import { useDeck } from '../state/DeckContext.js';
 import { useFileIndex } from '../hooks/useFileIndex.js';
 import { BACKENDS } from '../chat/backends.js';
@@ -206,7 +206,7 @@ export function SeanceTab({ spawnImpl }: SeanceTabProps = {}) {
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold color={palette.green}>{`${BRAND_GLYPH} hocus`}</Text>
+        <BrandMark compact />
         <Text color={palette.dim}>{'  the seance — commune with the coven'}</Text>
       </Box>
 

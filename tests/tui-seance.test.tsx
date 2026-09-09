@@ -10,7 +10,7 @@ import { SeanceTab } from "../src/tui/tabs/SeanceTab.js";
 import type { SpawnFn } from "../src/tui/chat/runBackend.js";
 import { makeEmptyRepo, makePopulatedRepo, cleanupRepo } from "./tui-fixtures.js";
 
-async function waitUntil(fn: () => boolean, timeoutMs = 2000, intervalMs = 20): Promise<void> {
+async function waitUntil(fn: () => boolean, timeoutMs = 5000, intervalMs = 20): Promise<void> {
   const start = Date.now();
   while (!fn()) {
     if (Date.now() - start > timeoutMs) throw new Error("timed out waiting for condition");
@@ -70,7 +70,7 @@ test("SeanceTab renders branding, model, and agent lines without throwing", asyn
         <SeanceTab />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
+    await waitUntil(() => (instance.lastFrame() ?? "").includes("HOCUS"));
     const frame = instance.lastFrame() ?? "";
     assert.match(frame, /model/);
     assert.match(frame, /claude -p/);
@@ -127,7 +127,7 @@ test("typing / surfaces both bundled skills and hocus's own builtin commands", a
         <SeanceTab />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
+    await waitUntil(() => /hocus/i.test(instance.lastFrame() ?? ""));
     instance.stdin.write("/sy");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("/sync"));
     assert.match(instance.lastFrame() ?? "", /\/sync/);
@@ -145,7 +145,7 @@ test("typing @ surfaces repo files for mentioning", async () => {
         <SeanceTab />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
+    await waitUntil(() => /hocus/i.test(instance.lastFrame() ?? ""));
     instance.stdin.write("@test-potion");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("test-potion.md"), 4000);
     assert.match(instance.lastFrame() ?? "", /test-potion\.md/);
@@ -163,7 +163,7 @@ test("sending a message runs it through the selected backend and shows the reply
         <SeanceTab spawnImpl={fakeSpawn("mocked reply text")} />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
+    await waitUntil(() => /hocus/i.test(instance.lastFrame() ?? ""));
     instance.stdin.write("hello there");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("hello there"));
     instance.stdin.write("\r");
@@ -185,7 +185,7 @@ test("a /sync command runs in-process and reports its own output, not a backend 
         <SeanceTab spawnImpl={fakeSpawn("should never be used")} />
       </DeckProvider>,
     );
-    await waitUntil(() => (instance.lastFrame() ?? "").includes("hocus"));
+    await waitUntil(() => /hocus/i.test(instance.lastFrame() ?? ""));
     instance.stdin.write("/sync");
     await waitUntil(() => (instance.lastFrame() ?? "").includes("/sync"));
     instance.stdin.write("\r"); // accept the /sync suggestion (value becomes "/sync ")

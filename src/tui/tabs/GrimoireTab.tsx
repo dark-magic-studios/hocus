@@ -44,7 +44,17 @@ export function GrimoireTab() {
     [data.skills],
   );
 
-  const reservedRows = 2 + (status ? 1 : 0) + (mode === 'install-from' ? 1 : 0);
+  const skillWarnings = useMemo(
+    () => data.warnings.filter((w) => w.includes('SKILL.md') || w.includes('skill')),
+    [data.warnings],
+  );
+
+  const reservedRows =
+    1 + // showing label
+    (mode === 'install-from' ? 1 : 0) +
+    (busy ? 1 : 0) +
+    (status ? 1 : 0) +
+    skillWarnings.length;
   const {
     selectedIndex,
     windowStart,
@@ -155,7 +165,7 @@ export function GrimoireTab() {
 
       {visibleSkills.map((s) => (
         <Box key={s.id} flexDirection="column">
-          <Text>
+          <Text wrap="truncate-end">
             <Text color={s.id === selectedSkill?.id ? palette.green : palette.dim}>
               {s.id === selectedSkill?.id ? '▸ ' : '  '}
             </Text>
@@ -166,7 +176,7 @@ export function GrimoireTab() {
             <Text color={palette.text}>{s.name.padEnd(24)}</Text>
             <Text color={palette.dim}>{`${s.enabledFor.length} bound`}</Text>
           </Text>
-          <Text color={palette.muted}>{`             ${s.description}`}</Text>
+          <Text wrap="truncate-end" color={palette.muted}>{`             ${s.description}`}</Text>
         </Box>
       ))}
 
@@ -177,7 +187,7 @@ export function GrimoireTab() {
       {busy ? <Text color={palette.violet}>updating skill…</Text> : null}
       {status ? <Text color={palette.amber}>{status}</Text> : null}
 
-      {data.warnings.filter((w) => w.includes('SKILL.md') || w.includes('skill')).map((w) => (
+      {skillWarnings.map((w) => (
         <Text key={w} color={palette.amber}>{`! ${w}`}</Text>
       ))}
     </Box>

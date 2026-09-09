@@ -33,7 +33,27 @@ export const glyphs = {
 
 export type GlyphSet = typeof glyphs.unicode;
 
-// Multi-line ASCII lockup used by the boot splash and seance tab. The
-// single-glyph brand mark ("/^\\") referenced by src/personas/*.soul.md's
-// frontmatter comment lives in the top-level src/theme.ts, not here.
-export const BRAND_MARK = ['   /\\', '  /  \\', ' /____\\'] as const;
+export type BrandMarkColor = 'green' | 'violet';
+
+export interface BrandMarkRow {
+  text: string;
+  color: BrandMarkColor;
+}
+
+/** Rotated-H lockup: violet asterisk, green bars, mono HOCUS wordmark. */
+export function getBrandMark(unicode: boolean): BrandMarkRow[] {
+  const bar = unicode ? '█' : '#';
+  const star = unicode ? '✦' : '*';
+  const wide = bar.repeat(16);
+  const stem = bar.repeat(3);
+  return [
+    { text: `       ${star}`, color: 'violet' },
+    { text: ` ${wide}`, color: 'green' },
+    { text: `       ${stem}`, color: 'green' },
+    { text: ` ${wide}`, color: 'green' },
+    { text: '      HOCUS', color: 'green' },
+  ];
+}
+
+// Legacy export kept for any direct row iteration; prefer getBrandMark().
+export const BRAND_MARK = getBrandMark(true).map((row) => row.text);

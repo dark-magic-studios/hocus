@@ -1,14 +1,14 @@
 ---
 trigger: model_decision
-globs: ["_potions/**/*", "TASKS.md", "PRODUCT.md", "MEMORY.md"]
-description: Workflow and schema for feature battle plans (_potions/*.md), task tracking in TASKS.md, and project memory persistence.
+globs: [".hocus/_potions/**/*", "TASKS.md", "PRODUCT.md", "MEMORY.md"]
+description: Workflow and schema for feature battle plans (.hocus/_potions/*.md), task tracking in TASKS.md, and project memory persistence.
 ---
 
 # Feature Potions & Task Orchestration
 
 Hocus uses a potion-based battle plan pattern to manage features and orchestrate agent handoffs.
 
-## 1. Potion File Structure (`_potions/<potion-id>.md`)
+## 1. Potion File Structure (`.hocus/_potions/<potion-id>.md`)
 
 Every non-trivial feature or refactor must be backed by a potion file:
 

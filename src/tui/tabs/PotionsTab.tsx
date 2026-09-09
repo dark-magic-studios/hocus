@@ -115,7 +115,7 @@ export function PotionsTab() {
         {statusDetail}
         {busy ? <Text color={palette.violet}>running express update…</Text> : null}
         {status ? <Text color={palette.amber}>{status}</Text> : null}
-        <Text color={palette.dim}>no potions in _potions/. run `hocus draft` to write the first one.</Text>
+        <Text color={palette.dim}>no potions in .hocus/_potions/. run `hocus draft` to write the first one.</Text>
       </Box>
     );
   }

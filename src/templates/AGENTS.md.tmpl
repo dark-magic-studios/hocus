@@ -9,25 +9,25 @@ Read the files below before making changes.
    decision, not a bug.
 3. `TASKS.md` — what's next. Don't pick up work that isn't listed here
    without checking with the user first.
-4. `_potions/` — one active battle plan per in-flight feature, written by
+4. `.hocus/_potions/` — one active battle plan per in-flight feature, written by
    the planner and kept current by the orchestrator.
-5. `_spells/` — atomic conventions, output templates, lifecycle hooks, and guardrails.
+5. `.hocus/_spells/` — atomic conventions, output templates, lifecycle hooks, and guardrails.
 
 ## Spells
 
-Before acting, check `_spells/` for conventions relevant to your current task:
+Before acting, check `.hocus/_spells/` for conventions relevant to your current task:
 
-- INCANTATIONS (`_spells/incantations/`) — reusable output templates.
+- INCANTATIONS (`.hocus/_spells/incantations/`) — reusable output templates.
   When producing that type of output, use the exact format specified —
   do not paraphrase or restyle it.
-- WARDS (`_spells/wards/`) — auto-triggered actions. When a ward's
+- WARDS (`.hocus/_spells/wards/`) — auto-triggered actions. When a ward's
   `trigger` condition is met, cast its linked incantation without
   being asked.
-- CURSES (`_spells/curses/`) — hard constraints. Never violate a curse.
+- CURSES (`.hocus/_spells/curses/`) — hard constraints. Never violate a curse.
   If a curse would block an action you're about to take, stop and ask
   the user for confirmation instead of proceeding.
 
-Check `_spells/` at the start of any task, and again before any commit,
+Check `.hocus/_spells/` at the start of any task, and again before any commit,
 PR, or destructive action.
 
 ## The cast

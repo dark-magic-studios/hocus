@@ -24,17 +24,17 @@ export function makePopulatedRepo(): string {
     ].join("\n"),
   );
 
-  fs.mkdirSync(path.join(dir, "_potions"), { recursive: true });
+  fs.mkdirSync(path.join(dir, ".hocus", "_potions"), { recursive: true });
   fs.writeFileSync(
-    path.join(dir, "_potions", "test-potion.md"),
+    path.join(dir, ".hocus", "_potions", "test-potion.md"),
     ["---", "potion: DMS-1", "feature: Test Feature", "status: casting", "progress: 40", "---", "", "Body", ""].join(
       "\n",
     ),
   );
 
-  fs.mkdirSync(path.join(dir, "_spells", "incantations"), { recursive: true });
+  fs.mkdirSync(path.join(dir, ".hocus", "_spells", "incantations"), { recursive: true });
   fs.writeFileSync(
-    path.join(dir, "_spells", "incantations", "test-spell.md"),
+    path.join(dir, ".hocus", "_spells", "incantations", "test-spell.md"),
     ["---", "name: test-spell", "type: incantation", "---", "", "Format: test", ""].join("\n"),
   );
 

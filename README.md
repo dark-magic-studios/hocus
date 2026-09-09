@@ -1,7 +1,7 @@
 # Hocus
 
 <p align="center">
-  <img src="readme-header.svg" width="400" alt="Hocus" />
+  <img src="logo.png" width="280" alt="Hocus" />
 </p>
 
 A multi-agent harness generator and interactive command deck for AI coding tools. Write one persona once — a `SOUL.md` file — and compile it into native agent and rule formats for **Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, **Command Code**, and **GitHub Copilot**.
@@ -144,6 +144,10 @@ Skill prefix variants normalize hyphens/casing: `bighead` ↔ `big-head`/`baba-y
 ## Interactive Command Deck (TUI)
 
 Running `hocus` (or `hocus tui`) launches an interactive Terminal User Interface (TUI) command deck built for managing personas, tracking battle plans, chatting with agents, and monitoring repo compilation state.
+
+<p align="center">
+  <img src="demo.gif" alt="Hocus TUI Command Deck" width="850" />
+</p>
 
 ```bash
 hocus            # Launch interactive TUI deck
@@ -376,3 +380,14 @@ tests/                      # test suite
 ## License
 
 MIT © Dark Magic Studios
+
+---
+
+## TUI Showcase & Demo Tape
+
+The TUI demo recording is powered by [VHS](https://github.com/charmbracelet/vhs). Re-run the tape script anytime to re-render the showcase:
+
+```bash
+vhs demo.tape
+```
+

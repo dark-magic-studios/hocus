@@ -14,5 +14,5 @@ When authoring, importing, or editing a spell convention:
    - **Curse** (guardrail): Negative constraints, anti-patterns, forbidden actions (`never`, `must not`, `do not`) with `hard` or `soft` severity. The "what never to do".
 
 2. **Placement & Routing**:
-   - Automatically route to `_spells/incantations/`, `_spells/wards/`, or `_spells/curses/`.
+   - Automatically route to `.hocus/_spells/incantations/`, `.hocus/_spells/wards/`, or `.hocus/_spells/curses/`.
    - Ensure required frontmatter matches the categorized type (`trigger`/`calls` for wards, `severity` for curses).

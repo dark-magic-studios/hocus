@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import fg from 'fast-glob';
 
-const IGNORE = ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.hocus/**'];
+const IGNORE = ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.hocus/ledger.jsonl'];
 const MAX_FILES = 5000;
 
 export interface FileIndex {
@@ -17,7 +17,13 @@ export function useFileIndex(cwd: string): FileIndex {
   useEffect(() => {
     let cancelled = false;
     setReady(false);
-    fg('**/*', { cwd, dot: false, onlyFiles: true, ignore: IGNORE, suppressErrors: true })
+    fg(['**/*', '.hocus/**/*', '_potions/**/*', '_spells/**/*'], {
+      cwd,
+      dot: false,
+      onlyFiles: true,
+      ignore: IGNORE,
+      suppressErrors: true,
+    })
       .then((results) => {
         if (cancelled) return;
         setFiles(results.slice(0, MAX_FILES));

@@ -29,7 +29,11 @@ export function SpellsTab() {
     visibleEnd,
     move,
     showingLabel,
-  } = useListWindow(data.spells.length, { reservedRows: 3 + expandedRows, linesPerItem: 1 });
+  } = useListWindow(data.spells.length, {
+    // status header (3) + margin (1) + showing label (1)
+    reservedRows: 5 + expandedRows,
+    linesPerItem: 1,
+  });
 
   const selectedId = data.spells[selectedIndex]?.id;
 
@@ -62,7 +66,7 @@ export function SpellsTab() {
     return (
       <Box flexDirection="column">
         {statusHeader}
-        <Text color={palette.dim}>no spells in _spells/. check incantations/, wards/, or curses/.</Text>
+        <Text color={palette.dim}>no spells in .hocus/_spells/. check incantations/, wards/, or curses/.</Text>
       </Box>
     );
   }
@@ -71,7 +75,7 @@ export function SpellsTab() {
   const selected = data.spells[selectedIndex];
 
   return (
-    <Box flexDirection="column" gap={1}>
+    <Box flexDirection="column">
       {statusHeader}
       <Text color={palette.dim}>{showingLabel}</Text>
 
@@ -82,7 +86,7 @@ export function SpellsTab() {
 
         return (
           <Box key={s.id} flexDirection="column">
-            <Text>
+            <Text wrap="truncate-end">
               <Text color={isSelected ? palette.green : palette.dim}>{isSelected ? '▸ ' : '  '}</Text>
               <Text color={color} bold>{`[${badge}] `}</Text>
               <Text bold color={isSelected ? palette.text : palette.muted}>{s.name}</Text>

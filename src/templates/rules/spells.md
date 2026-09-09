@@ -1,17 +1,17 @@
 ---
 trigger: model_decision
-globs: ["_spells/**/*"]
+globs: [".hocus/_spells/**/*"]
 description: Atomic conventions, templates (incantations), lifecycle triggers (wards), and stop conditions (curses).
 ---
 
 # Spells Convention
 
-Spells are Hocus-native, atomic, single-purpose conventions — distinct from potions (`_potions/`, multi-step task recipes) and skills (mirrored `SKILL.md` external standard). A spell is never a whole workflow; it's a rule an agent follows while doing one.
+Spells are Hocus-native, atomic, single-purpose conventions — distinct from potions (`.hocus/_potions/`, multi-step task recipes) and skills (mirrored `SKILL.md` external standard). A spell is never a whole workflow; it's a rule an agent follows while doing one.
 
 Three spell types, one folder:
 
 ```
-_spells/
+.hocus/_spells/
   incantations/   → templates (the "what to say")
   wards/          → hooks (the "when to act")
   curses/         → guardrails (the "what never to do")

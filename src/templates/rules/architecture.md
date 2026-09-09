@@ -36,6 +36,6 @@ Each compiler in `src/compilers/` transforms a `SoulFile` into a target-native f
 - `.agents/rules/*.md`: Workspace rules, coding guidelines, and safety constraints for Antigravity (NEVER place subagent personas here).
 - `.agents/skills/<name>/SKILL.md`: Open-standard skills shared across harnesses.
 - `.github/agents/<slug>.agent.md`: Native custom agents for GitHub Copilot.
-- `_potions/*.md`: Active feature battle plans drafted by planners and executed by orchestrators.
+- `.hocus/_potions/*.md`: Active feature battle plans drafted by planners and executed by orchestrators.
 - `src/tui/`: Interactive command deck built with Ink and React 19.
 - `dashboard.html`: Live visualization of project status, agents, potions, skills, and target readiness.

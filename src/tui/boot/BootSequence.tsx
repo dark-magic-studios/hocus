@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { palette, BRAND_MARK } from '../theme.js';
+import { palette } from '../theme.js';
+import { BrandMark } from '../components/BrandMark.js';
 import { useCapabilities } from '../hooks/useCapabilities.js';
 import { useBootTasks, type BootTask } from './useBootTasks.js';
 
@@ -24,13 +25,11 @@ export function BootSequence({ version, tasks, silent, onDone }: Props) {
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1}>
       <Box>
-        <Box flexDirection="column" marginRight={2}>
-          {BRAND_MARK.map((row) => (
-            <Text key={row} color={palette.green}>{row}</Text>
-          ))}
+        <Box marginRight={2}>
+          <BrandMark />
         </Box>
         <Box flexDirection="column" marginTop={1}>
-          <Text bold color={palette.text}>{`hocus  v${version}`}</Text>
+          <Text bold color={palette.text}>{`v${version}`}</Text>
           <Text color={palette.dim}>dark magic studios</Text>
         </Box>
       </Box>

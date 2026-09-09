@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { paneRows } from '../layout.js';
 import { useTerminalSize } from './useTerminalSize.js';
-
-const FRAME_CHROME = 10;
 
 export interface ListWindowOptions {
   /** Rows reserved for headers, status lines, etc. inside the tab pane. */
@@ -13,20 +12,11 @@ export interface ListWindowOptions {
 export function useListWindow(itemCount: number, options: ListWindowOptions = {}) {
   const { reservedRows = 0, linesPerItem = 1 } = options;
   const { rows } = useTerminalSize();
-  const rawWindow = Math.max(3, rows - FRAME_CHROME - reservedRows);
-  const windowSize = Math.max(1, Math.floor(rawWindow / linesPerItem));
+  const available = Math.max(1, paneRows(rows) - reservedRows);
+  const windowSize = Math.max(1, Math.floor(available / linesPerItem));
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [windowStart, setWindowStart] = useState(0);
-
-  useEffect(() => {
-    if (itemCount === 0) {
-      setSelectedIndex(0);
-      setWindowStart(0);
-    } else if (selectedIndex >= itemCount) {
-      setSelectedIndex(itemCount - 1);
-    }
-  }, [itemCount, selectedIndex]);
 
   const ensureVisible = useCallback(
     (index: number, start: number) => {
@@ -37,16 +27,25 @@ export function useListWindow(itemCount: number, options: ListWindowOptions = {}
     [windowSize],
   );
 
+  useEffect(() => {
+    if (itemCount === 0) {
+      setSelectedIndex(0);
+      setWindowStart(0);
+      return;
+    }
+    setSelectedIndex((prev) => (prev >= itemCount ? itemCount - 1 : prev));
+  }, [itemCount]);
+
+  useEffect(() => {
+    setWindowStart((start) => ensureVisible(selectedIndex, start));
+  }, [selectedIndex, ensureVisible]);
+
   const move = useCallback(
     (delta: number) => {
       if (itemCount === 0) return;
-      setSelectedIndex((prev) => {
-        const next = Math.max(0, Math.min(itemCount - 1, prev + delta));
-        setWindowStart((start) => ensureVisible(next, start));
-        return next;
-      });
+      setSelectedIndex((prev) => Math.max(0, Math.min(itemCount - 1, prev + delta)));
     },
-    [itemCount, ensureVisible],
+    [itemCount],
   );
 
   const visibleEnd = Math.min(itemCount, windowStart + windowSize);

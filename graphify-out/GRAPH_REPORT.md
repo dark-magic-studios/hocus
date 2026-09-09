@@ -1,16 +1,16 @@
-# Graph Report - hocus  (2026-09-04)
+# Graph Report - hocus  (2026-09-09)
 
 ## Corpus Check
-- 203 files · ~80,932 words
+- 201 files · ~209,095 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1065 nodes · 1258 edges · 180 communities (179 shown, 1 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.8)
+- 1495 nodes · 2049 edges · 257 communities (244 shown, 13 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bf4823bc`
+- Built from commit: `ebb52e38`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -194,59 +194,106 @@
 - [[_COMMUNITY_Community 177|Community 177]]
 - [[_COMMUNITY_Community 178|Community 178]]
 - [[_COMMUNITY_Community 179|Community 179]]
+- [[_COMMUNITY_Community 180|Community 180]]
+- [[_COMMUNITY_Community 181|Community 181]]
+- [[_COMMUNITY_Community 182|Community 182]]
+- [[_COMMUNITY_Community 183|Community 183]]
+- [[_COMMUNITY_Community 184|Community 184]]
+- [[_COMMUNITY_Community 185|Community 185]]
+- [[_COMMUNITY_Community 186|Community 186]]
+- [[_COMMUNITY_Community 187|Community 187]]
+- [[_COMMUNITY_Community 188|Community 188]]
+- [[_COMMUNITY_Community 189|Community 189]]
+- [[_COMMUNITY_Community 190|Community 190]]
+- [[_COMMUNITY_Community 191|Community 191]]
+- [[_COMMUNITY_Community 192|Community 192]]
+- [[_COMMUNITY_Community 193|Community 193]]
+- [[_COMMUNITY_Community 194|Community 194]]
+- [[_COMMUNITY_Community 195|Community 195]]
+- [[_COMMUNITY_Community 196|Community 196]]
+- [[_COMMUNITY_Community 197|Community 197]]
+- [[_COMMUNITY_Community 198|Community 198]]
+- [[_COMMUNITY_Community 199|Community 199]]
+- [[_COMMUNITY_Community 200|Community 200]]
+- [[_COMMUNITY_Community 201|Community 201]]
+- [[_COMMUNITY_Community 202|Community 202]]
+- [[_COMMUNITY_Community 203|Community 203]]
+- [[_COMMUNITY_Community 204|Community 204]]
+- [[_COMMUNITY_Community 205|Community 205]]
+- [[_COMMUNITY_Community 206|Community 206]]
+- [[_COMMUNITY_Community 207|Community 207]]
+- [[_COMMUNITY_Community 208|Community 208]]
+- [[_COMMUNITY_Community 209|Community 209]]
+- [[_COMMUNITY_Community 210|Community 210]]
+- [[_COMMUNITY_Community 211|Community 211]]
+- [[_COMMUNITY_Community 212|Community 212]]
+- [[_COMMUNITY_Community 213|Community 213]]
+- [[_COMMUNITY_Community 244|Community 244]]
+- [[_COMMUNITY_Community 245|Community 245]]
+- [[_COMMUNITY_Community 246|Community 246]]
+- [[_COMMUNITY_Community 247|Community 247]]
+- [[_COMMUNITY_Community 248|Community 248]]
+- [[_COMMUNITY_Community 249|Community 249]]
+- [[_COMMUNITY_Community 250|Community 250]]
+- [[_COMMUNITY_Community 251|Community 251]]
+- [[_COMMUNITY_Community 252|Community 252]]
+- [[_COMMUNITY_Community 253|Community 253]]
+- [[_COMMUNITY_Community 254|Community 254]]
+- [[_COMMUNITY_Community 255|Community 255]]
+- [[_COMMUNITY_Community 256|Community 256]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `compilerOptions` - 15 edges
-2. `useDeck()` - 13 edges
-3. `palette` - 12 edges
-4. `getHocusStatus()` - 12 edges
-5. `runCast()` - 11 edges
-6. `loadDeck()` - 11 edges
-7. `PROJECT_PERSONAS_DIR()` - 11 edges
-8. `Hocus` - 11 edges
-9. `SoulFile` - 10 edges
-10. `runInit()` - 9 edges
+1. `runInit()` - 25 edges
+2. `PROJECT_PERSONAS_DIR()` - 24 edges
+3. `SoulFile` - 23 edges
+4. `getSkillIdForCast()` - 17 edges
+5. `runCast()` - 16 edges
+6. `parseSoulFile()` - 16 edges
+7. `executeAbsorb()` - 16 edges
+8. `getHocusStatus()` - 16 edges
+9. `useDeck()` - 15 edges
+10. `palette` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `runInit()` --calls--> `SpawnFn`  [INFERRED]
-  src/commands/init.ts → src/tui/chat/runBackend.ts
-- `CastOptions` --references--> `TargetId`  [EXTRACTED]
-  src/commands/cast.ts → src/compilers/types.ts
-- `runCast()` --calls--> `detectStack()`  [EXTRACTED]
-  src/commands/cast.ts → src/scanners/detect-stack.ts
-- `DashboardParams` --references--> `SoulFile`  [EXTRACTED]
-  src/templates/dashboard.ts → src/schema/soul.ts
-- `AppProps` --references--> `BootTask`  [EXTRACTED]
-  src/tui/App.tsx → src/tui/boot/useBootTasks.ts
+- `AddOptions` --references--> `TargetId`  [EXTRACTED]
+  src/commands/add.ts → src/compilers/types.ts
+- `getAgentTargetPath()` --calls--> `getCompiler()`  [EXTRACTED]
+  src/commands/add.ts → src/compilers/index.ts
+- `findAgentSoul()` --calls--> `PROJECT_PERSONAS_DIR()`  [EXTRACTED]
+  src/commands/add.ts → src/utils/paths.ts
+- `runAdd()` --calls--> `getCompiler()`  [EXTRACTED]
+  src/commands/add.ts → src/compilers/index.ts
+- `runAdd()` --calls--> `detectStack()`  [EXTRACTED]
+  src/commands/add.ts → src/scanners/detect-stack.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (180 total, 1 thin omitted)
+## Communities (257 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (55): BUILTIN_NAMES, BuiltinContext, BuiltinName, BuiltinResult, captureConsole(), getBuiltinCommands(), isBuiltinCommand(), runBuiltin() (+47 more)
+Cohesion: 0.14
+Nodes (19): installSpells(), categorizeSpell(), CategorizeSpellInput, CurseFrontmatter, CurseFrontmatterSchema, CurseSpell, IncantationFrontmatter, IncantationFrontmatterSchema (+11 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (39): author, bin, hocus, dependencies, commander, fast-glob, fs-extra, gray-matter (+31 more)
+Nodes (41): author, bin, hocus, dependencies, commander, fast-glob, fs-extra, gray-matter (+33 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.15
-Nodes (18): CastOptions, antigravityCompiler, claudeCodeCompiler, DEFAULT_TOOLS, cursorCompiler, openCodeCompiler, CompiledFile, Compiler (+10 more)
+Cohesion: 0.07
+Nodes (38): ANTIGRAVITY_TOOL_MAP, antigravityCompiler, DEFAULT_TOOLS, claudeCodeCompiler, DEFAULT_TOOLS, codexCompiler, commandCodeCompiler, DEFAULT_TOOLS (+30 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.11
 Nodes (17): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, jsx, lib, module, moduleResolution (+9 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.11
-Nodes (17): Commands, Deck Tabs & Navigation, Directory Layout, Environment Variables, Hocus, `hocus cast`, `hocus` / `hocus tui`, `hocus init` (+9 more)
+Cohesion: 0.06
+Nodes (31): 1. Persona files (`.hocus/personas/*.soul.md`), 2. Persona-bound skills, 3. Compiled agent outputs, 4. Init prompt / agent instructions, 5. Dashboard (`dashboard.html`), 6. Switching / migration, Choosing a cast: Silicon Valley vs. Wizards, Choosing guidance (+23 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.05
-Nodes (47): BootSequence(), Props, BootLine, BootTask, useBootTasks(), Footer(), Frame(), FrameProps (+39 more)
+Cohesion: 0.19
+Nodes (12): BrandMark(), BrandMarkProps, ProgressBar(), StatusDot(), Capabilities, useCapabilities(), BrandMarkColor, BrandMarkRow (+4 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.33
@@ -473,8 +520,8 @@ Cohesion: 0.50
 Nodes (3): Big Head Dumb Test, Instructions, When to use
 
 ### Community 62 - "Community 62"
-Cohesion: 0.50
-Nodes (3): enabledMcpjsonServers, permissions, allow
+Cohesion: 0.06
+Nodes (73): BackendResult, runBackend(), RunHandle, SpawnFn, findAgentSoul(), findRuleFiles(), findSkillDir(), getAgentTargetPath() (+65 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.50
@@ -581,12 +628,12 @@ Cohesion: 0.50
 Nodes (3): Instructions, When to use, Whimsy Injector
 
 ### Community 90 - "Community 90"
-Cohesion: 0.13
-Nodes (25): detectStack(), FRAMEWORK_SIGNALS, PackageJsonShape, DeckContext, DeckState, EMPTY, collectSkills(), loadDeck() (+17 more)
+Cohesion: 0.10
+Nodes (31): ResolvedPrompt, detectStack(), FRAMEWORK_SIGNALS, PackageJsonShape, SoulValidationError, DeckContext, DeckState, EMPTY (+23 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.10
-Nodes (19): Backend, BACKENDS, ResolvedPrompt, resolvePrompt(), BackendResult, runBackend(), RunHandle, SpawnFn (+11 more)
+Cohesion: 0.22
+Nodes (14): Potion, Spell, borderTheme, theme, buildNameLookup(), castNamesFor(), DashboardParams, escapeHtml() (+6 more)
 
 ### Community 92 - "Community 92"
 Cohesion: 0.50
@@ -936,25 +983,165 @@ Nodes (3): Instructions, Update Dashboard, When to use
 Cohesion: 0.50
 Nodes (3): Instructions, When to use, Whimsy Injector
 
+### Community 179 - "Community 179"
+Cohesion: 0.08
+Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
+
+### Community 180 - "Community 180"
+Cohesion: 0.09
+Nodes (22): 10. Git Hygiene & Commit History 🌳, 1. Codebase Context, 1. Requirement Completeness & Edge Cases 🎯, 2. Code Readability & Clean Architecture 🏗️, 2. Requirements & Constraints, 3. Error Handling & Resilience 🛡️, 4. Testing Quality over Quantity 🧪, 5. State Management & Data Modeling 📊 (+14 more)
+
+### Community 181 - "Community 181"
+Cohesion: 0.21
+Nodes (13): TextInputState, useTextInput(), useDeck(), CovenTab(), GrimoireTab(), Mode, SOURCE_COLOR, SYNC_COLOR (+5 more)
+
+### Community 182 - "Community 182"
+Cohesion: 0.13
+Nodes (14): 1. Identify Source of Truth, 2. Verify Access or Delegate to `add-harness-mcp`, 3. Query the Source, 4. Read Local `TASKS.md`, 5. Compute the Reconciliation Diff, 6. Present Diff & Confirm with User, 7. Update `TASKS.md`, 8. Conflict Handling (+6 more)
+
+### Community 183 - "Community 183"
+Cohesion: 0.18
+Nodes (5): DeckProvider(), cleanupRepo(), makeEmptyRepo(), makePopulatedRepo(), TABS
+
+### Community 184 - "Community 184"
+Cohesion: 0.23
+Nodes (11): BootSequence(), Props, BootLine, BootTask, useBootTasks(), useTabs(), App(), AppProps (+3 more)
+
+### Community 185 - "Community 185"
+Cohesion: 0.18
+Nodes (10): 1. Ingestion & Truth Verification, 2. Diagrams & Visual Architecture, 3. Draft the Human-Readable README Structure, 4. Whimsy Injection (`whismy-injector` Pass), 5. De-Slopification (`deslopify` Pass), 6. Review & Output, Erlich README, Truth Grounding & Constraints (+2 more)
+
+### Community 186 - "Community 186"
+Cohesion: 0.18
+Nodes (10): 1. Inventory Existing Spells, 2. Style & Workflow Interview (Default 3–5 Questions), 3. Automatically Categorize & Formulate Spells, 4. Present Proposed Diffs, 5. Apply Changes & Resync Manifest, Automatic Spell Categorization, Categorization Rules:, Instructions (+2 more)
+
+### Community 187 - "Community 187"
+Cohesion: 0.26
+Nodes (9): Frame(), ListWindowOptions, useListWindow(), useTerminalSize(), SpellsTab(), TYPE_BADGES, TYPE_COLORS, paneBoxHeight() (+1 more)
+
+### Community 188 - "Community 188"
+Cohesion: 0.18
+Nodes (11): Backend, BACKENDS, resolvePrompt(), FileIndex, IGNORE, useFileIndex(), ChatMessage, Role (+3 more)
+
+### Community 189 - "Community 189"
+Cohesion: 0.25
+Nodes (7): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
+
+### Community 190 - "Community 190"
+Cohesion: 0.33
+Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
+
+### Community 191 - "Community 191"
+Cohesion: 0.33
+Nodes (5): 1. Directory Structure, 2. Frontmatter Specification, 3. Tool Mapping Contract, 4. Strict Separation: Agents vs Rules, Subagent & Custom Agent Nomenclature
+
+### Community 192 - "Community 192"
+Cohesion: 0.40
+Nodes (4): 1. Single Source of Truth, 2. Target Compilation Pipeline (`src/compilers/`), 3. Directory Responsibilities, Hocus Project Architecture & System Boundaries
+
+### Community 193 - "Community 193"
+Cohesion: 0.40
+Nodes (4): 1. Atomic Commits, 2. Conventional Commit Formatting, 3. Clean Diffs, Git Commit Hygiene & Conventional Commits
+
+### Community 194 - "Community 194"
+Cohesion: 0.40
+Nodes (4): 1. Incantations — templates, 2. Wards — hooks, 3. Curses — guardrails, Spells Convention
+
+### Community 195 - "Community 195"
+Cohesion: 0.40
+Nodes (4): 1. Filesystem Isolation, 2. Child Process & Agent Execution Mocking, 3. Ink TUI Testing, Testing & Verification Protocol
+
+### Community 196 - "Community 196"
+Cohesion: 0.40
+Nodes (4): 1. Terminal Styling & Picocolors, 2. ASCII Fallback Mode (`HOCUS_ASCII=1`), 3. Layout Stability & Navigation, Ink TUI & React 19 Development Guidelines
+
+### Community 197 - "Community 197"
+Cohesion: 0.40
+Nodes (4): 1. Explicit `.js` Extensions on Relative Imports, 2. Strict Type Safety, 3. Build & Packaging, TypeScript & ESM Module Standards
+
+### Community 198 - "Community 198"
+Cohesion: 0.40
+Nodes (4): Added, Changed, Fixed, [{version}] - {YYYY-MM-DD}
+
+### Community 199 - "Community 199"
+Cohesion: 0.40
+Nodes (4): Key Changes, Verification, What, Why
+
+### Community 200 - "Community 200"
+Cohesion: 0.40
+Nodes (4): Added, Changed, Fixed, [{version}] - {YYYY-MM-DD}
+
+### Community 201 - "Community 201"
+Cohesion: 0.40
+Nodes (4): Key Changes, Verification, What, Why
+
+### Community 202 - "Community 202"
+Cohesion: 0.50
+Nodes (3): For /graphify add, For --watch, graphify reference: add a URL and watch a folder
+
+### Community 203 - "Community 203"
+Cohesion: 0.50
+Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify reference: commit hook and native CLAUDE.md integration
+
+### Community 204 - "Community 204"
+Cohesion: 0.50
+Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
+
+### Community 205 - "Community 205"
+Cohesion: 0.40
+Nodes (4): 1. Potion File Structure (`.hocus/_potions/<potion-id>.md`), 1. Potion File Structure (`_potions/<potion-id>.md`), 2. Project State Alignment, Feature Potions & Task Orchestration
+
+### Community 206 - "Community 206"
+Cohesion: 0.50
+Nodes (3): $schema, spells, version
+
+### Community 244 - "Community 244"
+Cohesion: 0.28
+Nodes (11): runCast(), runSync(), SyncOptions, PotionFrontmatterSchema, readPotions(), loadPotions(), runExpressUpdate(), PROJECT_POTIONS_DIR() (+3 more)
+
+### Community 245 - "Community 245"
+Cohesion: 0.20
+Nodes (16): AbsorbCommandOptions, runAbsorb(), promptAbsorb(), args, AbsorbOptions, AbsorbResult, executeAbsorb(), findAgentsUsingPersona() (+8 more)
+
+### Community 246 - "Community 246"
+Cohesion: 0.21
+Nodes (10): detectRelevantCompilers(), runSkillAdd(), SkillAddOptions, __dirname, program, skill, FileWriteOptions, installSkill() (+2 more)
+
+### Community 247 - "Community 247"
+Cohesion: 0.29
+Nodes (9): BUILTIN_NAMES, BuiltinContext, BuiltinName, BuiltinResult, captureConsole(), getBuiltinCommands(), isBuiltinCommand(), runBuiltin() (+1 more)
+
+### Community 248 - "Community 248"
+Cohesion: 0.29
+Nodes (6): lastProcessedGenerationId, lastRunAtMs, lastTranscriptMtimeMs, trialStartedAtMs, turnsSinceLastRun, version
+
+### Community 253 - "Community 253"
+Cohesion: 0.24
+Nodes (8): AddOptions, CastOptions, TargetId, ALL_PROVIDER_OPTIONS, ProviderOption, ProviderSelectPrompt(), ProviderSelectPromptProps, AgentFileMatch
+
+### Community 254 - "Community 254"
+Cohesion: 0.36
+Nodes (6): Footer(), FrameProps, TabBar(), TAB_IDS, TabId, palette
+
 ## Knowledge Gaps
-- **519 isolated node(s):** `allow`, `enabledMcpjsonServers`, `@opencode-ai/plugin`, `name`, `version` (+514 more)
+- **717 isolated node(s):** `version`, `lastRunAtMs`, `turnsSinceLastRun`, `lastTranscriptMtimeMs`, `lastProcessedGenerationId` (+712 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useDeck()` connect `Community 5` to `Community 90`, `Community 91`?**
+- **Why does `palette` connect `Community 254` to `Community 256`, `Community 2`, `Community 5`, `Community 181`, `Community 184`, `Community 187`, `Community 188`, `Community 255`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `palette` connect `Community 5` to `Community 91`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `SeanceTab()` connect `Community 91` to `Community 5`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **What connects `allow`, `enabledMcpjsonServers`, `@opencode-ai/plugin` to the rest of the system?**
-  _519 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `SoulFile` connect `Community 2` to `Community 245`, `Community 181`, `Community 246`, `Community 91`, `Community 62`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `useDeck()` connect `Community 181` to `Community 256`, `Community 90`, `Community 187`, `Community 188`, `Community 255`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **What connects `version`, `lastRunAtMs`, `turnsSinceLastRun` to the rest of the system?**
+  _717 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06639839034205232 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.1471264367816092 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06874717322478517 - nodes in this community are weakly interconnected._

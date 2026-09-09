@@ -10,7 +10,7 @@ import { PROJECT_SPELLS_DIR } from "../src/utils/paths.js";
 test("readSpells returns empty array for non-existent or empty directory", async () => {
   const dir = makeEmptyRepo();
   try {
-    const spells = await readSpells(path.join(dir, "_spells"));
+    const spells = await readSpells(path.join(dir, ".hocus", "_spells"));
     assert.deepEqual(spells, []);
   } finally {
     cleanupRepo(dir);
@@ -19,7 +19,7 @@ test("readSpells returns empty array for non-existent or empty directory", async
 
 test("readSpells parses incantations, wards, and curses with correct properties", async () => {
   const dir = makeEmptyRepo();
-  const spellsDir = path.join(dir, "_spells");
+  const spellsDir = path.join(dir, ".hocus", "_spells");
   try {
     fs.mkdirSync(path.join(spellsDir, "incantations"), { recursive: true });
     fs.mkdirSync(path.join(spellsDir, "wards"), { recursive: true });
@@ -70,7 +70,7 @@ test("readSpells parses incantations, wards, and curses with correct properties"
 
 test("readSpells infers type from directory when frontmatter type is omitted", async () => {
   const dir = makeEmptyRepo();
-  const spellsDir = path.join(dir, "_spells");
+  const spellsDir = path.join(dir, ".hocus", "_spells");
   try {
     fs.mkdirSync(path.join(spellsDir, "curses"), { recursive: true });
     fs.writeFileSync(
@@ -89,7 +89,7 @@ test("readSpells infers type from directory when frontmatter type is omitted", a
 
 test("readSpells skips malformed files without throwing", async () => {
   const dir = makeEmptyRepo();
-  const spellsDir = path.join(dir, "_spells");
+  const spellsDir = path.join(dir, ".hocus", "_spells");
   try {
     fs.mkdirSync(spellsDir, { recursive: true });
     fs.writeFileSync(path.join(spellsDir, "broken.md"), "Not valid frontmatter: :::\n");
@@ -103,7 +103,7 @@ test("readSpells skips malformed files without throwing", async () => {
 
 test("writeSpellsManifest generates valid manifest.json", async () => {
   const dir = makeEmptyRepo();
-  const spellsDir = path.join(dir, "_spells");
+  const spellsDir = path.join(dir, ".hocus", "_spells");
   try {
     fs.mkdirSync(path.join(spellsDir, "incantations"), { recursive: true });
     fs.writeFileSync(
@@ -181,7 +181,7 @@ test("categorizeSpell automatically categorizes spells into incantations, wards,
 
   // Automatic categorization during readSpells for unclassified root files
   const dir = makeEmptyRepo();
-  const spellsDir = path.join(dir, "_spells");
+  const spellsDir = path.join(dir, ".hocus", "_spells");
   try {
     fs.mkdirSync(spellsDir, { recursive: true });
     fs.writeFileSync(
