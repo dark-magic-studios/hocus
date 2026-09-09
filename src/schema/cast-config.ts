@@ -9,6 +9,8 @@ export interface CustomCastConfig {
   label: string;
   /**
    * Persona naming keyed by canonical valley slug (e.g. "richard", "gilfoyle").
+   * Bundled source files use role slugs instead (e.g. "planner", "reviewer");
+   * see BASE_AGENT_TO_VALLEY in src/utils/cast.ts for the mapping.
    * Each entry defines the `character` slug, soul filename stem, skill prefix,
    * and `display_name` for that role in this cast.
    */

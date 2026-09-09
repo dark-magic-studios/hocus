@@ -28,22 +28,45 @@ export const CAST_MAP: Record<
   laurie: { valleyDisplay: "Laurie", wizardDisplay: "John Dee", wizardSlug: "john-dee" },
   monica: { valleyDisplay: "Monica", wizardDisplay: "Nostradamus", wizardSlug: "nostradamus" },
   "peter-gregory": { valleyDisplay: "Peter Gregory", wizardDisplay: "Midas", wizardSlug: "midas" },
-  "project-manager": {
-    valleyDisplay: "Project Manager",
-    wizardDisplay: "Cornelius Agrippa",
-    wizardSlug: "cornelius-agrippa",
+  "dan-melcher": {
+    valleyDisplay: "Dan Melcher",
+    wizardDisplay: "Chronos",
+    wizardSlug: "chronos",
   },
   richard: { valleyDisplay: "Richard", wizardDisplay: "Merlin", wizardSlug: "merlin" },
   russ: { valleyDisplay: "Russ Hanneman", wizardDisplay: "Prospero", wizardSlug: "prospero" },
 };
+
+/** Mapping from canonical base agent slug to valley persona slug */
+export const BASE_AGENT_TO_VALLEY: Record<string, string> = {
+  "dumb-qa": "big-head",
+  "feature-dev": "dinesh",
+  "product-strategist": "erlich",
+  "ceremony-master": "gavin",
+  "reviewer": "gilfoyle",
+  "orchestrator": "jared",
+  "qa": "jian-yang",
+  "configurator": "laurie",
+  "recruiter": "monica",
+  "founder": "peter-gregory",
+  "project-manager": "dan-melcher",
+  "planner": "richard",
+  "costs-cleaner": "russ",
+};
+
+export const VALLEY_TO_BASE_AGENT: Record<string, string> = Object.fromEntries(
+  Object.entries(BASE_AGENT_TO_VALLEY).map(([k, v]) => [v, k]),
+);
 
 // Skill-id prefix mapping: valley skill prefix (as it appears in skill folder)
 // -> valleySlug (key of CAST_MAP). Handles hyphen variants like bighead vs big-head.
 const SKILL_PREFIX_TO_VALLEY: Record<string, string> = {
   "bighead": "big-head",
   "baba-yaga": "big-head",
+  "dumb-qa": "big-head",
   "dinesh": "dinesh",
   "flamel": "dinesh",
+  "feature-dev": "dinesh",
   "erlich": "erlich",
   "circe": "erlich",
   "gavin": "gavin",
@@ -69,7 +92,12 @@ const SKILL_PREFIX_TO_VALLEY: Record<string, string> = {
   "merlin": "richard",
   "russ": "russ",
   "prospero": "russ",
-  // project-manager skills are generic (scry-tasks etc) — leave untouched
+  "dan-melcher": "dan-melcher",
+  "melcher": "dan-melcher",
+  "dan": "dan-melcher",
+  "chronos": "dan-melcher",
+  "cornelius-agrippa": "dan-melcher",
+  "project-manager": "dan-melcher",
 };
 
 // Skills that are persona-specific and should be renamed when cast switches.
@@ -151,7 +179,8 @@ export function getSkillIdForCast(skillId: string, cast: Cast): string {
     "laurie": "john-dee",
     "monica": "nostradamus",
     "peter-gregory": "midas",
-    "project-manager": "cornelius-agrippa",
+    "dan-melcher": "chronos",
+    "project-manager": "chronos",
     "richard": "merlin",
     "russ": "prospero",
   };
@@ -294,11 +323,11 @@ export function transformSkillFrontmatterForCast(rawContent: string, cast: Cast)
 export function transformSoulForCast(rawContent: string, cast: Cast): string {
   const { data, content } = matter(rawContent);
   const character = typeof data.character === "string" ? data.character : "";
-  // Find valleySlug key that matches character (or via aliases)
-  let valleySlug: string | undefined;
-  if (CAST_MAP[character]) {
+  // Find valleySlug key that matches base agent, character (or via aliases)
+  let valleySlug: string | undefined = BASE_AGENT_TO_VALLEY[character];
+  if (!valleySlug && CAST_MAP[character]) {
     valleySlug = character;
-  } else {
+  } else if (!valleySlug) {
     // Check if character is already a wizard slug
     valleySlug = Object.entries(CAST_MAP).find(([, v]) => v.wizardSlug === character)?.[0];
     if (!valleySlug) {
@@ -334,22 +363,30 @@ export function transformSoulForCast(rawContent: string, cast: Cast): string {
     occult: entry.wizardDisplay,
   };
 
-  // Update heading in body if it starts with "# <OldName> —"
+  // Update heading in body if it starts with "# <OldName> —" or clean "# <Display>"
   let newContent = content;
-  const headingMatch = content.match(/^#\s+(.+?)\s+—/m);
+  const headingMatch = content.match(/^#\s+(.+?)(?:\s+—\s*(.*))?$/m);
   if (headingMatch) {
     const oldHeadingName = headingMatch[1]?.trim();
-    if (oldHeadingName === entry.valleyDisplay || oldHeadingName === entry.wizardDisplay) {
-      newContent = content.replace(/^#\s+.+?\s+—/m, `# ${targetDisplay} —`);
+    const oldSuffix = headingMatch[2]?.trim();
+    if (
+      oldHeadingName === entry.valleyDisplay ||
+      oldHeadingName === entry.wizardDisplay ||
+      oldHeadingName === data.display_name ||
+      oldHeadingName === data.character
+    ) {
+      const suffix = oldSuffix ? ` — ${oldSuffix}` : data.role ? ` — ${data.role}` : "";
+      newContent = content.replace(/^#\s+.+$/m, `# ${targetDisplay}${suffix}`);
     }
   }
 
   return matter.stringify(newContent, newData);
 }
 
-export function getSoulFilenameForCast(valleySlug: string, cast: Cast): string {
+export function getSoulFilenameForCast(valleySlugOrBase: string, cast: Cast): string {
+  const valleySlug = BASE_AGENT_TO_VALLEY[valleySlugOrBase] ?? valleySlugOrBase;
   const entry = CAST_MAP[valleySlug];
-  if (!entry) return `${valleySlug}.soul.md`;
+  if (!entry) return `${valleySlugOrBase}.soul.md`;
   return cast === "valley" ? `${valleySlug}.soul.md` : `${entry.wizardSlug}.soul.md`;
 }
 

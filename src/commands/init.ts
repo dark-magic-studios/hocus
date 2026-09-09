@@ -30,6 +30,7 @@ import {
   getSkillIdForCast,
   transformSkillFrontmatterForCast,
 } from "../utils/cast.js";
+import { resolveValleySlug } from "../utils/cast-registry.js";
 
 export interface InitOptions {
   repoRoot: string;
@@ -156,7 +157,7 @@ export function getAgentSpawnSpec(
 
 import { initializeAgentPlugin, installRtk, installGraphify } from "../utils/plugin.js";
 
-const FOUNDER_SOUL = "peter-gregory";
+const FOUNDER_SOUL = "founder";
 
 function buildInitPrompt(cast: Cast, commandCode = false, copilot = false): string {
   const base = `scan the repository for its dependencies and tech stack. then, before proceeding with any setup:
@@ -558,7 +559,8 @@ export async function runInit({
   const personaFiles = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
   let installedCount = 0;
   for (const file of personaFiles) {
-    const valleySlug = path.basename(file, ".soul.md");
+    const baseSlug = path.basename(file, ".soul.md");
+    const valleySlug = resolveValleySlug(baseSlug) ?? baseSlug;
     const targetFile = getSoulFilenameForCast(valleySlug, cast);
     const dest = path.join(personasDir, targetFile);
     if (await pathExists(dest)) continue;
@@ -738,7 +740,10 @@ export async function runInit({
   const initPrompt = buildInitPrompt(cast, useCommandCode, useCopilot);
   let founder: ReturnType<typeof parseSoulFile>;
   if (dryRun) {
-    const founderRaw = await readFile(path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`), "utf8");
+    const founderFile = path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`);
+    const founderRaw = (await pathExists(founderFile))
+      ? await readFile(founderFile, "utf8")
+      : await readFile(path.join(BUNDLED_PERSONAS_DIR, "peter-gregory.soul.md"), "utf8");
     const transformed = transformSoulForCast(founderRaw, cast);
     // Write to temp for parseSoulFile expectation of file path — fake it via matter
     const { default: matter } = await import("gray-matter");
@@ -762,10 +767,16 @@ export async function runInit({
     } as ReturnType<typeof parseSoulFile>;
   } else {
     const founderPath = path.join(personasDir, getSoulFilenameForCast(FOUNDER_SOUL, cast));
+    const founderFile = path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`);
     // Fallback to bundled if transformed file missing (shouldn't happen, but be defensive)
-    const resolvedPath = (await pathExists(founderPath)) ? founderPath : path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`);
+    const resolvedPath = (await pathExists(founderPath))
+      ? founderPath
+      : (await pathExists(founderFile))
+        ? founderFile
+        : path.join(BUNDLED_PERSONAS_DIR, "peter-gregory.soul.md");
     founder = parseSoulFile(resolvedPath);
-    if (cast === "wizard" && founder.character !== CAST_MAP[FOUNDER_SOUL]?.wizardSlug) {
+    const founderValleySlug = resolveValleySlug(FOUNDER_SOUL) ?? "peter-gregory";
+    if (cast === "wizard" && founder.character !== CAST_MAP[founderValleySlug]?.wizardSlug) {
       // Defensive: ensure wizard display if somehow file wasn't transformed
       const raw = await readFile(resolvedPath, "utf8");
       const patched = transformSoulForCast(raw, cast);

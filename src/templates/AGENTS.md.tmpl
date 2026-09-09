@@ -32,7 +32,7 @@ PR, or destructive action.
 
 ## The cast
 
-This repo uses Hocus's persona harness — one logical cast of 13 roles — installed under a single naming convention chosen at `hocus init` and persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard" }`. Each agent's full identity is defined in its SOUL.md file under `.hocus/personas/` (or wherever this project's personas were installed) and compiled into this tool's native agent format. See `dashboard.html` for a live view of who's who.
+This repo uses Hocus's persona harness — one logical cast of 13 roles — installed under a single naming convention chosen at `hocus init` and persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard" }`. Bundled sources in the Hocus package use role-based filenames (`planner.soul.md`, `orchestrator.soul.md`, …); after init, each agent's full identity lives in its SOUL.md file under `.hocus/personas/` and is compiled into this tool's native agent format. See `dashboard.html` for a live view of who's who.
 
 - **Silicon Valley cast** (`--cast valley`): personas are `richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, … with `display_name` like `Richard` / `Gilfoyle` / `Jared` and skills/slash-commands like `/richard-draft-potion`, `/gilfoyle-pr-review`, `/jared-orchestrate`.
 - **Wizard cast** (`--cast wizard`, the default for non-interactive/`--dry-run`): personas are `merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, … with `display_name` like `Merlin` / `Zoroaster` / `Roger Bacon` and skills/slash-commands like `/merlin-draft-potion`, `/zoroaster-pr-review`, `/roger-bacon-orchestrate`.

@@ -6,7 +6,7 @@
 
 A multi-agent harness generator and interactive command deck for AI coding tools. Write one persona once — a `SOUL.md` file — and compile it into native agent and rule formats for **Claude Code**, **OpenCode**, **Cursor**, **Antigravity**, **Command Code**, and **GitHub Copilot**.
 
-The cast that ships with Hocus borrows wizard names from history and myth — Midas plans and founds, Roger Bacon orchestrates, Merlin plans, Flamel implements, Zoroaster reviews, and so on. Each persona also keeps aliases for the original *Silicon Valley* cast and an earlier occultist recast — toggle them on the dashboard with `?cast=valley` or `?cast=occult`. Rename or replace any persona — the harness doesn't care what an agent is called, only that it has a role, a voice, and a body of instructions.
+The cast that ships with Hocus is 13 role-based personas — `planner`, `orchestrator`, `reviewer`, `feature-dev`, `founder`, and so on — authored under `src/personas/` as `planner.soul.md`, `orchestrator.soul.md`, etc. At `hocus init`, each role is compiled into either **Silicon Valley** names (Richard, Jared, Gilfoyle…) or **Wizard** names (Merlin, Roger Bacon, Zoroaster…). Each persona keeps `aliases` for both conventions — toggle them on the dashboard with `?cast=valley` or `?cast=occult`. Rename or replace any persona — the harness doesn't care what an agent is called, only that it has a role, a voice, and a body of instructions.
 
 ---
 
@@ -30,12 +30,14 @@ The choice is persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard
 
 #### 1. Persona files (`.hocus/personas/*.soul.md`)
 
-The bundled sources under `src/personas/` are authored with `character: <valleySlug>` and `display_name: <wizardDisplay>` plus `aliases` for both. At `hocus init` time each file is transformed for the chosen cast (`transformSoulForCast` in `src/utils/cast.ts:180`):
+The bundled sources under `src/personas/` use **role-based filenames** (`planner.soul.md`, `orchestrator.soul.md`, `reviewer.soul.md`, `founder.soul.md`, …). Each file carries a `role` field and a cast-specific `character` slug in frontmatter, plus `aliases` for both naming conventions. Role slugs map to cast keys via `BASE_AGENT_TO_VALLEY` in `src/utils/cast.ts` (e.g. `planner` → `richard`, `orchestrator` → `jared`, `reviewer` → `gilfoyle`).
 
-- **Valley**: filename is the valley slug (`richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, `jian-yang.soul.md`, `big-head.soul.md`, …) via `getSoulFilenameForCast` (`src/utils/cast.ts:300`). Frontmatter `character` stays the valley slug, `display_name` becomes the Valley display (`Richard`, `Gilfoyle`, `Jared`, `Peter Gregory`, `Jian-Yang`, `Big Head`), and the `# <Name> —` heading in the body is rewritten to match.
-- **Wizard**: filename is the wizard slug (`merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, `cagliostro.soul.md`, `baba-yaga.soul.md`, …). Frontmatter `character` becomes the wizard slug (`merlin`, `zoroaster`, …), `display_name` becomes the wizard display (`Merlin`, `Zoroaster`, …), same heading rewrite.
+At `hocus init` time each file is transformed for the chosen cast (`transformSoulForCast` in `src/utils/cast.ts`):
 
-In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <WizardDisplay> }` so the dashboard can toggle without reparsing. `character` is the stable key validated by `src/schema/soul.ts:1` and referenced by compiled agent filenames — it survives recasts as the lookup key in `CAST_MAP`.
+- **Valley**: installed filename is the valley slug (`richard.soul.md`, `gilfoyle.soul.md`, `jared.soul.md`, `peter-gregory.soul.md`, `jian-yang.soul.md`, `big-head.soul.md`, …) via `getSoulFilenameForCast`. Frontmatter `character` becomes the valley slug, `display_name` becomes the Valley display (`Richard`, `Gilfoyle`, `Jared`, `Peter Gregory`, `Jian-Yang`, `Big Head`), and the `# <Name> —` heading in the body is rewritten to match.
+- **Wizard**: installed filename is the wizard slug (`merlin.soul.md`, `zoroaster.soul.md`, `roger-bacon.soul.md`, `midas.soul.md`, `cagliostro.soul.md`, `baba-yaga.soul.md`, …). Frontmatter `character` becomes the wizard slug (`merlin`, `zoroaster`, …), `display_name` becomes the wizard display (`Merlin`, `Zoroaster`, …), same heading rewrite.
+
+In both cases `aliases` is normalized to `{ valley: <ValleyDisplay>, occult: <WizardDisplay> }` so the dashboard can toggle without reparsing. After install, `character` is the cast-specific slug validated by `src/schema/soul.ts` and referenced by compiled agent filenames.
 
 #### 2. Persona-bound skills
 
@@ -107,29 +109,29 @@ Legacy repos with no config but existing personas are migrated the same way. `ho
 
 ### What does NOT change
 
-- **Roles, voices, glyphs, tools, triggers, model defaults** — identical. Only `character`, `display_name`, the `# … —` heading, and `aliases` normalization differ. A Valley `Richard` and a Wizard `Merlin` are the same planner (`role: planner`, `voice: anxious, earnest…`, `glyph: "(*)"`, `triggers: [new feature request, architecture decision, battle plan]`); likewise `Jared` ↔ `Roger Bacon` (`role: orchestrator`), `Gilfoyle` ↔ `Zoroaster` (`role: reviewer`), etc. See `src/personas/*.soul.md:1`.
+- **Roles, voices, glyphs, tools, triggers, model defaults** — identical across casts. The `role` field (e.g. `planner`, `reviewer`) is stable in bundled sources; only installed `character`, `display_name`, the `# … —` heading, and `aliases` normalization differ. A Valley `Richard` and a Wizard `Merlin` are the same planner (`role: planner`, `voice: anxious, earnest…`, `glyph: "(*)"`, `triggers: [new feature request, architecture decision, battle plan]`); likewise `Jared` ↔ `Roger Bacon` (`role: orchestrator`), `Gilfoyle` ↔ `Zoroaster` (`role: reviewer`), etc. See `src/personas/*.soul.md`.
 - **Behavior** — compilation, TUI, skill execution, and orchestration are cast-agnostic. The `character` slug is stable across recasts as the `CAST_MAP` key; `aliases` keeps both names for lookup.
 - **Generic skills and templates** — `PRODUCT.md`, `TASKS.md`, `MEMORY.md`, `AGENTS.md` content (except the live roster in `dashboard.html`) is cast-independent.
 
 ### Full slug mapping
 
-Source of truth is `CAST_MAP` in `src/utils/cast.ts:15`. Valley slug is the canonical key; wizard slug/display are the transformed values.
+Source of truth is `CAST_MAP` and `BASE_AGENT_TO_VALLEY` in `src/utils/cast.ts`. Bundled filenames use the **role slug**; installed filenames and `character` use the cast-specific slug.
 
-| Valley slug (`character` when valley) | Valley display | Wizard slug (`character` when wizard) | Wizard display |
-|---|---|---|---|
-| `big-head` | Big Head | `baba-yaga` | Baba Yaga |
-| `dinesh` | Dinesh | `flamel` | Flamel |
-| `erlich` | Erlich | `circe` | Circe |
-| `gavin` | Gavin | `the-apprentice` | The Apprentice |
-| `gilfoyle` | Gilfoyle | `zoroaster` | Zoroaster |
-| `jared` | Jared | `roger-bacon` | Roger Bacon |
-| `jian-yang` | Jian-Yang | `cagliostro` | Cagliostro |
-| `laurie` | Laurie | `john-dee` | John Dee |
-| `monica` | Monica | `nostradamus` | Nostradamus |
-| `peter-gregory` | Peter Gregory | `midas` | Midas |
-| `project-manager` | Project Manager | `cornelius-agrippa` | Cornelius Agrippa |
-| `richard` | Richard | `merlin` | Merlin |
-| `russ` | Russ Hanneman | `prospero` | Prospero |
+| Role slug (bundled filename) | Valley slug (`character` when valley) | Valley display | Wizard slug (`character` when wizard) | Wizard display |
+|---|---|---|---|---|
+| `dumb-qa` | `big-head` | Big Head | `baba-yaga` | Baba Yaga |
+| `feature-dev` | `dinesh` | Dinesh | `flamel` | Flamel |
+| `product-strategist` | `erlich` | Erlich | `circe` | Circe |
+| `ceremony-master` | `gavin` | Gavin | `the-apprentice` | The Apprentice |
+| `reviewer` | `gilfoyle` | Gilfoyle | `zoroaster` | Zoroaster |
+| `orchestrator` | `jared` | Jared | `roger-bacon` | Roger Bacon |
+| `qa` | `jian-yang` | Jian-Yang | `cagliostro` | Cagliostro |
+| `configurator` | `laurie` | Laurie | `john-dee` | John Dee |
+| `recruiter` | `monica` | Monica | `nostradamus` | Nostradamus |
+| `founder` | `peter-gregory` | Peter Gregory | `midas` | Midas |
+| `project-manager` | `dan-melcher` | Dan Melcher | `chronos` | Chronos |
+| `planner` | `richard` | Richard | `merlin` | Merlin |
+| `costs-cleaner` | `russ` | Russ Hanneman | `prospero` | Prospero |
 
 Skill prefix variants normalize hyphens/casing: `bighead` ↔ `big-head`/`baba-yaga`, `jianyang` ↔ `jian-yang`/`cagliostro`, `peter` ↔ `peter-gregory`/`midas`, etc. (`SKILL_PREFIX_TO_VALLEY` in `src/utils/cast.ts:35`).
 
@@ -355,7 +357,7 @@ npm run typecheck # run TypeScript check
 src/
 ├── cli.ts                  # CLI entrypoint & commander configuration
 ├── commands/               # init, cast, skill add, sync handlers
-├── personas/               # bundled SOUL.md cast (13 personas)
+├── personas/               # bundled SOUL.md cast (13 role-based personas)
 ├── schema/                 # SOUL.md, potion & spell validation schemas
 ├── compilers/              # target compilers (claude-code, codex, opencode, cursor, antigravity)
 ├── scanners/               # repository tech stack detection engine

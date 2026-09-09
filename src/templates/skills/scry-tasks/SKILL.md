@@ -3,7 +3,7 @@ name: scry-tasks
 description: Divine and reconcile TASKS.md against external issue trackers (Linear, GitHub Issues/Projects, Jira) via MCPs, or local offline sources (Obsidian vaults, local directories). Prompts for confirmation before applying changes and assists with MCP setup.
 ---
 
-# Scry Tasks (Cornelius Agrippa / Jared)
+# Scry Tasks (Chronos / Dan Melcher / Jared)
 
 > *"The grimoire reflects the realm; when the realm shifts, scry the truth and align the ledger."*
 

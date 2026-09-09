@@ -1,6 +1,6 @@
 # Custom casts
 
-Hocus ships two built-in naming **casts**:
+Hocus ships two built-in naming **casts**. The bundled personas in `src/personas/` use **role-based filenames** (`planner.soul.md`, `reviewer.soul.md`, …); after `hocus init`, installed files under `.hocus/personas/` use cast-specific slugs instead.
 
 | Cast | Example personas | Example skills |
 |------|------------------|----------------|
@@ -98,9 +98,27 @@ Each persona entry:
 | `character` | yes | Slug used for soul filename, compiled agent id, and skill prefix |
 | `display_name` | yes | Human-readable name in soul frontmatter and skill descriptions |
 
-Canonical valley slugs (keys for `personas`):
+Canonical valley slugs (keys for `personas` in custom cast JSON):
 
-`big-head`, `dinesh`, `erlich`, `gavin`, `gilfoyle`, `jared`, `jian-yang`, `laurie`, `monica`, `peter-gregory`, `project-manager`, `richard`, `russ`
+`big-head`, `dinesh`, `erlich`, `gavin`, `gilfoyle`, `jared`, `jian-yang`, `laurie`, `monica`, `peter-gregory`, `dan-melcher`, `richard`, `russ`
+
+These correspond to bundled **role slugs** via `BASE_AGENT_TO_VALLEY` in `src/utils/cast.ts`:
+
+| Role slug (bundled file) | Valley slug (custom cast key) |
+|---|---|
+| `planner` | `richard` |
+| `orchestrator` | `jared` |
+| `reviewer` | `gilfoyle` |
+| `feature-dev` | `dinesh` |
+| `founder` | `peter-gregory` |
+| `product-strategist` | `erlich` |
+| `ceremony-master` | `gavin` |
+| `configurator` | `laurie` |
+| `recruiter` | `monica` |
+| `qa` | `jian-yang` |
+| `dumb-qa` | `big-head` |
+| `costs-cleaner` | `russ` |
+| `project-manager` | `dan-melcher` |
 
 Omitted roles keep valley defaults when you recast.
 

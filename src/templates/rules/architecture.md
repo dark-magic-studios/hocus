@@ -9,12 +9,13 @@ Hocus is a multi-agent harness generator. It compiles a single persona specifica
 
 ## 1. Single Source of Truth
 
-- **Canonical Personas**: Defined in `.hocus/personas/*.soul.md` (and bundled in `src/personas/*.soul.md`).
+- **Canonical Personas**: Defined in `.hocus/personas/*.soul.md` after init; bundled sources live in `src/personas/*.soul.md` using role-based filenames (`planner.soul.md`, `orchestrator.soul.md`, …).
 - **Schema**: Validated by `src/schema/soul.ts` (`character`, `display_name`, `role`, `voice`, `glyph`, `triggers`, `tools`, `aliases: { valley, occult }`).
+- **Role mapping**: `BASE_AGENT_TO_VALLEY` in `src/utils/cast.ts` maps bundled role slugs to cast keys (e.g. `planner` → `richard`, `reviewer` → `gilfoyle`).
 - **Cast Types**:
   - `valley`: Silicon Valley persona names (`richard`, `gilfoyle`, `dinesh`, `jared`, `erlich`, etc.)
   - `wizard`: Occult / Wizard persona names (`merlin`, `zoroaster`, `roger-bacon`, `midas`, etc.)
-  - Switching casts rewrites filenames and frontmatter while preserving canonical aliases.
+  - Switching casts rewrites installed filenames and frontmatter while preserving canonical aliases.
 
 ## 2. Target Compilation Pipeline (`src/compilers/`)
 

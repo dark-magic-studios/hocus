@@ -4,6 +4,7 @@ import fsExtra from "fs-extra";
 const { pathExists, readdir, readFile, writeFile, remove, ensureDir } = fsExtra;
 import type { CustomCastConfig, CustomCastPersona } from "../schema/cast-config.js";
 import {
+  BASE_AGENT_TO_VALLEY,
   CAST_MAP,
   PERSONA_SKILL_IDS,
   type Cast,
@@ -94,6 +95,7 @@ export async function writeProjectCastId(repoRoot: string, castId: ProjectCastId
 
 /** Resolve any character/slug to its canonical valley slug. */
 export function resolveValleySlug(characterOrSlug: string): string | undefined {
+  if (BASE_AGENT_TO_VALLEY[characterOrSlug]) return BASE_AGENT_TO_VALLEY[characterOrSlug];
   if (CAST_MAP[characterOrSlug]) return characterOrSlug;
   const byWizard = Object.entries(CAST_MAP).find(([, v]) => v.wizardSlug === characterOrSlug);
   if (byWizard) return byWizard[0];

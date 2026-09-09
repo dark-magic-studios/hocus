@@ -14,7 +14,8 @@ import { getCompiler } from "../compilers/index.js";
 import type { TargetId } from "../compilers/types.js";
 import { promptProviders } from "../tui/components/ProviderSelectPrompt.js";
 import { detectStack } from "../scanners/detect-stack.js";
-import { getSkillIdForCast } from "../utils/cast.js";
+import { getSkillIdForCast, CAST_MAP } from "../utils/cast.js";
+import { resolveValleySlug } from "../utils/cast-registry.js";
 
 export interface AddOptions {
   repoRoot?: string;
@@ -149,9 +150,21 @@ export async function findAgentSoul(
       const fullPath = path.join(dir, file);
       try {
         const soul = parseSoulFile(fullPath);
+        const valleySlug = resolveValleySlug(soul.character) ?? soul.character;
+        const entry = CAST_MAP[valleySlug];
+        const fileStem = path.basename(file, ".soul.md").toLowerCase();
+        const query = agentId.toLowerCase();
         if (
-          soul.character.toLowerCase() === agentId.toLowerCase() ||
-          soul.display_name.toLowerCase() === agentId.toLowerCase()
+          soul.character.toLowerCase() === query ||
+          soul.display_name.toLowerCase() === query ||
+          soul.role.toLowerCase() === query ||
+          fileStem === query ||
+          valleySlug.toLowerCase() === query ||
+          (entry && entry.valleyDisplay.toLowerCase() === query) ||
+          (entry && entry.wizardDisplay.toLowerCase() === query) ||
+          (entry && entry.wizardSlug.toLowerCase() === query) ||
+          (soul.aliases?.valley && soul.aliases.valley.toLowerCase() === query) ||
+          (soul.aliases?.occult && soul.aliases.occult.toLowerCase() === query)
         ) {
           return { soul, filePath: fullPath };
         }
@@ -264,6 +277,24 @@ export async function runAdd(options: AddOptions): Promise<void> {
       log.error(`no agent found matching "${options.agent}"`);
     } else {
       let { soul } = agentResult;
+      const requestedSlug = options.agent.replace(/\.soul\.md$/, "").toLowerCase();
+      if (requestedSlug !== soul.character.toLowerCase()) {
+        const valleySlug = resolveValleySlug(requestedSlug);
+        const entry = valleySlug ? CAST_MAP[valleySlug] : undefined;
+        let displayName = soul.display_name;
+        if (entry && valleySlug) {
+          if (entry.valleyDisplay.toLowerCase() === requestedSlug || valleySlug.toLowerCase() === requestedSlug) {
+            displayName = entry.valleyDisplay;
+          } else if (entry.wizardDisplay.toLowerCase() === requestedSlug || entry.wizardSlug.toLowerCase() === requestedSlug) {
+            displayName = entry.wizardDisplay;
+          }
+        }
+        soul = {
+          ...soul,
+          character: requestedSlug,
+          display_name: displayName,
+        };
+      }
       if (scope === "local") {
         const stack = await detectStack(repoRoot);
         if (stack.languages.length || stack.frameworks.length) {
