@@ -270,7 +270,7 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
     });
     assert.deepEqual(mcpConfig.mcpServers.context7, {
       command: "npx",
-      args: ["@anthropic-ai/context7"],
+      args: ["-y", "@upstash/context7-mcp"],
       type: "stdio",
     });
 
@@ -288,7 +288,7 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
     });
     assert.deepEqual(agyWorkspaceConfig.mcpServers.context7, {
       command: "npx",
-      args: ["@anthropic-ai/context7"],
+      args: ["-y", "@upstash/context7-mcp"],
     });
 
     const agyPluginMcpPath = path.join(pluginDir, "mcp_config.json");
@@ -570,8 +570,10 @@ test("runInit passes MCP configuration to agy CLI when agy is installed", async 
       "mcp",
       "add",
       "context7",
+      "--",
       "npx",
-      "@anthropic-ai/context7",
+      "-y",
+      "@upstash/context7-mcp",
     ]);
   } finally {
     cleanupRepo(dir);

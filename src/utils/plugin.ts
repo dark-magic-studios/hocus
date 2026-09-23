@@ -15,24 +15,8 @@ export interface IntegrationOptions {
   spawnFn?: typeof spawnSync;
 }
 
-export const MCP_SERVERS_CONFIG = {
-  sequentialthinking: {
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-    type: "stdio",
-  },
-  "code-review-graph": {
-    command: "uvx",
-    args: ["code-review-graph", "serve"],
-    type: "stdio",
-  },
-  context7: {
-    command: "npx",
-    args: ["@anthropic-ai/context7"],
-    type: "stdio",
-  },
-} as const;
-
+// Single source of truth for the MCP servers hocus scaffolds. The agent-plugins
+// variant adds `type: "stdio"`; AGY and Cursor use the bare command/args shape.
 export const AGY_MCP_SERVERS_CONFIG = {
   sequentialthinking: {
     command: "npx",
@@ -44,9 +28,73 @@ export const AGY_MCP_SERVERS_CONFIG = {
   },
   context7: {
     command: "npx",
-    args: ["@anthropic-ai/context7"],
+    args: ["-y", "@upstash/context7-mcp"],
   },
 } as const;
+
+export const MCP_SERVERS_CONFIG = Object.fromEntries(
+  Object.entries(AGY_MCP_SERVERS_CONFIG).map(([name, server]) => [name, { ...server, type: "stdio" }]),
+) as {
+  [K in keyof typeof AGY_MCP_SERVERS_CONFIG]: (typeof AGY_MCP_SERVERS_CONFIG)[K] & { type: "stdio" };
+};
+
+// Package that earlier hocus versions wrote for context7; it does not exist on npm.
+const LEGACY_CONTEXT7_PACKAGE = "@anthropic-ai/context7";
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Reads a JSON config file if it exists. Returns `{}` when absent, the parsed
+ * object when valid, or `null` (after warning) when the file cannot be parsed
+ * as a JSON object — callers must then leave the file untouched.
+ */
+async function readExistingJsonConfig(filePath: string, repoRoot: string): Promise<Record<string, any> | null> {
+  if (!(await pathExists(filePath))) return {};
+  try {
+    const parsed = JSON.parse(await readFile(filePath, "utf8"));
+    if (isPlainObject(parsed)) return parsed;
+  } catch {
+    // fall through to warning
+  }
+  log.warn(`${path.relative(repoRoot, filePath)} is not a valid JSON object — leaving it untouched`);
+  return null;
+}
+
+/**
+ * Merges hocus MCP defaults into an existing MCP config file. Existing
+ * top-level keys are preserved and user-defined servers win over hocus
+ * defaults, except a stale legacy context7 entry written by older hocus.
+ */
+async function mergeMcpConfigFile(
+  filePath: string,
+  repoRoot: string,
+  defaults: Record<string, any>,
+): Promise<void> {
+  const existing = await readExistingJsonConfig(filePath, repoRoot);
+  if (existing === null) return;
+
+  const existingServers: Record<string, any> = isPlainObject(existing.mcpServers) ? { ...existing.mcpServers } : {};
+  const legacyContext7 = existingServers.context7;
+  if (
+    isPlainObject(legacyContext7) &&
+    Array.isArray(legacyContext7.args) &&
+    legacyContext7.args.includes(LEGACY_CONTEXT7_PACKAGE)
+  ) {
+    delete existingServers.context7;
+  }
+
+  const { mcpServers: defaultServers, ...defaultTopLevel } = defaults;
+  const merged = {
+    ...defaultTopLevel,
+    ...existing,
+    mcpServers: { ...defaultServers, ...existingServers },
+  };
+
+  await ensureDir(path.dirname(filePath));
+  await writeFile(filePath, JSON.stringify(merged, null, 2) + "\n", "utf8");
+}
 
 export function commandExists(cmd: string, spawnFn: typeof spawnSync = spawnSync): boolean {
   try {
@@ -140,7 +188,9 @@ export async function initializeAgentPlugin(
       if (parsed?.mcpServers && typeof parsed.mcpServers === "object") {
         rootMcpServers = parsed.mcpServers;
       }
-    } catch {}
+    } catch {
+      log.warn(`${path.relative(repoRoot, rootMcpConfigPath)} is not valid JSON — ignoring its mcpServers`);
+    }
   }
 
   const agyMcpServers: Record<string, any> = {
@@ -161,21 +211,7 @@ export async function initializeAgentPlugin(
   };
 
   const cursorMcpConfig = {
-    mcpServers: {
-      sequentialthinking: {
-        command: "npx",
-        args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-      },
-      "code-review-graph": {
-        command: "uvx",
-        args: ["code-review-graph", "serve"],
-      },
-      context7: {
-        command: "npx",
-        args: ["@anthropic-ai/context7"],
-      },
-      ...rootMcpServers,
-    },
+    mcpServers: agyMcpServers,
   };
 
   const manifestPath = path.join(pluginDir, "plugin.json");
@@ -203,12 +239,10 @@ export async function initializeAgentPlugin(
     await ensureDir(clientHooksDir);
     await writeFile(path.join(clientHooksDir, ".gitkeep"), "", "utf8");
 
-    await ensureDir(path.dirname(cursorMcpPath));
-    await writeFile(cursorMcpPath, JSON.stringify(cursorMcpConfig, null, 2) + "\n", "utf8");
-
-    await ensureDir(path.dirname(agentsMcpPath));
-    await writeFile(agentsMcpPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");
-    await writeFile(agentsMcpConfigPath, JSON.stringify(agyMcpConfig, null, 2) + "\n", "utf8");
+    // User-facing configs may hold the user's own servers: merge, never clobber.
+    await mergeMcpConfigFile(cursorMcpPath, repoRoot, cursorMcpConfig);
+    await mergeMcpConfigFile(agentsMcpPath, repoRoot, mcpConfig);
+    await mergeMcpConfigFile(agentsMcpConfigPath, repoRoot, agyMcpConfig);
   }
 
   // When scaffolding and the user has agy installed, pass the MCP configuration to AGY CLI
@@ -454,11 +488,20 @@ export const GraphifyPlugin = async ({ directory }) => {
   await ensureDir(path.dirname(opencodePluginPath));
   await writeFile(opencodePluginPath, opencodePluginContent, "utf8");
 
-  await ensureDir(path.dirname(opencodeConfigPath));
-  const opencodeConfig = {
-    plugin: ["./plugins/graphify.js"],
-  };
-  await writeFile(opencodeConfigPath, JSON.stringify(opencodeConfig, null, 2) + "\n", "utf8");
+  const existingOpencodeConfig = await readExistingJsonConfig(opencodeConfigPath, repoRoot);
+  if (existingOpencodeConfig !== null) {
+    const graphifyPluginRef = "./plugins/graphify.js";
+    const existingPlugin = existingOpencodeConfig.plugin;
+    const plugins: unknown[] = Array.isArray(existingPlugin)
+      ? [...existingPlugin]
+      : existingPlugin !== undefined
+        ? [existingPlugin]
+        : [];
+    if (!plugins.includes(graphifyPluginRef)) plugins.push(graphifyPluginRef);
+    const opencodeConfig = { ...existingOpencodeConfig, plugin: plugins };
+    await ensureDir(path.dirname(opencodeConfigPath));
+    await writeFile(opencodeConfigPath, JSON.stringify(opencodeConfig, null, 2) + "\n", "utf8");
+  }
 
   if (await pathExists(bundledGraphifySkill)) {
     await ensureDir(path.dirname(pluginSkillDest));
