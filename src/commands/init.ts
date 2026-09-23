@@ -31,6 +31,7 @@ import {
   transformSkillFrontmatterForCast,
 } from "../utils/cast.js";
 import { resolveValleySlug } from "../utils/cast-registry.js";
+import { recordPristineFiles } from "./upgrade.js";
 
 export interface InitOptions {
   repoRoot: string;
@@ -558,6 +559,8 @@ export async function runInit({
 
   const personaFiles = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
   let installedCount = 0;
+  // Files init writes verbatim from bundled sources; recorded so `hocus upgrade` knows they are untouched.
+  const pristineWritten: string[] = [];
   for (const file of personaFiles) {
     const baseSlug = path.basename(file, ".soul.md");
     const valleySlug = resolveValleySlug(baseSlug) ?? baseSlug;
@@ -570,6 +573,7 @@ export async function runInit({
       const raw = await readFile(path.join(BUNDLED_PERSONAS_DIR, file), "utf8");
       const transformed = transformSoulForCast(raw, cast);
       await writeFile(dest, transformed, "utf8");
+      pristineWritten.push(dest);
     }
     installedCount++;
   }
@@ -651,6 +655,7 @@ export async function runInit({
       await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
     } else {
       const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
+      pristineWritten.push(...tmpTargets);
       // When cast transforms the skill id, patch SKILL.md frontmatter (name + description) in place.
       if (targetSkillName !== skill) {
         for (const target of tmpTargets) {
@@ -691,6 +696,7 @@ export async function runInit({
     }
     skillCount++;
   }
+  if (!dryRun) await recordPristineFiles(repoRoot, pristineWritten);
   const skillTargetsMsg = [
     `.agents/plugins/${pluginName}/skills/`,
     `.agents/skills/`,

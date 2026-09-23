@@ -580,3 +580,33 @@ test("runInit passes MCP configuration to agy CLI when agy is installed", async 
   }
 });
 
+
+test("runInit records written personas and skills in .hocus/upgrade-manifest.json", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+    await runInit({ repoRoot: dir, agent: "claude", cast: "valley", spawnFn: mockSpawnFn as any });
+
+    const manifest = await readJson(path.join(dir, ".hocus", "upgrade-manifest.json"));
+    const keys = Object.keys(manifest.files);
+    const personas = await readdir(path.join(dir, ".hocus", "personas"));
+    for (const file of personas.filter((f) => f.endsWith(".soul.md"))) {
+      assert.ok(keys.includes(`.hocus/personas/${file}`), `missing persona key ${file}`);
+    }
+    assert.ok(keys.includes(".agents/skills/atomic-commits/SKILL.md"));
+    assert.ok(keys.some((k) => /^\.agents\/plugins\/[^/]+\/skills\/atomic-commits\/SKILL\.md$/.test(k)));
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit dryRun writes no upgrade manifest", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+    await runInit({ repoRoot: dir, agent: "claude", cast: "valley", dryRun: true, spawnFn: mockSpawnFn as any });
+    assert.equal(await pathExists(path.join(dir, ".hocus", "upgrade-manifest.json")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});

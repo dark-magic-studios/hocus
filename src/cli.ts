@@ -8,7 +8,7 @@ import { runCast } from "./commands/cast.js";
 import { runAdd } from "./commands/add.js";
 import { runSkillAdd } from "./commands/skill.js";
 import { runSync } from "./commands/sync.js";
-import { runUpgrade } from "./commands/upgrade.js";
+import { runUpgrade, resolveUpgradeScope } from "./commands/upgrade.js";
 import { runAbsorb } from "./commands/absorb.js";
 import { runAffix } from "./commands/affix.js";
 import { runRecast } from "./commands/recast-cast.js";
@@ -180,33 +180,22 @@ program
   .command("upgrade")
   .description("update personas and static skills to latest bundled versions")
   .option("--dry-run", "print planned file writes without touching the filesystem")
-  .option("--force", "overwrite even if files appear unchanged")
+  .option("--force", "overwrite files even if they have local changes")
   .option("--cast <cast>", "override cast: valley or wizard (defaults to project's .hocus/config.json or inferred)")
   .option("--personas", "only update personas (default: both)")
   .option("--skills", "only update skills (default: both)")
   .option("--no-personas", "skip personas")
   .option("--no-skills", "skip skills")
-  .action(async (opts: { dryRun?: boolean; force?: boolean; cast?: string; personas?: boolean; skills?: boolean }) => {
-    const personas = opts.personas !== false;
-    const skills = opts.skills !== false;
-    // --personas/--skills flags: if user passes one explicitly, the other defaults to false unless also passed
-    // Commander with --no- handles, but for --personas/--skills we need to infer intent
-    // If only one of them is true via explicit flag, the other should be false.
-    // We detect by checking if raw argv contains --personas or --skills
-    const raw = process.argv.join(" ");
-    const hasPersonasFlag = raw.includes("--personas");
-    const hasSkillsFlag = raw.includes("--skills");
-    let doPersonas = personas;
-    let doSkills = skills;
-    if (hasPersonasFlag && !hasSkillsFlag && !raw.includes("--no-skills")) doSkills = false;
-    if (hasSkillsFlag && !hasPersonasFlag && !raw.includes("--no-personas")) doPersonas = false;
+  .action(async (opts: { dryRun?: boolean; force?: boolean; cast?: string }) => {
+    // Commander folds --personas/--no-personas into one boolean, so scope is resolved from exact argv tokens.
+    const scope = resolveUpgradeScope(process.argv.slice(2));
     await runUpgrade({
       repoRoot: process.cwd(),
       dryRun: opts.dryRun,
       force: opts.force,
       cast: opts.cast,
-      personas: doPersonas,
-      skills: doSkills,
+      personas: scope.personas,
+      skills: scope.skills,
     });
   });
 
