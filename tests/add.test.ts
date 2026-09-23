@@ -2,9 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import fsExtra from "fs-extra";
-const { mkdtemp, rm, pathExists, readFile } = fsExtra;
+const { mkdtemp, rm, pathExists, readFile, ensureDir, writeFile } = fsExtra;
 import os from "node:os";
-import { runAdd } from "../src/commands/add.js";
+import { runAdd, findAgentSoul } from "../src/commands/add.js";
+import { SoulValidationError } from "../src/schema/soul.js";
+import { PROJECT_PERSONAS_DIR } from "../src/utils/paths.js";
 
 async function makeTmpDir(): Promise<string> {
   return mkdtemp(path.join(os.tmpdir(), "hocus-add-test-"));
@@ -148,5 +150,41 @@ test("runAdd installs rule globally", async () => {
   } finally {
     await rm(repoRoot, { recursive: true, force: true });
     await rm(fakeHome, { recursive: true, force: true });
+  }
+});
+
+test("findAgentSoul throws SoulValidationError for a malformed soul instead of returning null", async () => {
+  const repoRoot = await makeTmpDir();
+  try {
+    const personasDir = PROJECT_PERSONAS_DIR(repoRoot);
+    await ensureDir(personasDir);
+    await writeFile(
+      path.join(personasDir, "broken-bot.soul.md"),
+      "---\ncharacter: broken-bot\n---\n\nmissing required frontmatter fields\n",
+      "utf8",
+    );
+
+    await assert.rejects(
+      () => findAgentSoul("broken-bot", repoRoot),
+      (err: unknown) => {
+        assert.ok(err instanceof SoulValidationError);
+        assert.ok(err.issues.length > 0);
+        return true;
+      },
+    );
+
+    const fromPath = path.join(personasDir, "broken-bot.soul.md");
+    await assert.rejects(() => findAgentSoul("anything", repoRoot, fromPath), SoulValidationError);
+  } finally {
+    await rm(repoRoot, { recursive: true, force: true });
+  }
+});
+
+test("findAgentSoul still returns null when no candidate exists", async () => {
+  const repoRoot = await makeTmpDir();
+  try {
+    assert.equal(await findAgentSoul("definitely-not-a-persona", repoRoot), null);
+  } finally {
+    await rm(repoRoot, { recursive: true, force: true });
   }
 });

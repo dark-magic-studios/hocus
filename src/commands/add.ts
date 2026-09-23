@@ -9,7 +9,7 @@ import {
   BUNDLED_RULES_DIR,
   PROJECT_PERSONAS_DIR,
 } from "../utils/paths.js";
-import { parseSoulFile, type SoulFile } from "../schema/soul.js";
+import { parseSoulFile, SoulValidationError, type SoulFile } from "../schema/soul.js";
 import { getCompiler } from "../compilers/index.js";
 import type { TargetId } from "../compilers/types.js";
 import { promptProviders } from "../tui/components/ProviderSelectPrompt.js";
@@ -112,13 +112,24 @@ export async function findAgentSoul(
   repoRoot: string,
   fromPath?: string
 ): Promise<{ soul: SoulFile; filePath: string } | null> {
-  if (fromPath && (await pathExists(fromPath))) {
+  // A candidate that exists but fails schema validation is remembered so that,
+  // if nothing valid matches, the user sees the validation issues instead of
+  // a misleading "not found".
+  let validationError: SoulValidationError | undefined;
+  const tryParse = (filePath: string): SoulFile | undefined => {
     try {
-      const soul = parseSoulFile(fromPath);
-      return { soul, filePath: fromPath };
-    } catch {
-      // ignore
+      return parseSoulFile(filePath);
+    } catch (err) {
+      if (err instanceof SoulValidationError) validationError ??= err;
+      // Other errors (e.g. a candidate path that is a directory, EISDIR) just
+      // mean this candidate is not a soul file; keep searching the rest.
+      return undefined;
     }
+  };
+
+  if (fromPath && (await pathExists(fromPath))) {
+    const soul = tryParse(fromPath);
+    if (soul) return { soul, filePath: fromPath };
   }
 
   const normalized = agentId.endsWith(".soul.md") ? agentId : `${agentId}.soul.md`;
@@ -133,12 +144,8 @@ export async function findAgentSoul(
 
   for (const candidate of candidates) {
     if (await pathExists(candidate)) {
-      try {
-        const soul = parseSoulFile(candidate);
-        return { soul, filePath: candidate };
-      } catch {
-        // ignore
-      }
+      const soul = tryParse(candidate);
+      if (soul) return { soul, filePath: candidate };
     }
   }
 
@@ -168,12 +175,18 @@ export async function findAgentSoul(
         ) {
           return { soul, filePath: fullPath };
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        // Unrelated malformed souls must not block the fuzzy scan; only surface
+        // the error when the file itself is the one the user asked for.
+        const fileStem = path.basename(file, ".soul.md").toLowerCase();
+        if (err instanceof SoulValidationError && fileStem === agentId.toLowerCase()) {
+          validationError ??= err;
+        }
       }
     }
   }
 
+  if (validationError) throw validationError;
   return null;
 }
 
