@@ -24,7 +24,7 @@ export const codexCompiler: Compiler = {
       `name = ${tomlString(soul.character)}\n` +
       `description = ${tomlString(description)}\n` +
       model +
-      `developer_instructions = \"\"\"\n${escapeMultilineString(soul.body)}\n\"\"\"\n`;
+      `developer_instructions = \"\"\"\n${escapeMultilineString(soul.body)}\\\n\"\"\"\n`;
 
     return {
       relPath: path.join(".codex", "agents", `${soul.character}.toml`),
@@ -37,6 +37,17 @@ function tomlString(value: string): string {
   return JSON.stringify(value);
 }
 
+/**
+ * Escapes a value for a TOML basic multiline string (`"""..."""`). Backslashes
+ * go first so later escapes aren't doubled; control characters other than tab
+ * and newline become `\uXXXX`; any run of three or more quotes is fully
+ * escaped so it cannot close the string early. The caller closes the string
+ * with a line-ending backslash, so the delimiter sits on its own line (a body
+ * ending in `"` stays valid) without adding a trailing newline to the value.
+ */
 function escapeMultilineString(value: string): string {
-  return value.replace(/\"\"\"/g, '\\\"\\\"\\\"');
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)
+    .replace(/"{3,}/g, (run) => '\\"'.repeat(run.length));
 }
