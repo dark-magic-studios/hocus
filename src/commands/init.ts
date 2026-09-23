@@ -45,6 +45,7 @@ import {
   transformSkillFrontmatterForCast,
 } from "../utils/cast.js";
 import { resolveValleySlug } from "../utils/cast-registry.js";
+import { recordPristineFiles } from "./upgrade.js";
 
 export interface InitOptions {
   repoRoot: string;
@@ -643,6 +644,8 @@ export async function runInit({
 
   const personaFiles = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
   let installedCount = 0;
+  // Files init writes verbatim from bundled sources; recorded so `hocus upgrade` knows they are untouched.
+  const pristineWritten: string[] = [];
   for (const file of personaFiles) {
     const baseSlug = path.basename(file, ".soul.md");
     const valleySlug = resolveValleySlug(baseSlug) ?? baseSlug;
@@ -655,6 +658,7 @@ export async function runInit({
       const raw = await readFile(path.join(BUNDLED_PERSONAS_DIR, file), "utf8");
       const transformed = transformSoulForCast(raw, cast);
       await writeFile(dest, transformed, "utf8");
+      pristineWritten.push(dest);
     }
     installedCount++;
   }
@@ -719,7 +723,8 @@ export async function runInit({
     const s = await stat(src);
     if (!s.isDirectory()) continue;
     const targetSkillName = getSkillIdForCast(skill, cast);
-    await installSkill(src, repoRoot, targetSkillName, { dryRun });
+    const installed = await installSkill(src, repoRoot, targetSkillName, { dryRun });
+    if (!dryRun) pristineWritten.push(...installed);
     if (!dryRun) {
       const skillFile = path.join(repoRoot, ".agents", "skills", targetSkillName, "SKILL.md");
       if (await pathExists(skillFile)) {
@@ -735,9 +740,11 @@ export async function runInit({
         }
       }
     }
-    await mirrorSkill(repoRoot, targetSkillName, skillMirrors, { symlink: symlinks, dryRun });
+    const mirrored = await mirrorSkill(repoRoot, targetSkillName, skillMirrors, { symlink: symlinks, dryRun });
+    if (!dryRun) pristineWritten.push(...mirrored);
     skillCount++;
   }
+  if (!dryRun) await recordPristineFiles(repoRoot, pristineWritten);
   const skillTargetsMsg = [".agents/skills/", ...skillMirrors.map((d) => `${d}/`)].join(", ");
   log.ok(
     `installed ${skillCount} skills to ${skillTargetsMsg}${skillMirrors.length ? (symlinks ? " (symlinked)" : " (copied)") : ""} (${describeCast(cast)})`,

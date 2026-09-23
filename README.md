@@ -193,6 +193,8 @@ Skills don't need a translation layer — `SKILL.md` is already a shared open st
 
 ## Install
 
+Requires **Node.js 22+** (the TUI is built on Ink 7).
+
 ```bash
 pnpm i -g @darkmagicstudios/hocus
 # or: npm i -g @darkmagicstudios/hocus
@@ -330,6 +332,56 @@ hocus affix -a custom-reviewer -s gilfoyle
 
 # Preview without modifying files
 hocus affix --dry-run
+```
+
+### `hocus upgrade`
+
+Updates the project's personas (`.hocus/personas/`) and static skills (`.agents/skills/`, `.agents/plugins/*/skills/`, `.commandcode/skills/`) to the versions bundled with the installed Hocus release. New bundled personas and skills are created; stale opposite-cast variants are removed when you haven't edited them. The cast comes from `.hocus/config.json` (or is inferred) unless `--cast` overrides it.
+
+Your edits are preserved. If a persona or skill file differs from what Hocus last installed, `upgrade` leaves it untouched and writes the new bundled version beside it as `<file>.new` so you can diff and merge by hand. What was installed is tracked in `.hocus/upgrade-manifest.json`. Pass `--force` to overwrite local edits with the bundled version.
+
+By default both personas and skills are upgraded. `--personas` or `--skills` limits the run to one of them; `--no-personas` / `--no-skills` skips one.
+
+```bash
+hocus upgrade
+hocus upgrade --dry-run        # preview planned writes
+hocus upgrade --personas       # only personas
+hocus upgrade --skills         # only skills
+hocus upgrade --no-skills      # everything except skills
+hocus upgrade --cast valley    # upgrade using the Silicon Valley cast
+hocus upgrade --force          # overwrite local edits instead of writing <file>.new
+```
+
+Run `hocus cast` afterwards to recompile agents from the updated personas.
+
+### `hocus recast [castName]`
+
+Switches the project's naming cast in place: renames `*.soul.md` files, persona-bound skills, and slash commands to the target cast (`valley`, `wizard`, or a custom cast), and persists the choice in `.hocus/config.json`. With no argument (or `--list`) it lists the available casts and marks the active one.
+
+Custom casts live in `.hocus/casts/<id>.json`. `--create` writes a template to edit; `--delete` removes one, and if it was active the project falls back to `wizard`. The JSON schema is documented in [docs/custom-casts.md](docs/custom-casts.md).
+
+```bash
+hocus recast                              # list casts (same as --list)
+hocus recast valley                       # switch to Silicon Valley names
+hocus recast wizard --dry-run             # preview the rename
+hocus recast my-team --create --label "My Team"
+hocus recast my-team                      # apply a custom cast
+hocus recast my-team --delete
+```
+
+Recast does not recompile agents. Run `hocus cast` afterwards.
+
+### `hocus absorb [persona]`
+
+Removes a persona from `.hocus/personas/` and moves every compiled agent that uses it onto a replacement persona. Hocus finds the dependent agent files across providers, rewrites them, re-parents any familiars derived from it, removes the source persona file, and refreshes `dashboard.html`.
+
+Without `--into`, an interactive prompt lets you choose a replacement for each dependent agent. `--into` assigns them all to one persona without prompting.
+
+```bash
+hocus absorb dinesh                   # interactive replacement per agent
+hocus absorb dinesh --into gilfoyle   # migrate all dependents to gilfoyle
+hocus absorb dinesh --into gilfoyle --dry-run
+hocus absorb dinesh --into gilfoyle --no-remove   # keep dinesh.soul.md
 ```
 
 ---

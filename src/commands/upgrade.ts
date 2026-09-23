@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 import fsExtra from "fs-extra";
 const { readdir, readFile, writeFile, copy, pathExists, remove, stat, ensureDir } = fsExtra;
@@ -27,6 +28,11 @@ export interface UpgradeOptions {
   personas?: boolean;
   skills?: boolean;
   cast?: string;
+}
+
+export interface UpgradeScope {
+  personas: boolean;
+  skills: boolean;
 }
 
 async function detectCast(repoRoot: string, override?: string): Promise<Cast> {
@@ -75,6 +81,184 @@ async function detectPluginNames(repoRoot: string): Promise<string[]> {
   return plugins;
 }
 
+
+/**
+ * Decides which sections `hocus upgrade` touches from raw CLI tokens.
+ * Exact token matching — a substring check would treat `--no-personas`
+ * as `--personas`. Positive flags select; negative flags subtract.
+ */
+export function resolveUpgradeScope(argv: readonly string[]): UpgradeScope {
+  const hasPersonas = argv.includes("--personas");
+  const hasSkills = argv.includes("--skills");
+  const anyPositive = hasPersonas || hasSkills;
+  return {
+    personas: (anyPositive ? hasPersonas : true) && !argv.includes("--no-personas"),
+    skills: (anyPositive ? hasSkills : true) && !argv.includes("--no-skills"),
+  };
+}
+
+export const UPGRADE_MANIFEST_FILE = (repoRoot: string) => path.join(repoRoot, ".hocus", "upgrade-manifest.json");
+
+interface UpgradeManifest {
+  version: 1;
+  /** repo-relative posix path -> sha256 of the content hocus last wrote there */
+  files: Record<string, string>;
+}
+
+async function loadManifest(repoRoot: string): Promise<UpgradeManifest> {
+  const file = UPGRADE_MANIFEST_FILE(repoRoot);
+  if (!(await pathExists(file))) return { version: 1, files: {} };
+  try {
+    const parsed = JSON.parse(await readFile(file, "utf8"));
+    if (parsed && typeof parsed.files === "object" && parsed.files !== null) {
+      return { version: 1, files: { ...parsed.files } };
+    }
+  } catch {}
+  log.warn(`${path.relative(repoRoot, file)} is unreadable — treating all differing files as user-modified`);
+  return { version: 1, files: {} };
+}
+
+async function saveManifest(repoRoot: string, manifest: UpgradeManifest): Promise<void> {
+  const file = UPGRADE_MANIFEST_FILE(repoRoot);
+  await ensureDir(path.dirname(file));
+  await writeFile(file, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+}
+
+/**
+ * Marks files hocus just wrote as pristine so a later `hocus upgrade` may
+ * overwrite them. Directories are expanded recursively; missing paths are skipped.
+ */
+export async function recordPristineFiles(repoRoot: string, absPaths: readonly string[]): Promise<void> {
+  const manifest = await loadManifest(repoRoot);
+  for (const p of absPaths) {
+    const s = await stat(p).catch(() => undefined);
+    if (!s) continue;
+    const files = s.isDirectory() ? (await listFilesRecursive(p)).map((f) => path.join(p, f)) : [p];
+    for (const file of files) {
+      manifest.files[relKey(repoRoot, file)] = sha256(await readFile(file));
+    }
+  }
+  await saveManifest(repoRoot, manifest);
+}
+
+function sha256(content: Buffer): string {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function relKey(repoRoot: string, file: string): string {
+  return path.relative(repoRoot, file).split(path.sep).join("/");
+}
+
+interface SyncContext {
+  repoRoot: string;
+  dryRun: boolean;
+  force: boolean;
+  manifest: UpgradeManifest;
+}
+
+type SyncResult = "created" | "updated" | "unchanged" | "conflict";
+
+/**
+ * Writes one hocus-managed file without clobbering user edits.
+ * - missing → create
+ * - identical to bundled → unchanged (hash recorded as pristine)
+ * - hash matches what hocus last wrote (untouched) or --force → overwrite
+ * - otherwise user-modified → keep it, write bundled version to `<file>.new`
+ */
+async function syncFile(ctx: SyncContext, dest: string, content: Buffer, label: string): Promise<SyncResult> {
+  const rel = relKey(ctx.repoRoot, dest);
+  const bundledHash = sha256(content);
+
+  if (!(await pathExists(dest))) {
+    if (ctx.dryRun) {
+      log.planned(rel, `new ${label}`);
+    } else {
+      await ensureDir(path.dirname(dest));
+      await writeFile(dest, content);
+    }
+    ctx.manifest.files[rel] = bundledHash;
+    return "created";
+  }
+
+  const current = await readFile(dest);
+  if (current.equals(content)) {
+    ctx.manifest.files[rel] = bundledHash;
+    return "unchanged";
+  }
+
+  const recorded = ctx.manifest.files[rel];
+  if (ctx.force || (recorded !== undefined && recorded === sha256(current))) {
+    if (ctx.dryRun) log.planned(rel, `update ${label}`);
+    else await writeFile(dest, content);
+    ctx.manifest.files[rel] = bundledHash;
+    return "updated";
+  }
+
+  const sidecar = `${dest}.new`;
+  if (ctx.dryRun) {
+    log.planned(relKey(ctx.repoRoot, sidecar), `bundled ${label} (${rel} has local changes)`);
+  } else {
+    await writeFile(sidecar, content);
+    log.warn(`${rel} has local changes — kept it; bundled version written to ${rel}.new (use --force to overwrite)`);
+  }
+  return "conflict";
+}
+
+/** True when `file` is exactly what hocus wrote (by recorded hash) or matches the expected bundled content. */
+async function isPristine(ctx: SyncContext, file: string, expected: Buffer | undefined): Promise<boolean> {
+  const current = await readFile(file).catch(() => undefined);
+  if (!current) return false;
+  if (expected && current.equals(expected)) return true;
+  const recorded = ctx.manifest.files[relKey(ctx.repoRoot, file)];
+  return recorded !== undefined && recorded === sha256(current);
+}
+
+async function listFilesRecursive(dir: string, prefix = ""): Promise<string[]> {
+  const out: string[] = [];
+  for (const entry of await readdir(dir).catch(() => [] as string[])) {
+    const full = path.join(dir, entry);
+    const s = await stat(full).catch(() => undefined);
+    if (!s) continue;
+    const rel = prefix ? path.join(prefix, entry) : entry;
+    if (s.isDirectory()) out.push(...(await listFilesRecursive(full, rel)));
+    else out.push(rel);
+  }
+  return out;
+}
+
+/** Bundled skill contents as they should land on disk for `cast` (root SKILL.md frontmatter transformed). */
+async function collectSkillFiles(src: string, cast: Cast): Promise<Map<string, Buffer>> {
+  const files = new Map<string, Buffer>();
+  for (const rel of await listFilesRecursive(src)) {
+    const raw = await readFile(path.join(src, rel));
+    files.set(rel, rel === "SKILL.md" ? Buffer.from(transformSkillFrontmatterForCast(raw.toString("utf8"), cast), "utf8") : raw);
+  }
+  return files;
+}
+
+/** Removes a stale opposite-cast file/dir only when every file in it is pristine. */
+async function removeStaleIfPristine(ctx: SyncContext, target: string, expected: Map<string, Buffer>, kind: string): Promise<void> {
+  const rel = relKey(ctx.repoRoot, target);
+  const s = await stat(target).catch(() => undefined);
+  if (!s) return;
+  const entries = s.isDirectory()
+    ? (await listFilesRecursive(target)).map((f) => ({ file: path.join(target, f), expected: expected.get(f) }))
+    : [{ file: target, expected: expected.get("") }];
+  for (const { file, expected: exp } of entries) {
+    if (!(await isPristine(ctx, file, exp))) {
+      log.warn(`kept stale ${rel} — it has local changes; remove it manually once merged`);
+      return;
+    }
+  }
+  if (ctx.dryRun) {
+    log.planned(rel, `remove stale ${kind}`);
+    return;
+  }
+  await remove(target);
+  for (const { file } of entries) delete ctx.manifest.files[relKey(ctx.repoRoot, file)];
+  log.info(`removed stale ${rel}`);
+}
+
 export async function runUpgrade({
   repoRoot,
   dryRun = false,
@@ -94,7 +278,10 @@ export async function runUpgrade({
   }
 
   const cast = await detectCast(repoRoot, castOpt);
+  const oppositeCast: Cast = cast === "wizard" ? "valley" : "wizard";
   log.info(`using ${describeCast(cast)} cast`);
+
+  const ctx: SyncContext = { repoRoot, dryRun, force, manifest: await loadManifest(repoRoot) };
 
   const personasDir = PROJECT_PERSONAS_DIR(repoRoot);
   const hasPersonasDir = await pathExists(personasDir);
@@ -102,74 +289,60 @@ export async function runUpgrade({
   let personaUpdated = 0;
   let personaUnchanged = 0;
   let personaCreated = 0;
+  let personaConflicts = 0;
 
   if (personas) {
     if (!hasPersonasDir) {
       log.warn(`no ${path.relative(repoRoot, personasDir)} found — run hocus init first`);
     } else {
       const bundledFiles = (await readdir(BUNDLED_PERSONAS_DIR)).filter((f) => f.endsWith(".soul.md"));
+      // opposite-cast filename -> the content hocus would have written there
+      const oppositeExpected = new Map<string, Buffer>();
       for (const file of bundledFiles) {
         const valleySlug = path.basename(file, ".soul.md");
         const targetFile = getSoulFilenameForCast(valleySlug, cast);
         const dest = path.join(personasDir, targetFile);
         const bundledRaw = await readFile(path.join(BUNDLED_PERSONAS_DIR, file), "utf8");
         const transformed = transformSoulForCast(bundledRaw, cast);
+        oppositeExpected.set(
+          getSoulFilenameForCast(valleySlug, oppositeCast),
+          Buffer.from(transformSoulForCast(bundledRaw, oppositeCast), "utf8"),
+        );
 
-        const exists = await pathExists(dest);
-        if (!exists) {
-          if (dryRun) {
-            log.planned(path.relative(repoRoot, dest), "new persona");
-          } else {
-            await writeFile(dest, transformed, "utf8");
-            log.ok(`created ${path.relative(repoRoot, dest)}`);
-          }
+        const result = await syncFile(ctx, dest, Buffer.from(transformed, "utf8"), "persona");
+        if (result === "created") {
+          if (!dryRun) log.ok(`created ${path.relative(repoRoot, dest)}`);
           personaCreated++;
-          continue;
-        }
-
-        const current = await readFile(dest, "utf8");
-        if (current === transformed && !force) {
-          personaUnchanged++;
-          continue;
-        }
-
-        if (dryRun) {
-          log.planned(path.relative(repoRoot, dest), "update persona");
+        } else if (result === "updated") {
+          if (!dryRun) log.ok(`updated ${path.relative(repoRoot, dest)}`);
+          personaUpdated++;
+        } else if (result === "conflict") {
+          personaConflicts++;
         } else {
-          await writeFile(dest, transformed, "utf8");
-          log.ok(`updated ${path.relative(repoRoot, dest)}`);
+          personaUnchanged++;
         }
-        personaUpdated++;
       }
 
-      // Remove stale opposite-cast persona files
-      const staleCheck = async (doRemove: boolean) => {
-        for (const file of await readdir(personasDir).catch(() => [] as string[])) {
-          if (!file.endsWith(".soul.md")) continue;
-          const slug = path.basename(file, ".soul.md");
-          let valleySlug: string | undefined;
-          if (CAST_MAP[slug]) valleySlug = slug;
-          else valleySlug = Object.entries(CAST_MAP).find(([, v]) => v.wizardSlug === slug)?.[0];
-          if (!valleySlug) continue;
-          const expected = getSoulFilenameForCast(valleySlug, cast);
-          if (file !== expected && (await pathExists(path.join(personasDir, expected)))) {
-            const stalePath = path.join(personasDir, file);
-            if (doRemove) {
-              await remove(stalePath);
-              log.info(`removed stale ${path.relative(repoRoot, stalePath)}`);
-            } else {
-              log.planned(path.relative(repoRoot, stalePath), "remove stale persona");
-            }
-          }
+      // Remove stale opposite-cast persona files (never user-modified ones)
+      for (const file of await readdir(personasDir).catch(() => [] as string[])) {
+        if (!file.endsWith(".soul.md")) continue;
+        const slug = path.basename(file, ".soul.md");
+        let valleySlug: string | undefined;
+        if (CAST_MAP[slug]) valleySlug = slug;
+        else valleySlug = Object.entries(CAST_MAP).find(([, v]) => v.wizardSlug === slug)?.[0];
+        if (!valleySlug) continue;
+        const expected = getSoulFilenameForCast(valleySlug, cast);
+        if (file !== expected && (await pathExists(path.join(personasDir, expected)))) {
+          const exp = oppositeExpected.get(file);
+          await removeStaleIfPristine(ctx, path.join(personasDir, file), new Map(exp ? [["", exp]] : []), "persona");
         }
-      };
-      if (dryRun) await staleCheck(false);
-      else await staleCheck(true);
+      }
 
+      const conflictNote = personaConflicts > 0 ? `, ${personaConflicts} kept (local changes)` : "";
       if (personaUpdated === 0 && personaCreated === 0) {
-        log.ok(`personas up to date (${personaUnchanged} unchanged)`);
+        log.ok(`personas up to date (${personaUnchanged} unchanged${conflictNote})`);
       } else {
-        log.ok(`personas: ${personaUpdated} updated, ${personaCreated} created, ${personaUnchanged} unchanged`);
+        log.ok(`personas: ${personaUpdated} updated, ${personaCreated} created, ${personaUnchanged} unchanged${conflictNote}`);
       }
     }
   }
@@ -177,6 +350,7 @@ export async function runUpgrade({
   let skillUpdated = 0;
   let skillUnchanged = 0;
   let skillCreated = 0;
+  let skillConflicts = 0;
 
   if (skills) {
     const bundledSkills = (await readdir(BUNDLED_SKILLS_DIR)).filter(
@@ -195,21 +369,16 @@ export async function runUpgrade({
         if (!s?.isDirectory()) continue;
 
         const targetSkillName = getSkillIdForCast(skill, cast);
-        const wizardName = getSkillIdForCast(skill, "wizard");
-        const valleyName = skill;
-        const oppositeName = cast === "wizard" ? valleyName : wizardName;
+        const oppositeName = getSkillIdForCast(skill, oppositeCast);
         const isPersonaSkill = oppositeName !== targetSkillName;
 
-        const checkPaths = [
+        const targets = [
           path.join(PROJECT_SKILLS_DIR(repoRoot), targetSkillName),
           ...pluginNames.map((p) => path.join(PROJECT_PLUGINS_DIR(repoRoot), p, "skills", targetSkillName)),
         ];
-        if (hasCommandCode) {
-          checkPaths.push(path.join(repoRoot, ".commandcode", "skills", targetSkillName));
-        }
+        if (hasCommandCode) targets.push(path.join(repoRoot, ".commandcode", "skills", targetSkillName));
 
-        const existsChecks = await Promise.all(checkPaths.map((p) => pathExists(p)));
-        const anyExists = existsChecks.some(Boolean);
+        const anyExists = (await Promise.all(targets.map((p) => pathExists(p)))).some(Boolean);
 
         const oppositePaths = isPersonaSkill
           ? [
@@ -229,117 +398,52 @@ export async function runUpgrade({
           continue;
         }
 
-        // Determine if update is needed
-        let needsUpdate = false;
-        let isNew = false;
-
-        if (anyExists) {
-          let existingPath: string | undefined;
-          for (let i = 0; i < checkPaths.length; i++) {
-            if (existsChecks[i]) {
-              existingPath = checkPaths[i];
-              break;
-            }
+        const bundledFiles = await collectSkillFiles(src, cast);
+        const tally: Record<SyncResult, number> = { created: 0, updated: 0, unchanged: 0, conflict: 0 };
+        for (const target of targets) {
+          for (const [rel, content] of bundledFiles) {
+            tally[await syncFile(ctx, path.join(target, rel), content, "skill")]++;
           }
-          if (existingPath) {
-            const existingRaw = await readFile(path.join(existingPath, "SKILL.md"), "utf8").catch(() => "");
-            const bundledRaw = await readFile(path.join(src, "SKILL.md"), "utf8").catch(() => "");
-            const transformedBundled = transformSkillFrontmatterForCast(bundledRaw, cast);
-            if (existingRaw !== transformedBundled) needsUpdate = true;
-            if (!needsUpdate) {
-              const bundledEntries = await readdir(src).catch(() => [] as string[]);
-              for (const entry of bundledEntries) {
-                if (entry === "SKILL.md") continue;
-                const bundledFile = path.join(src, entry);
-                const existingFile = path.join(existingPath, entry);
-                const bundledStat = await stat(bundledFile).catch(() => undefined);
-                if (!bundledStat || bundledStat.isDirectory()) continue;
-                const bundledContent = await readFile(bundledFile, "utf8").catch(() => "");
-                const existingContent = await readFile(existingFile, "utf8").catch(() => "__missing__");
-                if (bundledContent !== existingContent) {
-                  needsUpdate = true;
-                  break;
-                }
-              }
-            }
-          }
-        } else if (oppositeExists) {
-          needsUpdate = true;
-          isNew = true;
-        } else {
-          // Neither variant exists but project has hocus — this is a new bundled skill
-          needsUpdate = true;
-          isNew = true;
-        }
-
-        if (!needsUpdate && !force) {
-          skillUnchanged++;
-          continue;
-        }
-
-        if (dryRun) {
-          if (isNew) {
-            log.planned(path.relative(repoRoot, path.join(PROJECT_SKILLS_DIR(repoRoot), targetSkillName)), "new skill");
-            for (const pn of pluginNames) {
-              log.planned(path.relative(repoRoot, path.join(PROJECT_PLUGINS_DIR(repoRoot), pn, "skills", targetSkillName)), "new skill");
-            }
-            if (hasCommandCode) log.planned(path.relative(repoRoot, path.join(repoRoot, ".commandcode", "skills", targetSkillName)), "new skill");
-          } else {
-            log.planned(path.relative(repoRoot, path.join(PROJECT_SKILLS_DIR(repoRoot), targetSkillName)), "update skill");
-            for (const pn of pluginNames) {
-              log.planned(path.relative(repoRoot, path.join(PROJECT_PLUGINS_DIR(repoRoot), pn, "skills", targetSkillName)), "update skill");
-            }
-            if (hasCommandCode) log.planned(path.relative(repoRoot, path.join(repoRoot, ".commandcode", "skills", targetSkillName)), "update skill");
-          }
-          if (isNew) skillCreated++;
-          else skillUpdated++;
-          continue;
         }
 
         if (oppositeExists) {
+          const oppositeFiles = await collectSkillFiles(src, oppositeCast);
           for (const opp of oppositePaths) {
-            if (await pathExists(opp)) {
-              await remove(opp);
-              log.info(`removed stale ${path.relative(repoRoot, opp)}`);
-            }
+            await removeStaleIfPristine(ctx, opp, oppositeFiles, "skill");
           }
         }
 
-        const targets = [
-          path.join(PROJECT_SKILLS_DIR(repoRoot), targetSkillName),
-          ...pluginNames.map((p) => path.join(PROJECT_PLUGINS_DIR(repoRoot), p, "skills", targetSkillName)),
-        ];
-        if (hasCommandCode) targets.push(path.join(repoRoot, ".commandcode", "skills", targetSkillName));
-
-        for (const target of targets) {
-          await ensureDir(path.dirname(target));
-          await copy(src, target, { overwrite: true });
-          const skillFile = path.join(target, "SKILL.md");
-          if (await pathExists(skillFile)) {
-            const raw = await readFile(skillFile, "utf8");
-            const patched = transformSkillFrontmatterForCast(raw, cast);
-            if (patched !== raw) await writeFile(skillFile, patched, "utf8");
-          }
-        }
-        if (isNew) {
-          log.ok(`created ${targetSkillName} -> ${targets.map((t) => path.relative(repoRoot, t)).join(", ")}`);
+        if (!anyExists && tally.created > 0) {
+          if (!dryRun) log.ok(`created ${targetSkillName} -> ${targets.map((t) => path.relative(repoRoot, t)).join(", ")}`);
           skillCreated++;
-        } else {
-          log.ok(`updated ${targetSkillName}`);
+        } else if (tally.created > 0 || tally.updated > 0) {
+          if (!dryRun) log.ok(`updated ${targetSkillName}`);
           skillUpdated++;
+        } else {
+          skillUnchanged++;
         }
+        if (tally.conflict > 0) skillConflicts++;
       }
 
+      const conflictNote = skillConflicts > 0 ? `, ${skillConflicts} with kept local changes` : "";
       if (skillUpdated === 0 && skillCreated === 0) {
-        log.ok(`skills up to date (${skillUnchanged} unchanged)`);
+        log.ok(`skills up to date (${skillUnchanged} unchanged${conflictNote})`);
       } else {
-        log.ok(`skills: ${skillUpdated} updated, ${skillCreated} created, ${skillUnchanged} unchanged`);
+        log.ok(`skills: ${skillUpdated} updated, ${skillCreated} created, ${skillUnchanged} unchanged${conflictNote}`);
       }
     }
   }
 
+  // Only persist tracking once .hocus/ exists — creating it here would flip hasHocus-based detection.
+  if (!dryRun && hasHocus) {
+    await saveManifest(repoRoot, ctx.manifest);
+  }
+
   if (!dryRun && (personaUpdated > 0 || personaCreated > 0 || skillUpdated > 0 || skillCreated > 0)) {
     log.info("run `hocus cast` to recompile agents if persona sources changed");
+  }
+  if (personaConflicts > 0 || skillConflicts > 0) {
+    log.warn("some files had local changes — review the .new files and merge, or rerun with --force");
   }
 
   log.ok("upgrade complete");

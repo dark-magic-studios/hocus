@@ -62,9 +62,25 @@ async function captureConsole<T>(fn: () => Promise<T>): Promise<{ lines: string[
   }
 }
 
+/**
+ * Quotes one argument for cmd.exe so shell metacharacters (`&`, `|`, `>`, …)
+ * stay literal. `%` is caret-escaped outside quotes to block variable expansion.
+ */
+function quoteWindowsArg(arg: string): string {
+  return `"${arg.replace(/"/g, '""').replace(/%/g, '"^%"')}"`;
+}
+
+/**
+ * Args come from user-typed chat text, so they must never reach a shell
+ * unquoted. On POSIX we spawn directly with no shell. On Windows, npm is a
+ * `.cmd` shim that Node only runs through a shell, so every arg is quoted.
+ */
 async function runExternalCommand(cmd: string, args: string[], cwd: string): Promise<BuiltinResult> {
   return new Promise((resolve) => {
-    const child = spawn(cmd, args, { cwd, shell: true });
+    const child =
+      process.platform === "win32"
+        ? spawn([cmd, ...args].map(quoteWindowsArg).join(" "), { cwd, shell: true })
+        : spawn(cmd, args, { cwd, shell: false });
     let output = "";
     child.stdout?.on("data", (d: Buffer) => {
       output += d.toString();
