@@ -1,11 +1,14 @@
 import path from "node:path";
 import fsExtra from "fs-extra";
-const { pathExists, readJson, readFile, readdir } = fsExtra;
+const { pathExists, readJson, readFile, readdir, outputFile, outputJson } = fsExtra;
+import { readlink, realpath } from "node:fs/promises";
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import matter from "gray-matter";
 import { makeEmptyRepo, cleanupRepo } from "./tui-fixtures.js";
 import { getAgentSpawnSpec, runInit } from "../src/commands/init.js";
+import { isSymlink } from "../src/utils/link.js";
+import { runCast } from "../src/commands/cast.js";
 
 const origLog = console.log;
 beforeEach(() => {
@@ -217,7 +220,7 @@ test("runInit spawns specified agent runner", async () => {
   }
 });
 
-test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes Claude-specific files", async () => {
+test("runInit plugin format lays out a Claude Code / Cursor / Antigravity plugin bundle", async () => {
   const dir = makeEmptyRepo();
   try {
     const mockSpawnFn = () => ({ error: undefined } as any);
@@ -229,111 +232,183 @@ test("runInit packages agent plugin, configures MCP, RTK, Graphify, and excludes
       spawnFn: mockSpawnFn as any,
     });
 
-    // 1. NO claude-specific instructions or directories
-    assert.equal(await pathExists(path.join(dir, "CLAUDE.md")), false);
+    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
+
+    // Antigravity manifest at the plugin root
+    const agyManifest = await readJson(path.join(pluginDir, "plugin.json"));
+    assert.equal(agyManifest.$schema, "https://antigravity.google/schemas/v1/plugin.json");
+    assert.equal(agyManifest.name, "sample-app-plugin");
+    assert.ok((await readJson(path.join(pluginDir, "mcp_config.json"))).mcpServers.context7);
+
+    // Claude Code manifest, MCP, marketplace, and project settings enabling it
+    const claudeManifest = await readJson(path.join(pluginDir, ".claude-plugin", "plugin.json"));
+    assert.equal(claudeManifest.name, "sample-app-plugin");
+    assert.deepEqual(claudeManifest.agents, []);
+    assert.ok((await readJson(path.join(pluginDir, ".mcp.json"))).mcpServers["code-review-graph"]);
+    const claudeMarket = await readJson(path.join(dir, ".claude-plugin", "marketplace.json"));
+    assert.equal(claudeMarket.name, "sample-app-harness");
+    assert.deepEqual(claudeMarket.plugins[0].source, "./.agents/plugins/sample-app-plugin");
+    const settings = await readJson(path.join(dir, ".claude", "settings.json"));
+    assert.deepEqual(settings.extraKnownMarketplaces["sample-app-harness"].source, { source: "directory", path: "." });
+    assert.equal(settings.enabledPlugins["sample-app-plugin@sample-app-harness"], true);
+
+    // Cursor manifest, MCP and marketplace
+    const cursorManifest = await readJson(path.join(pluginDir, ".cursor-plugin", "plugin.json"));
+    assert.deepEqual(cursorManifest.agents, []);
+    assert.deepEqual(cursorManifest.rules, ["./cursor/rules/graphify.mdc", "./cursor/rules/rtk.mdc"]);
+    assert.equal(cursorManifest.mcpServers, "./mcp.json");
+    assert.ok((await readJson(path.join(pluginDir, "mcp.json"))).mcpServers.sequentialthinking);
+    const cursorMarket = await readJson(path.join(dir, ".cursor-plugin", "marketplace.json"));
+    assert.equal(cursorMarket.plugins[0].source, "./.agents/plugins/sample-app-plugin");
+
+    // Plugin-only: no solo files for plugin-capable providers, no legacy placeholders
     assert.equal(await pathExists(path.join(dir, ".claude", "agents")), false);
     assert.equal(await pathExists(path.join(dir, ".claude", "skills")), false);
+    assert.equal(await pathExists(path.join(dir, ".cursor")), false);
+    assert.equal(await pathExists(path.join(dir, ".mcp.json")), false);
+    assert.equal(await pathExists(path.join(dir, ".agents", "mcp.json")), false);
+    assert.equal(await pathExists(path.join(pluginDir, "com.example.client")), false);
 
-    // 2. Agent plugin created following agent-plugins.org convention
-    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
-    assert.equal(await pathExists(pluginDir), true);
+    // Skills: .agents/skills is the source, the plugin gets a copy by default
+    assert.equal(await pathExists(path.join(dir, ".agents", "skills", "atomic-commits", "SKILL.md")), true);
+    assert.equal(await pathExists(path.join(pluginDir, "skills", "atomic-commits", "SKILL.md")), true);
+    assert.equal(await isSymlink(path.join(pluginDir, "skills", "atomic-commits")), false);
+    assert.equal(await pathExists(path.join(pluginDir, "skills", "graphify", "SKILL.md")), true);
 
-    // plugin.json
-    const manifestPath = path.join(pluginDir, "plugin.json");
-    assert.equal(await pathExists(manifestPath), true);
-    const manifest = await readJson(manifestPath);
-    assert.equal(manifest.$schema, "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
-    assert.equal(manifest.name, "sample-app-plugin");
-
-    // skills/ directory in plugin
-    const pluginSkillsDir = path.join(pluginDir, "skills");
-    assert.equal(await pathExists(pluginSkillsDir), true);
-    assert.equal(await pathExists(path.join(pluginSkillsDir, "atomic-commits", "SKILL.md")), true);
-
-    // com.example.client/hooks
-    assert.equal(await pathExists(path.join(pluginDir, "com.example.client", "hooks")), true);
-
-    // 3. mcp.json in plugin
-    const mcpPath = path.join(pluginDir, "mcp.json");
-    assert.equal(await pathExists(mcpPath), true);
-    const mcpConfig = await readJson(mcpPath);
-    assert.equal(mcpConfig.$schema, "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json");
-    assert.deepEqual(mcpConfig.mcpServers.sequentialthinking, {
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-      type: "stdio",
-    });
-    assert.deepEqual(mcpConfig.mcpServers["code-review-graph"], {
-      command: "uvx",
-      args: ["code-review-graph", "serve"],
-      type: "stdio",
-    });
-    assert.deepEqual(mcpConfig.mcpServers.context7, {
-      command: "npx",
-      args: ["@anthropic-ai/context7"],
-      type: "stdio",
-    });
-
-    // 3b. mcp_config.json following AGY CLI conventions
-    const agyWorkspaceMcpPath = path.join(dir, ".agents", "mcp_config.json");
-    assert.equal(await pathExists(agyWorkspaceMcpPath), true);
-    const agyWorkspaceConfig = await readJson(agyWorkspaceMcpPath);
+    // MCP source of truth (AGY CLI format)
+    const agyWorkspaceConfig = await readJson(path.join(dir, ".agents", "mcp_config.json"));
     assert.deepEqual(agyWorkspaceConfig.mcpServers.sequentialthinking, {
       command: "npx",
       args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
     });
-    assert.deepEqual(agyWorkspaceConfig.mcpServers["code-review-graph"], {
-      command: "uvx",
-      args: ["code-review-graph", "serve"],
-    });
-    assert.deepEqual(agyWorkspaceConfig.mcpServers.context7, {
-      command: "npx",
-      args: ["@anthropic-ai/context7"],
-    });
 
-    const agyPluginMcpPath = path.join(pluginDir, "mcp_config.json");
-    assert.equal(await pathExists(agyPluginMcpPath), true);
-    const agyPluginConfig = await readJson(agyPluginMcpPath);
-    assert.deepEqual(agyPluginConfig.mcpServers.sequentialthinking, {
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-    });
-
-    // 4. RTK installed on all providers
-    // Antigravity rule
-    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md")), true);
-    const rtkAntigravityContent = await readFile(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md"), "utf8");
-    assert.match(rtkAntigravityContent, /Rust Token Killer/);
-
-    // Cursor rule
-    assert.equal(await pathExists(path.join(dir, ".cursor", "rules", "rtk.mdc")), true);
-
-    // OpenCode plugin
+    // RTK + graphify: Cursor rules ship inside the plugin
+    assert.match(
+      await readFile(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md"), "utf8"),
+      /Rust Token Killer/,
+    );
+    assert.equal(await pathExists(path.join(pluginDir, "cursor", "rules", "rtk.mdc")), true);
+    assert.equal(await pathExists(path.join(pluginDir, "cursor", "rules", "graphify.mdc")), true);
     assert.equal(await pathExists(path.join(dir, ".opencode", "plugins", "rtk.js")), true);
-
-    // 5. Graphify installed on all providers
-    // Antigravity rules & workflows
     assert.equal(await pathExists(path.join(dir, ".agents", "rules", "graphify.md")), true);
     assert.equal(await pathExists(path.join(dir, ".agents", "workflows", "graphify.md")), true);
-
-    // Cursor rule
-    assert.equal(await pathExists(path.join(dir, ".cursor", "rules", "graphify.mdc")), true);
-
-    // OpenCode plugin & config
     assert.equal(await pathExists(path.join(dir, ".opencode", "plugins", "graphify.js")), true);
     assert.equal(await pathExists(path.join(dir, ".opencode", "opencode.json")), true);
 
-    // Graphify skill installed in plugin and .agents/skills
-    assert.equal(await pathExists(path.join(pluginSkillsDir, "graphify", "SKILL.md")), true);
-    assert.equal(await pathExists(path.join(dir, ".agents", "skills", "graphify", "SKILL.md")), true);
-
     // Codex uses native project-agent TOML files and discovers the shared
     // .agents/skills directory directly.
-    const codexAgent = path.join(dir, ".codex", "agents", "midas.toml");
-    assert.equal(await pathExists(codexAgent), true);
-    const codexContent = await readFile(codexAgent, "utf8");
+    const codexContent = await readFile(path.join(dir, ".codex", "agents", "midas.toml"), "utf8");
     assert.match(codexContent, /^name = "midas"/);
     assert.match(codexContent, /developer_instructions = \"\"\"/);
+
+    // Choices persist for later runs
+    const config = await readJson(path.join(dir, ".hocus", "config.json"));
+    assert.equal(config.cast, "wizard");
+    assert.equal(config.format, "plugin");
+    assert.equal(config.symlinks, false);
+    assert.equal(config.pluginName, "sample-app-plugin");
+    assert.deepEqual(config.providers, ["claude-code", "codex", "opencode", "cursor", "antigravity"]);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit solo format with symlinks links provider dirs back to .agents/", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    let spawnedArgs: string[] = [];
+    const mockSpawnFn = (_cmd: string, args: readonly string[] = []) => {
+      spawnedArgs = [...args];
+      return { error: undefined } as any;
+    };
+
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      providers: ["claude-code", "cursor", "antigravity"],
+      format: "solo",
+      symlinks: true,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    assert.equal(await pathExists(path.join(dir, ".agents", "plugins")), false);
+    assert.equal(await pathExists(path.join(dir, ".claude-plugin")), false);
+
+    for (const mirror of [".claude/skills/atomic-commits", ".cursor/skills/atomic-commits"]) {
+      const full = path.join(dir, mirror);
+      assert.equal(await isSymlink(full), true, `${mirror} should be a symlink`);
+      assert.equal(path.isAbsolute(await readlink(full)), false, "symlinks are relative");
+      assert.equal(await realpath(full), await realpath(path.join(dir, ".agents", "skills", "atomic-commits")));
+    }
+    assert.equal(await isSymlink(path.join(dir, ".mcp.json")), true);
+    assert.equal(await isSymlink(path.join(dir, ".cursor", "mcp.json")), true);
+    assert.ok((await readJson(path.join(dir, ".mcp.json"))).mcpServers.context7);
+    assert.equal(await pathExists(path.join(dir, ".cursor", "rules", "rtk.mdc")), true);
+
+    // Unselected providers get nothing
+    assert.equal(await pathExists(path.join(dir, ".codex")), false);
+    assert.equal(await pathExists(path.join(dir, ".opencode")), false);
+
+    // Runner defaults to the first selected provider with a CLI
+    assert.equal(spawnedArgs[0], "--system-prompt");
+    const prompt = spawnedArgs.join(" ");
+    assert.match(prompt, /\.claude\/agents\//);
+    assert.match(prompt, /symlink/);
+
+    // Re-running keeps links in place instead of failing on them
+    await runInit({ repoRoot: dir, projectName: "sample-app", spawnFn: mockSpawnFn as any });
+    assert.equal(await isSymlink(path.join(dir, ".claude", "skills", "atomic-commits")), true);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit plugin format with symlinks links plugin skills and MCP to .agents/", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const mockSpawnFn = () => ({ error: undefined } as any);
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      providers: ["claude-code"],
+      format: "plugin",
+      symlinks: true,
+      spawnFn: mockSpawnFn as any,
+    });
+
+    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
+    assert.equal(await isSymlink(path.join(pluginDir, "skills", "atomic-commits")), true);
+    assert.equal(await isSymlink(path.join(pluginDir, ".mcp.json")), true);
+    // Only the selected provider's manifest is written
+    assert.equal(await pathExists(path.join(pluginDir, ".claude-plugin", "plugin.json")), true);
+    assert.equal(await pathExists(path.join(pluginDir, ".cursor-plugin")), false);
+    assert.equal(await pathExists(path.join(pluginDir, "plugin.json")), false);
+    // No Antigravity/Cursor/OpenCode integrations without those providers
+    assert.equal(await pathExists(path.join(dir, ".agents", "rules", "antigravity-rtk-rules.md")), false);
+    assert.equal(await pathExists(path.join(dir, ".opencode")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});
+
+test("runInit removes legacy agent-plugins.org files", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
+    await outputFile(path.join(pluginDir, "com.example.client", "hooks", ".gitkeep"), "");
+    await outputJson(path.join(dir, ".agents", "mcp.json"), {
+      $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+      mcpServers: {},
+    });
+
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      spawnFn: (() => ({ error: undefined })) as any,
+    });
+
+    assert.equal(await pathExists(path.join(pluginDir, "com.example.client")), false);
+    assert.equal(await pathExists(path.join(dir, ".agents", "mcp.json")), false);
   } finally {
     cleanupRepo(dir);
   }
@@ -578,3 +653,34 @@ test("runInit passes MCP configuration to agy CLI when agy is installed", async 
   }
 });
 
+
+test("runCast after a plugin-format init compiles plugin providers into the bundle", async () => {
+  const dir = makeEmptyRepo();
+  try {
+    await runInit({
+      repoRoot: dir,
+      projectName: "sample-app",
+      providers: ["claude-code", "cursor", "antigravity", "codex"],
+      format: "plugin",
+      spawnFn: (() => ({ error: undefined })) as any,
+    });
+    await runCast({ repoRoot: dir });
+
+    const pluginDir = path.join(dir, ".agents", "plugins", "sample-app-plugin");
+    assert.equal(await pathExists(path.join(pluginDir, "claude", "agents", "midas.md")), true);
+    assert.equal(await pathExists(path.join(pluginDir, "cursor", "agents", "midas.md")), true);
+    assert.equal(await pathExists(path.join(pluginDir, "agents", "midas", "agent.md")), true);
+    const claudeManifest = await readJson(path.join(pluginDir, ".claude-plugin", "plugin.json"));
+    assert.ok(claudeManifest.agents.includes("./claude/agents/midas.md"));
+    const cursorManifest = await readJson(path.join(pluginDir, ".cursor-plugin", "plugin.json"));
+    assert.ok(cursorManifest.agents.includes("./cursor/agents/midas.md"));
+    assert.equal(await pathExists(path.join(dir, ".claude", "agents")), false);
+    assert.equal(await pathExists(path.join(dir, ".cursor", "agents")), false);
+    assert.equal(await pathExists(path.join(dir, ".agents", "agents")), false);
+    // Providers without a plugin system stay solo; unselected ones are skipped
+    assert.equal(await pathExists(path.join(dir, ".codex", "agents", "midas.toml")), true);
+    assert.equal(await pathExists(path.join(dir, ".opencode")), false);
+  } finally {
+    cleanupRepo(dir);
+  }
+});

@@ -1,6 +1,5 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import * as readline from "node:readline";
 import fsExtra from "fs-extra";
 const { ensureDir, pathExists, readdir, readFile, writeFile, stat, copy, remove, unlink } = fsExtra;
 import { log } from "../utils/log.js";
@@ -14,11 +13,26 @@ import {
   PROJECT_SPELLS_DIR,
 } from "../utils/paths.js";
 import { parseSoulFile } from "../schema/soul.js";
-import { installSkill, writeCompiledFile } from "../utils/files.js";
+import { installSkill, mirrorSkill, writeCompiledFile } from "../utils/files.js";
+import { isSymlink } from "../utils/link.js";
 import { commandCodeCompiler } from "../compilers/command-code.js";
 import { codexCompiler } from "../compilers/codex.js";
 import { copilotCompiler } from "../compilers/copilot.js";
-import { confirmYesNo } from "../utils/prompt.js";
+import { ALL_COMPILERS, type TargetId } from "../compilers/index.js";
+import {
+  ALL_PROVIDERS,
+  DEFAULT_PROVIDERS,
+  PROVIDER_RUNNERS,
+  type HarnessChoices,
+  type HarnessFormat,
+  agentDirFor,
+  hasPluginProvider,
+  pluginRelDir,
+  readHarnessConfig,
+  skillMirrorDirs,
+  usesPlugin,
+  writeHarnessConfig,
+} from "../utils/harness.js";
 import {
   type Cast,
   CAST_MAP,
@@ -41,12 +55,23 @@ export interface InitOptions {
   dryRun?: boolean;
   spawnFn?: typeof spawnSync;
   cast?: string;
+  /** Providers to set up. Unset = ask in the wizard, else saved config, else defaults + detection. */
+  providers?: TargetId[];
   /** true = force Command Code support, false = disable, undefined = ask/auto-detect. */
   commandCode?: boolean;
   /** true = force GitHub Copilot support, false = disable, undefined = ask/auto-detect. */
   copilot?: boolean;
+  /** Plugin bundle vs. per-provider dot-directories for Claude Code, Cursor and Antigravity. */
+  format?: HarnessFormat;
+  /** Symlink provider mirrors to .agents/ instead of copying. */
+  symlinks?: boolean;
   /** whether to install template rules into .agents/rules/ (default: true) */
   rules?: boolean;
+  /**
+   * Show the setup wizard for anything flags didn't answer.
+   * Default: when stdin is a TTY and this isn't a dry run.
+   */
+  interactive?: boolean;
 }
 
 export interface AgentSpawnSpec {
@@ -155,11 +180,44 @@ export function getAgentSpawnSpec(
   };
 }
 
-import { initializeAgentPlugin, installRtk, installGraphify } from "../utils/plugin.js";
+import {
+  initializeAgentPlugin,
+  installRtk,
+  installGraphify,
+  sanitizePluginName,
+  syncPluginManifests,
+} from "../utils/plugin.js";
 
 const FOUNDER_SOUL = "founder";
 
-function buildInitPrompt(cast: Cast, commandCode = false, copilot = false): string {
+const DEFAULT_PROMPT_HARNESS: HarnessChoices = {
+  providers: DEFAULT_PROVIDERS,
+  format: "plugin",
+  symlinks: false,
+  pluginName: "hocus-plugin",
+};
+
+/** Tells the founder where every provider's files live under the chosen layout. */
+function describeHarnessForPrompt(harness: HarnessChoices): string {
+  const labels = (ids: TargetId[]) =>
+    ids.map((id) => ALL_PROVIDERS.find((p) => p.id === id)?.label ?? id).join(", ");
+  const agentDirs = harness.providers
+    .map((id) => `${ALL_PROVIDERS.find((p) => p.id === id)?.label ?? id} -> ${agentDirFor(harness, id)}`)
+    .join("; ");
+  const mirrors = skillMirrorDirs(harness);
+  const mirrorSentence = mirrors.length
+    ? ` every skill is then ${harness.symlinks ? "symlinked (relative symlinks)" : "copied"} into ${mirrors.join(", ")} — when you add a skill, create it in .agents/skills/ and ${harness.symlinks ? "symlink" : "copy"} it into those directories too; never edit a mirror directly.`
+    : "";
+  const pluginProviders = harness.providers.filter((id) => usesPlugin(harness, id));
+  const pluginSentence = pluginProviders.length
+    ? ` ${labels(pluginProviders)} load everything from the plugin bundle at ${pluginRelDir(harness.pluginName)}/ (per-provider manifests: .claude-plugin/plugin.json, .cursor-plugin/plugin.json, and plugin.json for Antigravity) — do not create .claude/agents/ or .cursor/agents/ for them. hocus refreshes the manifests' agent lists after this session (and on \`hocus cast\`), so just write the agent files.`
+    : "";
+  return `harness layout — providers configured: ${labels(harness.providers)}. .agents/ is the source of truth: skills live in .agents/skills/, MCP servers in .agents/mcp_config.json.${mirrorSentence}${pluginSentence} when you create an agent, write it for every configured provider: ${agentDirs}. reference the pre-installed skills and MCP servers when creating agents, and create additional project-specific skills as needed.`;
+}
+
+function buildInitPrompt(cast: Cast, harness: HarnessChoices = DEFAULT_PROMPT_HARNESS): string {
+  const commandCode = harness.providers.includes("command-code");
+  const copilot = harness.providers.includes("copilot");
   const base = `scan the repository for its dependencies and tech stack. then, before proceeding with any setup:
 
 1. **Confirm the tech stack with the user.** Present what you found: languages, frameworks, package manager, databases, cloud providers, CI/CD, and any notable tools or patterns. Ask the user to confirm or correct — do not proceed until they've validated it.
@@ -173,7 +231,7 @@ Only after the user has confirmed both the tech stack and product definition sho
       ? `3. **Confirm the naming convention is Silicon Valley.** The user has chosen the **Silicon Valley** cast — personas use Silicon Valley character names (Richard, Jared, Gilfoyle, Dinesh, Erlich, Gavin, Laurie, Monica, Peter Gregory, Russ, etc.) and skills are prefixed with those names (e.g. /richard-draft-potion, /jared-orchestrate, /gilfoyle-pr-review). Use Silicon Valley names consistently for all personas, skills, and references. Do not mix in wizard names.`
       : `3. **Confirm the naming convention is Wizards.** The user has chosen the **Wizard** cast — personas use wizard names (Merlin, Roger Bacon, Zoroaster, Flamel, Circe, The Apprentice, John Dee, Nostradamus, Midas, Prospero, etc.) and skills are prefixed with those names (e.g. /merlin-draft-potion, /roger-bacon-orchestrate, /zoroaster-pr-review). Use wizard names consistently for all personas, skills, and references. Do not mix in Silicon Valley names.`;
 
-  const tail = `Then create a team of 5-10 agents and skills and ask the user to accept/tweak each of them. each of them should have a soul based on a soul from this repository which will dictate the tone and output of the agent. also include specialized skills for this repository (for example a new-component or new-hook for frontend and new-controller or new-model for backend). the team must include an orchestrator agent whose job is to (1) maintain battle plans — structured markdown files that break down active goals into phases, tasks, and owners — and keep them up to date as work progresses, and (2) read the planner's task queue and delegate individual tasks to the appropriate specialized sub-agents by spawning them with the right context. create a hocus.md with the agents to be created, mark them as done once you've stopped working on them and after all are done build the initial dashboard.html for this the project. also set up the project's foundational documents: PRODUCT.md (product vision, goals, target users), AGENTS.md (registry of all created agents), MEMORY.md (persistent memory index), and TASKS.md (current work items). starter spells (atomic conventions, templates, hooks, and guardrails) have been installed under _spells/ (incantations/, wards/, curses/) — adhere to them and create additional spells as conventions emerge. fill each with real content derived from the repository — not placeholder text. skills and MCP servers have been pre-installed in the agent plugin under .agents/plugins/ (following agent-plugins.org convention), in .agents/mcp_config.json (following agy CLI convention), and .agents/skills/ — reference them when creating agents, and create additional project-specific skills as needed. workspace rules and coding guidelines have been installed under .agents/rules/ (architecture, subagent conventions, token efficiency, commit hygiene, testing standards, etc.) — adhere to them and reference them when configuring the project and defining agent roles. RTK and graphify have also been configured across providers.`;
+  const tail = `Then create a team of 5-10 agents and skills and ask the user to accept/tweak each of them. each of them should have a soul based on a soul from this repository which will dictate the tone and output of the agent. also include specialized skills for this repository (for example a new-component or new-hook for frontend and new-controller or new-model for backend). the team must include an orchestrator agent whose job is to (1) maintain battle plans — structured markdown files that break down active goals into phases, tasks, and owners — and keep them up to date as work progresses, and (2) read the planner's task queue and delegate individual tasks to the appropriate specialized sub-agents by spawning them with the right context. create a hocus.md with the agents to be created, mark them as done once you've stopped working on them and after all are done build the initial dashboard.html for this the project. also set up the project's foundational documents: PRODUCT.md (product vision, goals, target users), AGENTS.md (registry of all created agents), MEMORY.md (persistent memory index), and TASKS.md (current work items). starter spells (atomic conventions, templates, hooks, and guardrails) have been installed under _spells/ (incantations/, wards/, curses/) — adhere to them and create additional spells as conventions emerge. fill each with real content derived from the repository — not placeholder text. ${describeHarnessForPrompt(harness)} workspace rules and coding guidelines have been installed under .agents/rules/ (architecture, subagent conventions, token efficiency, commit hygiene, testing standards, etc.) — adhere to them and reference them when configuring the project and defining agent roles. RTK and graphify have also been configured for the selected providers.`;
 
   const commandCodeSection = commandCode
     ? `\n\nCommand Code support: this project uses Command Code (cmdc) as one of its agent harnesses. Native subagents are pre-compiled into .commandcode/agents/ and skills are mirrored into .commandcode/skills/ — maintain them when creating agents and skills (a Command Code subagent is a markdown file with name/description/tools frontmatter whose body is the system prompt). The user's learned preferences ("taste") live in .commandcode/taste/taste.md plus category packages in .commandcode/taste/<category>/taste.md (global ones in ~/.commandcode/taste/) — read them before starting work, treat them as requirements, never hand-edit them, and record any preference the user states using the taste tool. Document this in AGENTS.md so every agent stays taste-compatible.`
@@ -380,111 +438,138 @@ export async function installSpells(
   return installedCount;
 }
 
-async function resolveCast(opts: { cast?: string; dryRun?: boolean }): Promise<Cast> {
+function resolveCast(opts: { cast?: string; saved?: string; dryRun?: boolean }): Cast {
   if (opts.cast) {
     const normalized = normalizeCast(opts.cast);
     if (!normalized) {
       throw new Error(`invalid --cast value "${opts.cast}" — expected "wizard" or "valley" (or "silicon valley")`);
     }
-    log.ok(`using ${describeCast(normalized)} cast (--cast ${normalized})`);
     return normalized;
   }
-
-  if (opts.dryRun) {
-    log.info(`dry run — defaulting to ${describeCast("wizard")} cast (pass --cast valley|wizard to override)`);
-    return "wizard";
-  }
-
-  // Non-interactive fallback
-  if (!process.stdin.isTTY) {
-    log.info(`non-interactive — defaulting to ${describeCast("wizard")} cast`);
-    return "wizard";
-  }
-
-  return promptForCast();
+  const saved = opts.saved ? normalizeCast(opts.saved) : undefined;
+  return saved ?? "wizard";
 }
 
-function promptForCast(): Promise<Cast> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    console.log("");
-    console.log("Choose a naming convention for personas and skills:");
-    console.log("  1) Silicon Valley — Richard, Jared, Gilfoyle, Dinesh...  (/richard-draft-potion, /jared-orchestrate)");
-    console.log("  2) Wizards — Merlin, Roger Bacon, Zoroaster, Flamel...   (/merlin-draft-potion, /roger-bacon-orchestrate)");
-    console.log("");
-    rl.question("Select cast [1=valley, 2=wizard] (default: 2): ", (answer) => {
-      rl.close();
-      const a = answer.trim().toLowerCase();
-      if (a === "1" || a === "valley" || a === "silicon" || a === "silicon valley" || a === "sv") {
-        resolve("valley");
-        return;
-      }
-      if (a === "2" || a === "wizard" || a === "wizards" || a === "occult" || a === "" ) {
-        resolve("wizard");
-        return;
-      }
-      // ambiguous — default to wizard
-      console.log(`Unrecognised choice "${answer}" — defaulting to wizards.`);
-      resolve("wizard");
-    });
+interface ResolvedInit {
+  cast: Cast;
+  providers: TargetId[];
+  format: HarnessFormat;
+  symlinks: boolean;
+  runner: string;
+}
+
+/**
+ * Works out cast, providers, format, symlinks and runner. Flags win; in an
+ * interactive terminal the wizard asks for the rest (pre-filled from the saved
+ * config and repo detection); otherwise saved config, then defaults, apply.
+ * Returns null when the user cancels the wizard.
+ */
+async function resolveInitChoices(
+  opts: Pick<InitOptions, "repoRoot" | "cast" | "providers" | "commandCode" | "copilot" | "format" | "symlinks" | "agent" | "dryRun">,
+  interactive: boolean,
+  pluginName: string,
+): Promise<ResolvedInit | null> {
+  const saved = await readHarnessConfig(opts.repoRoot);
+  const detected = (
+    await Promise.all(ALL_COMPILERS.map(async (c) => ((await c.detect(opts.repoRoot)) ? c.id : null)))
+  ).filter((id): id is TargetId => id !== null);
+
+  let providers: TargetId[] =
+    opts.providers ??
+    saved.providers ??
+    ALL_PROVIDERS.map((p) => p.id).filter(
+      (id) => DEFAULT_PROVIDERS.includes(id) || (detected.includes(id) && (id === "command-code" || id === "copilot")),
+    );
+  // --command-code / --copilot (and their --no- forms) toggle a single provider.
+  const toggle = (id: TargetId, on: boolean | undefined) => {
+    if (on === true && !providers.includes(id)) providers = [...providers, id];
+    if (on === false) providers = providers.filter((p) => p !== id);
+  };
+  toggle("command-code", opts.commandCode);
+  toggle("copilot", opts.copilot ?? (opts.agent === "copilot" || opts.agent === "github-copilot" ? true : undefined));
+
+  const defaultRunner = (list: TargetId[]) =>
+    list.map((p) => PROVIDER_RUNNERS[p]).find(Boolean) ?? "claude";
+  const initial: ResolvedInit = {
+    cast: resolveCast({ cast: opts.cast, saved: saved.cast, dryRun: opts.dryRun }),
+    providers,
+    format: opts.format ?? saved.format ?? "plugin",
+    symlinks: opts.symlinks ?? saved.symlinks ?? (interactive ? process.platform !== "win32" : false),
+    runner: opts.agent ?? saved.runner ?? defaultRunner(providers),
+  };
+
+  const providersLocked = opts.providers !== undefined;
+  if (!interactive) return initial;
+
+  const { promptInitWizard } = await import("../tui/components/InitWizard.js");
+  return promptInitWizard({
+    initial,
+    pluginName,
+    detected,
+    locked: {
+      cast: opts.cast !== undefined,
+      providers: providersLocked,
+      format: opts.format !== undefined,
+      symlinks: opts.symlinks !== undefined,
+      runner: opts.agent !== undefined,
+    },
   });
 }
 
 export async function runInit({
   repoRoot,
   projectName,
-  agent = "claude",
+  agent,
   model,
   effort,
   dryRun = false,
   spawnFn = spawnSync,
   cast: castOpt,
+  providers: providersOpt,
   commandCode: commandCodeOpt,
   copilot: copilotOpt,
+  format: formatOpt,
+  symlinks: symlinksOpt,
   rules = true,
+  interactive = Boolean(process.stdin.isTTY) && !dryRun,
 }: InitOptions): Promise<void> {
   log.heading(`initializing hocus in ${repoRoot}`);
   if (dryRun) {
     log.info("dry run — no files will be written");
   }
 
-  const cast = await resolveCast({ cast: castOpt, dryRun });
-
-  // Resolve Command Code (cmdc) support: an explicit flag wins; otherwise ask
-  // in a TTY (defaulting to what detection finds), else auto-detect.
-  let useCommandCode = commandCodeOpt;
-  if (useCommandCode === undefined) {
-    const detected = await commandCodeCompiler.detect(repoRoot);
-    if (process.stdin.isTTY) {
-      useCommandCode = await confirmYesNo(
-        `Do you use Command Code (cmdc)?${detected ? " (found an existing .commandcode/ directory)" : ""}`,
-        detected,
-      );
-    } else {
-      useCommandCode = detected;
-      if (detected) {
-        log.info("detected .commandcode/ — enabling Command Code support (pass --no-command-code to disable)");
-      }
-    }
-  }
-  if (useCommandCode) {
-    log.ok("Command Code support enabled — subagents -> .commandcode/agents/, skills -> .commandcode/skills/");
+  const pluginName = sanitizePluginName(projectName ?? path.basename(repoRoot));
+  const choices = await resolveInitChoices(
+    {
+      repoRoot,
+      cast: castOpt,
+      providers: providersOpt,
+      commandCode: commandCodeOpt,
+      copilot: copilotOpt,
+      format: formatOpt,
+      symlinks: symlinksOpt,
+      agent,
+      dryRun,
+    },
+    interactive,
+    pluginName,
+  );
+  if (!choices) {
+    log.info("init cancelled — nothing was written");
+    return;
   }
 
-  // Resolve GitHub Copilot support: an explicit flag wins; otherwise auto-detect or infer from agent runner.
-  let useCopilot = copilotOpt;
-  if (useCopilot === undefined) {
-    if (agent === "copilot" || agent === "github-copilot") {
-      useCopilot = true;
-    } else if (dryRun) {
-      useCopilot = false;
-    } else {
-      useCopilot = await copilotCompiler.detect(repoRoot);
-    }
-  }
-  if (useCopilot) {
-    log.ok("GitHub Copilot support enabled — subagents -> .github/agents/, skills -> .github/skills/");
-  }
+  const { cast, providers, symlinks, runner } = choices;
+  const format: HarnessFormat = hasPluginProvider(providers) ? choices.format : "solo";
+  const harness: HarnessChoices = { providers, format, symlinks, pluginName };
+  const useCommandCode = providers.includes("command-code");
+  const useCopilot = providers.includes("copilot");
+  const providerLabels = providers.map((id) => ALL_PROVIDERS.find((p) => p.id === id)?.label ?? id);
+  log.ok(`cast: ${describeCast(cast)}`);
+  log.ok(`providers: ${providerLabels.join(", ")}`);
+  log.ok(
+    `layout: ${format}${format === "plugin" ? ` (${pluginRelDir(pluginName)}/)` : ""}, ${symlinks ? "symlinked to .agents/" : "copied from .agents/"}`,
+  );
 
   // Determine existing cast from config (if any) before migration
   const configPath = path.join(repoRoot, ".hocus", "config.json");
@@ -578,26 +663,23 @@ export async function runInit({
   // but we log the active cast.
   log.ok(`installed ${installedCount} personas to .hocus/personas/ (${describeCast(cast)})`);
 
-  // Persist chosen cast so future cast/sync operations know which convention is active.
+  // Persist the choices so future cast/sync/init runs reuse them.
   if (dryRun) {
     log.planned(path.relative(repoRoot, configPath));
   } else {
-    await ensureDir(path.dirname(configPath));
-    const existing = (await pathExists(configPath))
-      ? JSON.parse(await readFile(configPath, "utf8")).cast
-      : undefined;
-    if (!existing) {
-      await writeFile(configPath, JSON.stringify({ cast }, null, 2) + "\n", "utf8");
-    } else if (existing !== cast) {
-      // User explicitly re-ran init with a different cast — update.
-      await writeFile(configPath, JSON.stringify({ cast }, null, 2) + "\n", "utf8");
-      log.warn(`overwrote ${path.relative(repoRoot, configPath)} cast "${existing}" -> "${cast}"`);
+    if (existingCast !== undefined && existingCast !== cast) {
+      log.warn(`overwrote ${path.relative(repoRoot, configPath)} cast "${existingCast}" -> "${cast}"`);
     }
+    await writeHarnessConfig(repoRoot, { cast, providers, format, symlinks, runner, pluginName });
   }
 
-  // 1b. Initialize the agent plugin (.agents/plugins/<pluginName>/) following agent-plugins.org and AGY CLI conventions
-  const { pluginName } = await initializeAgentPlugin(repoRoot, projectName, { dryRun, spawnFn });
-  log.ok(`initialized agent plugin "${pluginName}" at .agents/plugins/${pluginName}/`);
+  // 1b. MCP config (.agents/mcp_config.json is the source of truth) and, in
+  //     plugin format, the plugin bundle with Claude Code, Cursor and Antigravity manifests.
+  await initializeAgentPlugin(repoRoot, harness, { dryRun, spawnFn, projectName });
+  if (format === "plugin") {
+    log.ok(`initialized plugin "${pluginName}" at ${pluginRelDir(pluginName)}/`);
+  }
+  const skillMirrors = skillMirrorDirs(harness);
 
   // 1b-ii. Clean up stale persona-bound skills from the opposite cast when switching
   if (!dryRun) {
@@ -605,14 +687,9 @@ export async function runInit({
       const wizardName = getSkillIdForCast(valleyId, "wizard");
       if (valleyId === wizardName) continue;
       const staleName = cast === "valley" ? wizardName : valleyId;
-      const stalePaths = [
-        path.join(repoRoot, ".agents", "skills", staleName),
-        path.join(repoRoot, ".agents", "plugins", pluginName, "skills", staleName),
-        ...(useCommandCode ? [path.join(repoRoot, ".commandcode", "skills", staleName)] : []),
-        ...(useCopilot ? [path.join(repoRoot, ".github", "skills", staleName)] : []),
-      ];
+      const stalePaths = [".agents/skills", ...skillMirrors].map((dir) => path.join(repoRoot, dir, staleName));
       for (const p of stalePaths) {
-        if (await pathExists(p)) {
+        if ((await pathExists(p)) || (await isSymlink(p))) {
           await remove(p);
           log.info(`removed stale ${path.relative(repoRoot, p)} (now ${describeCast(cast)})`);
         }
@@ -623,20 +700,16 @@ export async function runInit({
       const wizardName = getSkillIdForCast(valleyId, "wizard");
       if (valleyId === wizardName) continue;
       const staleName = cast === "valley" ? wizardName : valleyId;
-      const bases = [
-        path.join(".agents", "skills", staleName),
-        path.join(".agents", "plugins", pluginName, "skills", staleName),
-        ...(useCommandCode ? [path.join(".commandcode", "skills", staleName)] : []),
-        ...(useCopilot ? [path.join(".github", "skills", staleName)] : []),
-      ];
+      const bases = [".agents/skills", ...skillMirrors].map((dir) => path.join(dir, staleName));
       for (const base of bases) {
         log.planned(base, `remove stale (${describeCast(cast)})`);
       }
     }
   }
 
-  // 1c. Install all bundled skills into the agent plugin and .agents/skills/
-  //     — renamed/retitled according to the chosen cast so skill ids match persona names.
+  // 1c. Install all bundled skills into .agents/skills/ (the source of truth)
+  //     — renamed/retitled according to the chosen cast so skill ids match
+  //     persona names — then mirror them into each provider's skills dir.
   const skillDirs = (await readdir(BUNDLED_SKILLS_DIR)).filter(
     (f) => !f.startsWith(".") && f !== "example-skill",
   );
@@ -646,63 +719,36 @@ export async function runInit({
     const s = await stat(src);
     if (!s.isDirectory()) continue;
     const targetSkillName = getSkillIdForCast(skill, cast);
-    if (dryRun) {
-      // Preview transformed skill name when it differs
-      await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
-    } else {
-      const tmpTargets = await installSkill(src, repoRoot, targetSkillName, { dryRun, pluginName, commandCode: useCommandCode, copilot: useCopilot });
-      // When cast transforms the skill id, patch SKILL.md frontmatter (name + description) in place.
-      if (targetSkillName !== skill) {
-        for (const target of tmpTargets) {
-          const skillFile = path.join(target, "SKILL.md");
-          if (await pathExists(skillFile)) {
-            const raw = await readFile(skillFile, "utf8");
-            const patched = transformSkillFrontmatterForCast(raw, cast);
-            if (patched !== raw) await writeFile(skillFile, patched, "utf8");
-          }
-        }
-      } else {
-        // Even when id unchanged, still ensure description matches valley vs wizard naming
-        // for persona-bound skills (e.g. wizard default already matches bundled wizard names,
-        // but valley re-run needs to retitle).
-        if (cast === "valley") {
-          for (const target of tmpTargets) {
-            const skillFile = path.join(target, "SKILL.md");
-            if (await pathExists(skillFile)) {
-              const raw = await readFile(skillFile, "utf8");
-              // Only transform persona-bound skills; generic skills have no valley prefix.
-              if (
-                raw.includes("Richard") ||
-                raw.includes("Merlin") ||
-                raw.includes("Jared") ||
-                raw.includes("Roger Bacon") ||
-                raw.includes("Gilfoyle") ||
-                raw.includes("Zoroaster") ||
-                raw.includes("Erlich") ||
-                raw.includes("Circe")
-              ) {
-                const patched = transformSkillFrontmatterForCast(raw, cast);
-                if (patched !== raw) await writeFile(skillFile, patched, "utf8");
-              }
-            }
-          }
+    await installSkill(src, repoRoot, targetSkillName, { dryRun });
+    if (!dryRun) {
+      const skillFile = path.join(repoRoot, ".agents", "skills", targetSkillName, "SKILL.md");
+      if (await pathExists(skillFile)) {
+        const raw = await readFile(skillFile, "utf8");
+        // When cast transforms the skill id, patch SKILL.md frontmatter (name + description).
+        // Even when the id is unchanged, a valley run still retitles persona-bound skills
+        // (generic skills carry no persona names).
+        const personaBound = ["Richard", "Merlin", "Jared", "Roger Bacon", "Gilfoyle", "Zoroaster", "Erlich", "Circe"]
+          .some((name) => raw.includes(name));
+        if (targetSkillName !== skill || (cast === "valley" && personaBound)) {
+          const patched = transformSkillFrontmatterForCast(raw, cast);
+          if (patched !== raw) await writeFile(skillFile, patched, "utf8");
         }
       }
     }
+    await mirrorSkill(repoRoot, targetSkillName, skillMirrors, { symlink: symlinks, dryRun });
     skillCount++;
   }
-  const skillTargetsMsg = [
-    `.agents/plugins/${pluginName}/skills/`,
-    `.agents/skills/`,
-    useCommandCode ? `.commandcode/skills/` : "",
-    useCopilot ? `.github/skills/` : "",
-  ].filter(Boolean).join(" and ");
-  log.ok(`installed ${skillCount} skills to ${skillTargetsMsg} (${describeCast(cast)})`);
+  const skillTargetsMsg = [".agents/skills/", ...skillMirrors.map((d) => `${d}/`)].join(", ");
+  log.ok(
+    `installed ${skillCount} skills to ${skillTargetsMsg}${skillMirrors.length ? (symlinks ? " (symlinked)" : " (copied)") : ""} (${describeCast(cast)})`,
+  );
 
   // Codex discovers repository skills from .agents/skills/, so the shared
   // installation above needs no mirror. Its custom subagents are TOML files.
-  const codexAgentCount = await installCodexAgents(repoRoot, cast, dryRun);
-  log.ok(`compiled ${codexAgentCount} Codex subagents to .codex/agents/ (skills use .agents/skills/)`);
+  if (providers.includes("codex")) {
+    const codexAgentCount = await installCodexAgents(repoRoot, cast, dryRun);
+    log.ok(`compiled ${codexAgentCount} Codex subagents to .codex/agents/ (skills use .agents/skills/)`);
+  }
 
   // 1f. Compile Command Code subagents (.commandcode/agents/) when enabled —
   //     each one gets taste-compatibility instructions baked into its body.
@@ -717,13 +763,23 @@ export async function runInit({
     log.ok(`compiled ${copilotCount} Copilot subagents to .github/agents/`);
   }
 
-  // 1d. Install RTK on all providers (Antigravity, Cursor, OpenCode)
-  await installRtk(repoRoot, { dryRun, spawnFn });
-  log.ok("configured RTK for all providers (Antigravity, Cursor, OpenCode)");
-
-  // 1e. Install Graphify on all providers (Antigravity, Cursor, OpenCode)
-  await installGraphify(repoRoot, pluginName, { dryRun, spawnFn });
-  log.ok("configured Graphify for all providers (Antigravity, Cursor, OpenCode)");
+  // 1d/1e. RTK and graphify for the selected providers that support them.
+  //        In plugin format, Cursor rules ship inside the plugin bundle.
+  const integrationProviders = providers.filter((p) => p === "antigravity" || p === "cursor" || p === "opencode");
+  if (integrationProviders.length) {
+    const cursorRulesDir = usesPlugin(harness, "cursor")
+      ? path.join(pluginRelDir(pluginName), "cursor", "rules")
+      : path.join(".cursor", "rules");
+    const integrationOptions = { dryRun, spawnFn, providers, cursorRulesDir };
+    const integrationLabels = integrationProviders
+      .map((id) => ALL_PROVIDERS.find((p) => p.id === id)?.label ?? id)
+      .join(", ");
+    await installRtk(repoRoot, integrationOptions);
+    log.ok(`configured RTK for ${integrationLabels}`);
+    await installGraphify(repoRoot, integrationOptions);
+    log.ok(`configured Graphify for ${integrationLabels}`);
+    if (format === "plugin") await syncPluginManifests(repoRoot, harness, { dryRun });
+  }
 
   // 1g. Install template workspace rules into .agents/rules/
   if (rules !== false) {
@@ -737,7 +793,7 @@ export async function runInit({
 
   // 2. Parse the founder soul (transformed, cast-aware) and fire an interactive
   //    agent session with its body as the system prompt and the cast-aware init task.
-  const initPrompt = buildInitPrompt(cast, useCommandCode, useCopilot);
+  const initPrompt = buildInitPrompt(cast, harness);
   let founder: ReturnType<typeof parseSoulFile>;
   if (dryRun) {
     const founderFile = path.join(BUNDLED_PERSONAS_DIR, `${FOUNDER_SOUL}.soul.md`);
@@ -787,7 +843,7 @@ export async function runInit({
 
   log.ok(`firing ${founder.display_name} — ${founder.role} (${describeCast(cast)})`);
 
-  const { command, args } = getAgentSpawnSpec(agent, founder.body, initPrompt, {
+  const { command, args } = getAgentSpawnSpec(runner, founder.body, initPrompt, {
     model,
     effort,
   });
@@ -813,4 +869,7 @@ export async function runInit({
   if (result.error) {
     throw new Error(`failed to spawn ${command}: ${result.error.message}`);
   }
+
+  // The founder session may have added plugin agents; list them in the manifests.
+  if (format === "plugin") await syncPluginManifests(repoRoot, harness);
 }

@@ -15,6 +15,7 @@ import { runRecast } from "./commands/recast-cast.js";
 import { launchTui } from "./tui/index.js";
 import type { TargetId } from "./compilers/types.js";
 import { log } from "./utils/log.js";
+import { parseProviderList } from "./utils/harness.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const VERSION: string = JSON.parse(
@@ -50,6 +51,12 @@ program
     "reasoning effort (Codex: config override; claude/agy: --effort; opencode: --variant; cursor: model[effort=…])",
   )
   .option("--cast <cast>", "naming convention: valley (Silicon Valley) or wizard (Merlin, etc.) — prompts interactively if omitted")
+  .option("-p, --providers <list>", "comma-separated providers: claude-code,codex,opencode,cursor,antigravity,command-code,copilot (skips the wizard's provider step)")
+  .option("--plugin", "install Claude Code / Cursor / Antigravity as one plugin bundle under .agents/plugins/<name>/")
+  .option("--solo", "install Claude Code / Cursor / Antigravity files straight into .claude/, .cursor/, .agents/")
+  .option("--symlinks", "keep .agents/ as the source of truth and symlink provider dirs to it")
+  .option("--no-symlinks", "copy files into provider dirs instead of symlinking")
+  .option("-y, --yes", "skip the wizard: use flags, then saved .hocus/config.json, then defaults")
   .option("--command-code", "enable Command Code (cmdc) support: compile subagents to .commandcode/agents/, mirror skills, bake in taste instructions")
   .option("--no-command-code", "disable Command Code support (skips the interactive question)")
   .option("--no-rules", "skip installing workspace rules into .agents/rules/")
@@ -70,8 +77,16 @@ program
       cast?: string;
       commandCode?: boolean;
       rules?: boolean;
+      providers?: string;
+      plugin?: boolean;
+      solo?: boolean;
+      symlinks?: boolean;
+      yes?: boolean;
     }) => {
-      let resolvedAgent = "claude";
+      if (opts.plugin && opts.solo) {
+        throw new Error("--plugin and --solo are mutually exclusive");
+      }
+      let resolvedAgent: string | undefined;
       if (typeof opts.agent === "string" && opts.agent.trim()) {
         resolvedAgent = opts.agent.trim();
       } else if (opts.agent === true) {
@@ -95,9 +110,13 @@ program
         effort: opts.effort,
         dryRun: opts.dryRun,
         cast: opts.cast,
+        providers: opts.providers ? parseProviderList(opts.providers) : undefined,
         commandCode: opts.commandCode,
         copilot: opts.copilot,
+        format: opts.plugin ? "plugin" : opts.solo ? "solo" : undefined,
+        symlinks: opts.symlinks,
         rules: opts.rules,
+        interactive: opts.yes ? false : undefined,
       });
     },
   );

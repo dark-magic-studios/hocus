@@ -1,9 +1,12 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import fsExtra from "fs-extra";
-const { ensureDir, writeFile, pathExists, copy, readFile } = fsExtra;
+const { ensureDir, writeFile, pathExists, readFile, readdir, remove } = fsExtra;
+import type { TargetId } from "../compilers/types.js";
 import { log } from "./log.js";
-import { BUNDLED_SKILLS_DIR, PROJECT_PLUGINS_DIR } from "./paths.js";
+import { PROJECT_MCP_CONFIG_FILE, PROJECT_PLUGINS_DIR } from "./paths.js";
+import { type HarnessChoices, PLUGIN_PROVIDERS, marketplaceName, pluginRelDir } from "./harness.js";
+import { isSymlink, linkOrCopy } from "./link.js";
 
 export interface PluginInitOptions {
   dryRun?: boolean;
@@ -13,25 +16,11 @@ export interface PluginInitOptions {
 export interface IntegrationOptions {
   dryRun?: boolean;
   spawnFn?: typeof spawnSync;
+  /** Providers to configure (default: all that the integration supports). */
+  providers?: TargetId[];
+  /** Repo-relative directory for Cursor rules (default: .cursor/rules). */
+  cursorRulesDir?: string;
 }
-
-export const MCP_SERVERS_CONFIG = {
-  sequentialthinking: {
-    command: "npx",
-    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-    type: "stdio",
-  },
-  "code-review-graph": {
-    command: "uvx",
-    args: ["code-review-graph", "serve"],
-    type: "stdio",
-  },
-  context7: {
-    command: "npx",
-    args: ["@anthropic-ai/context7"],
-    type: "stdio",
-  },
-} as const;
 
 export const AGY_MCP_SERVERS_CONFIG = {
   sequentialthinking: {
@@ -114,21 +103,44 @@ export function sanitizePluginName(rawName: string): string {
   return name || "hocus-plugin";
 }
 
+/**
+ * Lays down MCP config and, in plugin format, the plugin bundle at
+ * .agents/plugins/<pluginName>/ — one directory that Claude Code, Cursor and
+ * Antigravity each load through their own manifest:
+ *
+ *   plugin.json                  Antigravity manifest (workspace plugins live in .agents/plugins/)
+ *   mcp_config.json              Antigravity MCP servers
+ *   agents/<name>/agent.md       Antigravity subagents
+ *   .claude-plugin/plugin.json   Claude Code manifest (agents: ./claude/agents/*.md, listed)
+ *   .mcp.json                    Claude Code MCP servers
+ *   claude/agents/               Claude Code subagents
+ *   .cursor-plugin/plugin.json   Cursor manifest (agents/rules: ./cursor/..., listed)
+ *   mcp.json                     Cursor MCP servers
+ *   cursor/agents/, cursor/rules/
+ *   skills/                      shared by all three (Agent Skills standard)
+ *
+ * Claude Code and Cursor discover the bundle through repo-root marketplaces
+ * (.claude-plugin/marketplace.json, .cursor-plugin/marketplace.json);
+ * .claude/settings.json registers and enables it for everyone who trusts the repo.
+ *
+ * `.agents/mcp_config.json` is the source of truth for MCP servers; every other
+ * MCP file is a symlink to it or a copy of it.
+ *
+ * Claude Code only accepts explicit .md file paths for `agents` (no
+ * directories or globs), so manifests list files; syncPluginManifests()
+ * refreshes those lists whenever agents or rules change.
+ */
 export async function initializeAgentPlugin(
   repoRoot: string,
-  projectName?: string,
-  options: PluginInitOptions = {},
+  choices: HarnessChoices,
+  options: PluginInitOptions & { projectName?: string } = {},
 ): Promise<{ pluginDir: string; pluginName: string }> {
-  const baseName = projectName ?? path.basename(repoRoot);
-  const pluginName = sanitizePluginName(baseName);
+  const { dryRun = false } = options;
+  const { pluginName, providers, symlinks } = choices;
+  const baseName = options.projectName ?? path.basename(repoRoot);
+  const description = `Multi-agent harness plugin for ${baseName}`;
   const pluginDir = path.join(PROJECT_PLUGINS_DIR(repoRoot), pluginName);
-
-  const manifest = {
-    $schema: "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-    name: pluginName,
-    version: "0.1.0",
-    description: `Multi-agent harness plugin for ${baseName}`,
-  };
+  const has = (id: TargetId) => providers.includes(id);
 
   // If repoRoot has an existing mcp_config.json, merge its servers
   let rootMcpServers: Record<string, any> = {};
@@ -148,77 +160,81 @@ export async function initializeAgentPlugin(
     ...rootMcpServers,
   };
 
-  const agyMcpConfig = {
-    mcpServers: agyMcpServers,
+  const writeJson = async (file: string, data: unknown, label: string) => {
+    if (dryRun) {
+      log.planned(path.relative(repoRoot, file), label);
+      return;
+    }
+    if (await isSymlink(file)) await remove(file);
+    await ensureDir(path.dirname(file));
+    await writeFile(file, JSON.stringify(data, null, 2) + "\n", "utf8");
   };
+  const mirror = (dest: string) =>
+    linkOrCopy(canonicalMcpPath, dest, { symlink: symlinks, dryRun, repoRoot });
 
-  const mcpConfig = {
-    $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
-    mcpServers: {
-      ...MCP_SERVERS_CONFIG,
-      ...rootMcpServers,
-    },
-  };
+  const canonicalMcpPath = PROJECT_MCP_CONFIG_FILE(repoRoot);
+  await writeJson(canonicalMcpPath, { mcpServers: agyMcpServers }, "MCP servers (source of truth)");
 
-  const cursorMcpConfig = {
-    mcpServers: {
-      sequentialthinking: {
-        command: "npx",
-        args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-      },
-      "code-review-graph": {
-        command: "uvx",
-        args: ["code-review-graph", "serve"],
-      },
-      context7: {
-        command: "npx",
-        args: ["@anthropic-ai/context7"],
-      },
-      ...rootMcpServers,
-    },
-  };
+  const pluginProviders = choices.format === "plugin" ? providers.filter((p) => PLUGIN_PROVIDERS.includes(p)) : [];
 
-  const manifestPath = path.join(pluginDir, "plugin.json");
-  const mcpPath = path.join(pluginDir, "mcp.json");
-  const pluginMcpConfigPath = path.join(pluginDir, "mcp_config.json");
-  const clientHooksDir = path.join(pluginDir, "com.example.client", "hooks");
-  const cursorMcpPath = path.join(repoRoot, ".cursor", "mcp.json");
-  const agentsMcpPath = path.join(repoRoot, ".agents", "mcp.json");
-  const agentsMcpConfigPath = path.join(repoRoot, ".agents", "mcp_config.json");
+  if (pluginProviders.length) {
+    const manifestBase = { name: pluginName, version: "0.1.0", description };
 
-  if (options.dryRun) {
-    log.planned(path.relative(repoRoot, manifestPath), "plugin manifest");
-    log.planned(path.relative(repoRoot, mcpPath), "plugin mcp config");
-    log.planned(path.relative(repoRoot, pluginMcpConfigPath), "plugin AGY mcp config");
-    log.planned(path.relative(repoRoot, path.join(clientHooksDir, ".gitkeep")), "client hooks directory");
-    log.planned(path.relative(repoRoot, cursorMcpPath), "Cursor MCP config");
-    log.planned(path.relative(repoRoot, agentsMcpPath), "agent-plugins MCP config");
-    log.planned(path.relative(repoRoot, agentsMcpConfigPath), "Antigravity AGY MCP config");
+    if (has("antigravity")) {
+      await writeJson(
+        path.join(pluginDir, "plugin.json"),
+        { $schema: "https://antigravity.google/schemas/v1/plugin.json", name: pluginName, description },
+        "Antigravity plugin manifest",
+      );
+      await mirror(path.join(pluginDir, "mcp_config.json"));
+    }
+
+    if (has("claude-code")) {
+      await writeJson(
+        path.join(pluginDir, ".claude-plugin", "plugin.json"),
+        { ...manifestBase, agents: [] },
+        "Claude Code plugin manifest",
+      );
+      await mirror(path.join(pluginDir, ".mcp.json"));
+      await ensureKeepDir(path.join(pluginDir, "claude", "agents"), repoRoot, dryRun);
+      await writeClaudeMarketplace(repoRoot, pluginName, description, baseName, dryRun);
+    }
+
+    if (has("cursor")) {
+      await writeJson(
+        path.join(pluginDir, ".cursor-plugin", "plugin.json"),
+        { ...manifestBase, agents: [], rules: [], mcpServers: "./mcp.json" },
+        "Cursor plugin manifest",
+      );
+      await mirror(path.join(pluginDir, "mcp.json"));
+      await ensureKeepDir(path.join(pluginDir, "cursor", "agents"), repoRoot, dryRun);
+      await writeJson(
+        path.join(repoRoot, ".cursor-plugin", "marketplace.json"),
+        {
+          name: marketplaceName(pluginName),
+          owner: { name: baseName },
+          metadata: { description: `Local hocus harness for ${baseName}` },
+          plugins: [{ name: pluginName, source: `./${pluginRelDir(pluginName)}`, description }],
+        },
+        "Cursor marketplace",
+      );
+    }
   } else {
-    await ensureDir(pluginDir);
-    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
-    await writeFile(mcpPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");
-    await writeFile(pluginMcpConfigPath, JSON.stringify(agyMcpConfig, null, 2) + "\n", "utf8");
-
-    await ensureDir(clientHooksDir);
-    await writeFile(path.join(clientHooksDir, ".gitkeep"), "", "utf8");
-
-    await ensureDir(path.dirname(cursorMcpPath));
-    await writeFile(cursorMcpPath, JSON.stringify(cursorMcpConfig, null, 2) + "\n", "utf8");
-
-    await ensureDir(path.dirname(agentsMcpPath));
-    await writeFile(agentsMcpPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");
-    await writeFile(agentsMcpConfigPath, JSON.stringify(agyMcpConfig, null, 2) + "\n", "utf8");
+    if (has("claude-code")) await mirror(path.join(repoRoot, ".mcp.json"));
+    if (has("cursor")) await mirror(path.join(repoRoot, ".cursor", "mcp.json"));
   }
+
+  await removeLegacyPluginFiles(repoRoot, pluginDir, dryRun);
+  await syncPluginManifests(repoRoot, choices, { dryRun });
 
   // When scaffolding and the user has agy installed, pass the MCP configuration to AGY CLI
   const spawnFn = options.spawnFn ?? spawnSync;
-  if (commandExists("agy", spawnFn)) {
+  if (has("antigravity") && commandExists("agy", spawnFn)) {
     let configuredCount = 0;
     for (const [name, server] of Object.entries(agyMcpServers)) {
       const addArgs = buildAgyMcpAddArgs(name, server);
       if (addArgs.length > 2) {
-        if (options.dryRun) {
+        if (dryRun) {
           log.planned(`agy ${addArgs.join(" ")}`, "pass MCP config to agy CLI");
         } else {
           try {
@@ -230,7 +246,7 @@ export async function initializeAgentPlugin(
         }
       }
     }
-    if (!options.dryRun && configuredCount > 0) {
+    if (!dryRun && configuredCount > 0) {
       log.ok(`configured ${configuredCount} MCP servers for agy CLI`);
     }
   }
@@ -238,11 +254,136 @@ export async function initializeAgentPlugin(
   return { pluginDir, pluginName };
 }
 
+/**
+ * Rewrites the `agents` (and Cursor `rules`) lists in the plugin's Claude Code
+ * and Cursor manifests from the files on disk. Call it after anything adds or
+ * removes plugin agents or rules. Missing manifests are left alone.
+ */
+export async function syncPluginManifests(
+  repoRoot: string,
+  choices: Pick<HarnessChoices, "pluginName">,
+  options: { dryRun?: boolean } = {},
+): Promise<void> {
+  if (options.dryRun) return;
+  const pluginDir = path.join(PROJECT_PLUGINS_DIR(repoRoot), choices.pluginName);
+  const listFiles = async (rel: string, exts: string[]) => {
+    const dir = path.join(pluginDir, rel);
+    if (!(await pathExists(dir))) return [];
+    return (await readdir(dir))
+      .filter((f) => exts.some((ext) => f.endsWith(ext)))
+      .sort()
+      .map((f) => `./${rel}/${f}`);
+  };
+  const update = async (rel: string, fields: Record<string, string[]>) => {
+    const file = path.join(pluginDir, rel);
+    if (!(await pathExists(file))) return;
+    try {
+      const manifest = JSON.parse(await readFile(file, "utf8"));
+      await writeFile(file, JSON.stringify({ ...manifest, ...fields }, null, 2) + "\n", "utf8");
+    } catch {
+      log.warn(`couldn't parse ${path.relative(repoRoot, file)} — skipped refreshing its file lists`);
+    }
+  };
+  await update(path.join(".claude-plugin", "plugin.json"), {
+    agents: await listFiles("claude/agents", [".md"]),
+  });
+  await update(path.join(".cursor-plugin", "plugin.json"), {
+    agents: await listFiles("cursor/agents", [".md"]),
+    rules: await listFiles("cursor/rules", [".mdc", ".md"]),
+  });
+}
+
+async function ensureKeepDir(dir: string, repoRoot: string, dryRun: boolean): Promise<void> {
+  if (dryRun) {
+    log.planned(path.relative(repoRoot, dir) + "/");
+    return;
+  }
+  await ensureDir(dir);
+  const entries = await readdir(dir);
+  if (entries.length === 0) await writeFile(path.join(dir, ".gitkeep"), "", "utf8");
+}
+
+/**
+ * Writes .claude-plugin/marketplace.json at the repo root and registers it in
+ * .claude/settings.json (extraKnownMarketplaces + enabledPlugins), merging
+ * into whatever settings already exist.
+ */
+async function writeClaudeMarketplace(
+  repoRoot: string,
+  pluginName: string,
+  description: string,
+  owner: string,
+  dryRun: boolean,
+): Promise<void> {
+  const market = marketplaceName(pluginName);
+  const marketplacePath = path.join(repoRoot, ".claude-plugin", "marketplace.json");
+  const settingsPath = path.join(repoRoot, ".claude", "settings.json");
+  if (dryRun) {
+    log.planned(path.relative(repoRoot, marketplacePath), "Claude Code marketplace");
+    log.planned(path.relative(repoRoot, settingsPath), `enable ${pluginName}@${market}`);
+    return;
+  }
+
+  const marketplace = {
+    name: market,
+    owner: { name: owner },
+    metadata: { description: `Local hocus harness for ${owner}` },
+    plugins: [{ name: pluginName, source: `./${pluginRelDir(pluginName)}`, description }],
+  };
+  await ensureDir(path.dirname(marketplacePath));
+  await writeFile(marketplacePath, JSON.stringify(marketplace, null, 2) + "\n", "utf8");
+
+  let settings: Record<string, any> = {};
+  if (await pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(await readFile(settingsPath, "utf8"));
+    } catch {
+      log.warn(`couldn't parse ${path.relative(repoRoot, settingsPath)} — enable the plugin with /plugin install ${pluginName}@${market}`);
+      return;
+    }
+  }
+  settings.extraKnownMarketplaces = {
+    ...(settings.extraKnownMarketplaces ?? {}),
+    [market]: { source: { source: "directory", path: "." } },
+  };
+  settings.enabledPlugins = { ...(settings.enabledPlugins ?? {}), [`${pluginName}@${market}`]: true };
+  await ensureDir(path.dirname(settingsPath));
+  await writeFile(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf8");
+}
+
+/** Removes files earlier hocus versions wrote that match no provider's spec. */
+async function removeLegacyPluginFiles(repoRoot: string, pluginDir: string, dryRun: boolean): Promise<void> {
+  const legacy = [path.join(pluginDir, "com.example.client")];
+  for (const file of [path.join(repoRoot, ".agents", "mcp.json"), path.join(pluginDir, "mcp.json")]) {
+    try {
+      const parsed = JSON.parse(await readFile(file, "utf8"));
+      if (String(parsed?.$schema ?? "").includes("agent-plugins.org")) legacy.push(file);
+    } catch {}
+  }
+  try {
+    const manifest = JSON.parse(await readFile(path.join(pluginDir, "plugin.json"), "utf8"));
+    if (String(manifest?.$schema ?? "").includes("agent-plugins.org")) legacy.push(path.join(pluginDir, "plugin.json"));
+  } catch {}
+
+  for (const file of legacy) {
+    if (!(await pathExists(file))) continue;
+    if (dryRun) {
+      log.planned(path.relative(repoRoot, file), "remove legacy agent-plugins.org file");
+    } else {
+      await remove(file);
+      log.info(`removed legacy ${path.relative(repoRoot, file)}`);
+    }
+  }
+}
+
+
 export async function installRtk(
   repoRoot: string,
   options: IntegrationOptions = {},
 ): Promise<void> {
   const { dryRun = false, spawnFn = spawnSync } = options;
+  const has = (id: TargetId) => !options.providers || options.providers.includes(id);
+  const cursorRulesDir = options.cursorRulesDir ?? path.join(".cursor", "rules");
 
   // 1. Antigravity: .agents/rules/antigravity-rtk-rules.md
   const antigravityRulePath = path.join(repoRoot, ".agents", "rules", "antigravity-rtk-rules.md");
@@ -281,7 +422,7 @@ RTK filters and compresses command output before it reaches the LLM context, sav
 `;
 
   // 2. Cursor: .cursor/rules/rtk.mdc
-  const cursorRulePath = path.join(repoRoot, ".cursor", "rules", "rtk.mdc");
+  const cursorRulePath = path.join(repoRoot, cursorRulesDir, "rtk.mdc");
   const cursorRuleContent = `---
 description: Always use RTK (Rust Token Killer) to execute shell commands to minimize token consumption
 globs: *
@@ -326,39 +467,36 @@ export const RtkOpenCodePlugin = async ({ $ }) => {
 };
 `;
 
-  if (dryRun) {
-    log.planned(path.relative(repoRoot, antigravityRulePath), "RTK Antigravity rule");
-    log.planned(path.relative(repoRoot, cursorRulePath), "RTK Cursor rule");
-    log.planned(path.relative(repoRoot, opencodePluginPath), "RTK OpenCode plugin");
-    return;
-  }
-
-  await ensureDir(path.dirname(antigravityRulePath));
-  await writeFile(antigravityRulePath, antigravityRuleContent, "utf8");
-
-  await ensureDir(path.dirname(cursorRulePath));
-  await writeFile(cursorRulePath, cursorRuleContent, "utf8");
-
-  await ensureDir(path.dirname(opencodePluginPath));
-  await writeFile(opencodePluginPath, opencodePluginContent, "utf8");
+  const files: Array<[string, string, string, TargetId]> = [
+    [antigravityRulePath, antigravityRuleContent, "RTK Antigravity rule", "antigravity"],
+    [cursorRulePath, cursorRuleContent, "RTK Cursor rule", "cursor"],
+    [opencodePluginPath, opencodePluginContent, "RTK OpenCode plugin", "opencode"],
+  ];
+  await writeIntegrationFiles(repoRoot, files.filter(([, , , id]) => has(id)), dryRun);
+  if (dryRun) return;
 
   if (commandExists("rtk", spawnFn)) {
     try {
-      spawnFn("rtk", ["init", "--agent", "antigravity"], { cwd: repoRoot, stdio: "ignore" });
-      spawnFn("rtk", ["init", "-g", "--agent", "cursor"], { cwd: repoRoot, stdio: "ignore" });
-      spawnFn("rtk", ["init", "-g", "--opencode"], { cwd: repoRoot, stdio: "ignore" });
+      if (has("antigravity")) spawnFn("rtk", ["init", "--agent", "antigravity"], { cwd: repoRoot, stdio: "ignore" });
+      if (has("cursor")) spawnFn("rtk", ["init", "-g", "--agent", "cursor"], { cwd: repoRoot, stdio: "ignore" });
+      if (has("opencode")) spawnFn("rtk", ["init", "-g", "--opencode"], { cwd: repoRoot, stdio: "ignore" });
     } catch {
       // Ignore CLI execution errors; fallback rule files are written
     }
   }
 }
 
+/**
+ * Configures graphify per provider. The graphify skill itself ships with the
+ * bundled skills, so it is installed (and mirrored) with the rest of them.
+ */
 export async function installGraphify(
   repoRoot: string,
-  pluginName: string,
   options: IntegrationOptions = {},
 ): Promise<void> {
   const { dryRun = false, spawnFn = spawnSync } = options;
+  const has = (id: TargetId) => !options.providers || options.providers.includes(id);
+  const cursorRulesDir = options.cursorRulesDir ?? path.join(".cursor", "rules");
 
   // 1. Antigravity: .agents/rules/graphify.md and .agents/workflows/graphify.md
   const antigravityRulePath = path.join(repoRoot, ".agents", "rules", "graphify.md");
@@ -385,7 +523,7 @@ Rules:
 `;
 
   // 2. Cursor: .cursor/rules/graphify.mdc
-  const cursorRulePath = path.join(repoRoot, ".cursor", "rules", "graphify.mdc");
+  const cursorRulePath = path.join(repoRoot, cursorRulesDir, "graphify.mdc");
   const cursorRuleContent = `---
 description: graphify knowledge graph context
 alwaysApply: true
@@ -425,56 +563,42 @@ export const GraphifyPlugin = async ({ directory }) => {
 `;
 
   const opencodeConfigPath = path.join(repoRoot, ".opencode", "opencode.json");
+  const opencodeConfigContent = JSON.stringify({ plugin: ["./plugins/graphify.js"] }, null, 2) + "\n";
 
-  // 4. Graphify Skill in plugin and .agents/skills
-  const bundledGraphifySkill = path.join(BUNDLED_SKILLS_DIR, "graphify");
-  const pluginSkillDest = path.join(PROJECT_PLUGINS_DIR(repoRoot), pluginName, "skills", "graphify");
-  const agentsSkillDest = path.join(repoRoot, ".agents", "skills", "graphify");
-
-  if (dryRun) {
-    log.planned(path.relative(repoRoot, antigravityRulePath), "Graphify Antigravity rule");
-    log.planned(path.relative(repoRoot, antigravityWorkflowPath), "Graphify Antigravity workflow");
-    log.planned(path.relative(repoRoot, cursorRulePath), "Graphify Cursor rule");
-    log.planned(path.relative(repoRoot, opencodePluginPath), "Graphify OpenCode plugin");
-    log.planned(path.relative(repoRoot, opencodeConfigPath), "Graphify OpenCode config");
-    log.planned(path.relative(repoRoot, pluginSkillDest), "Graphify plugin skill");
-    log.planned(path.relative(repoRoot, agentsSkillDest), "Graphify agents skill");
-    return;
-  }
-
-  await ensureDir(path.dirname(antigravityRulePath));
-  await writeFile(antigravityRulePath, antigravityRuleContent, "utf8");
-
-  await ensureDir(path.dirname(antigravityWorkflowPath));
-  await writeFile(antigravityWorkflowPath, antigravityWorkflowContent, "utf8");
-
-  await ensureDir(path.dirname(cursorRulePath));
-  await writeFile(cursorRulePath, cursorRuleContent, "utf8");
-
-  await ensureDir(path.dirname(opencodePluginPath));
-  await writeFile(opencodePluginPath, opencodePluginContent, "utf8");
-
-  await ensureDir(path.dirname(opencodeConfigPath));
-  const opencodeConfig = {
-    plugin: ["./plugins/graphify.js"],
-  };
-  await writeFile(opencodeConfigPath, JSON.stringify(opencodeConfig, null, 2) + "\n", "utf8");
-
-  if (await pathExists(bundledGraphifySkill)) {
-    await ensureDir(path.dirname(pluginSkillDest));
-    await copy(bundledGraphifySkill, pluginSkillDest, { overwrite: true });
-
-    await ensureDir(path.dirname(agentsSkillDest));
-    await copy(bundledGraphifySkill, agentsSkillDest, { overwrite: true });
-  }
+  const files: Array<[string, string, string, TargetId]> = [
+    [antigravityRulePath, antigravityRuleContent, "Graphify Antigravity rule", "antigravity"],
+    [antigravityWorkflowPath, antigravityWorkflowContent, "Graphify Antigravity workflow", "antigravity"],
+    [cursorRulePath, cursorRuleContent, "Graphify Cursor rule", "cursor"],
+    [opencodePluginPath, opencodePluginContent, "Graphify OpenCode plugin", "opencode"],
+    [opencodeConfigPath, opencodeConfigContent, "Graphify OpenCode config", "opencode"],
+  ];
+  await writeIntegrationFiles(repoRoot, files.filter(([, , , id]) => has(id)), dryRun);
+  if (dryRun) return;
 
   if (commandExists("graphify", spawnFn)) {
     try {
-      spawnFn("graphify", ["install", "--project", "--platform", "antigravity"], { cwd: repoRoot, stdio: "ignore" });
-      spawnFn("graphify", ["install", "--project", "--platform", "cursor"], { cwd: repoRoot, stdio: "ignore" });
-      spawnFn("graphify", ["install", "--project", "--platform", "opencode"], { cwd: repoRoot, stdio: "ignore" });
+      for (const platform of ["antigravity", "cursor", "opencode"] as const) {
+        if (has(platform)) {
+          spawnFn("graphify", ["install", "--project", "--platform", platform], { cwd: repoRoot, stdio: "ignore" });
+        }
+      }
     } catch {
       // Ignore CLI execution errors; fallback configurations are written
     }
+  }
+}
+
+async function writeIntegrationFiles(
+  repoRoot: string,
+  files: Array<[string, string, string, TargetId]>,
+  dryRun: boolean,
+): Promise<void> {
+  for (const [file, content, label] of files) {
+    if (dryRun) {
+      log.planned(path.relative(repoRoot, file), label);
+      continue;
+    }
+    await ensureDir(path.dirname(file));
+    await writeFile(file, content, "utf8");
   }
 }

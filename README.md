@@ -20,11 +20,11 @@ Implementation lives in `src/utils/cast.ts:1` (`CAST_MAP`, `PERSONA_SKILL_IDS`, 
 
 | Mode | What happens |
 |---|---|
-| **Interactive** (`hocus init` in a TTY) | Prompt: `1) Silicon Valley — Richard, Jared, Gilfoyle, Dinesh...` / `2) Wizards — Merlin, Roger Bacon, Zoroaster, Flamel...` (`src/commands/init.ts:260`). Default is `2` (Wizards) if you press Enter or enter an unrecognized value. |
+| **Interactive** (`hocus init` in a TTY) | First step of the init wizard: pick Wizards or Silicon Valley (`src/tui/components/InitWizard.tsx`). Wizards is pre-selected, or whatever `.hocus/config.json` saved last time. |
 | **Flag** | `hocus init --cast valley` or `hocus init --cast wizard` (also accepts `silicon`, `silicon valley`, `sv`, `occult`, `hocus`, `mystic` — see `normalizeCast` in `src/utils/cast.ts:8`). `--cast` bypasses the prompt and logs `using … cast (--cast …)`. |
-| **Non-interactive / `--dry-run`** | No prompt. Defaults to Wizards (`src/commands/init.ts:240`). Pass `--cast` explicitly to force Valley in CI. |
+| **Non-interactive / `-y` / `--dry-run`** | No prompt. Uses the saved cast, else Wizards. Pass `--cast` explicitly to force Valley in CI. |
 
-The choice is persisted in `.hocus/config.json` as `{ "cast": "valley" | "wizard" }`. `hocus cast` and `hocus sync` read the personas on disk; `hocus init` reads the config to detect an existing cast before deciding whether to migrate (`src/commands/init.ts:300`).
+The choice is persisted in `.hocus/config.json` as `"cast": "valley" | "wizard"`, next to the wizard's other answers (`providers`, `format`, `symlinks`, `runner`, `pluginName`). `hocus cast` and `hocus sync` read the personas on disk; `hocus init` reads the config to detect an existing cast before deciding whether to migrate (`src/commands/init.ts:300`).
 
 ### What changes when you pick a cast
 
@@ -218,7 +218,21 @@ hocus --silent     # skip boot animation
 
 Run once in the repo where you want the harness. Writes main entrypoint files (`AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, `MEMORY.md`, `TASKS.md`, `_potions/`, `_spells/`), copies the persona cast into `.hocus/personas/` for per-project editing, installs bundled skills and starter spells, and spawns an interactive initialization session with the founder persona using your preferred agent CLI.
 
-If you use Command Code, `hocus init` asks about it (or respects `--command-code` / `--no-command-code`); when enabled it also compiles the cast into `.commandcode/agents/`, mirrors skills into `.commandcode/skills/`, and bakes [Taste](https://commandcode.ai/docs/taste) compatibility instructions into every compiled agent. Outside a TTY it auto-detects an existing `.commandcode/` directory instead of asking.
+In a terminal, `hocus init` opens a wizard (↑/↓ move, Space toggles, Enter confirms, Esc goes back):
+
+1. **Cast** — Wizards or Silicon Valley.
+2. **Providers** — a checklist of Claude Code, Codex, OpenCode, Cursor, Antigravity, Command Code and GitHub Copilot, pre-ticked from the saved config or from what's detected in the repo. Only ticked providers get files, RTK/graphify setup and MCP config.
+3. **Format** (only when Claude Code, Cursor or Antigravity is ticked):
+   - **Plugin** — one bundle at `.agents/plugins/<name>-plugin/` that each tool loads through its own manifest: `.claude-plugin/plugin.json` + `.mcp.json` + `claude/agents/` for Claude Code, `.cursor-plugin/plugin.json` + `mcp.json` + `cursor/agents/` + `cursor/rules/` for Cursor, `plugin.json` + `mcp_config.json` + `agents/<name>/agent.md` for Antigravity, and a shared `skills/`. Repo-root `.claude-plugin/marketplace.json` and `.cursor-plugin/marketplace.json` list the bundle, and `.claude/settings.json` registers and enables it (`extraKnownMarketplaces` + `enabledPlugins`). Claude Code only accepts explicit agent file paths, so hocus refreshes the manifests' `agents`/`rules` lists after the founder session and on every `hocus cast`.
+   - **Solo** — files go straight into `.claude/`, `.cursor/` and `.agents/`.
+   Codex, OpenCode, Command Code and Copilot have no plugin format and are always solo.
+4. **Symlinks** — `.agents/` stays the single source of truth (`.agents/skills/`, `.agents/rules/`, `.agents/mcp_config.json`), and every provider copy (`.claude/skills/<skill>`, the plugin's `skills/<skill>`, `.mcp.json`, `.cursor/mcp.json`, …) becomes a relative symlink to it. Choose "copy" instead on Windows without Developer Mode; if symlinks fail, hocus falls back to copying and warns.
+5. **Runner** — which of the ticked providers' CLIs runs the founder session.
+6. **Summary** — the planned layout; Enter installs.
+
+Any flag skips its step (`--cast`, `--providers`, `--plugin`/`--solo`, `--symlinks`/`--no-symlinks`, `--claude`/`--codex`/`--agent …`). `-y` skips the wizard completely and uses flags, then the saved config, then defaults (Claude Code, Codex, OpenCode, Cursor and Antigravity, plus Command Code/Copilot if detected; plugin format; copies). Runs outside a TTY and `--dry-run` behave like `-y`.
+
+If you use Command Code, tick it in the wizard (or pass `--command-code` / `--no-command-code`); when enabled it also compiles the cast into `.commandcode/agents/`, mirrors skills into `.commandcode/skills/`, and bakes [Taste](https://commandcode.ai/docs/taste) compatibility instructions into every compiled agent. Outside a TTY it auto-detects an existing `.commandcode/` directory instead of asking.
 
 If you use GitHub Copilot, `hocus init` respects `--copilot` / `--no-copilot` (or auto-detects `.github/`); when enabled it compiles the cast into `.github/agents/<character>.agent.md` and mirrors skills into `.github/skills/`. Passing `--copilot` also sets GitHub Copilot as the agent runner to execute the interactive initialization prompt.
 
@@ -242,6 +256,9 @@ hocus init --command-code       # force Command Code (cmdc) support on
 hocus init --no-command-code    # force Command Code support off
 hocus init --copilot            # force GitHub Copilot support on
 hocus init --no-copilot         # force GitHub Copilot support off
+hocus init --providers claude-code,cursor --plugin --symlinks   # answer the wizard with flags
+hocus init --solo --no-symlinks # per-provider dot-directories, plain copies
+hocus init -y                   # skip the wizard: flags > saved config > defaults
 hocus init --dry-run            # preview files without writing to disk
 ```
 

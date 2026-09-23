@@ -12,6 +12,8 @@ import { readPotions } from "../schema/potion.js";
 import { readSpells, writeSpellsManifest } from "../schema/spell.js";
 import { renderDashboard } from "../templates/dashboard.js";
 import { getHocusStatus } from "../utils/status.js";
+import { type HarnessChoices, readHarnessConfig, resolveAgentRelPath } from "../utils/harness.js";
+import { sanitizePluginName, syncPluginManifests } from "../utils/plugin.js";
 
 export interface CastOptions {
   repoRoot: string;
@@ -50,9 +52,20 @@ export async function runCast({ repoRoot, projectName, targets, dryRun = false }
   // it's actually being installed into.
   const tailoredSouls = stackSummary.length ? souls.map((s) => tailor(s, stack)) : souls;
 
-  const compilers = targets?.length
-    ? ALL_COMPILERS.filter((c) => targets.includes(c.id))
+  // Providers and layout chosen at `hocus init` decide what gets compiled and
+  // where: in plugin format, Claude Code / Cursor / Antigravity agents go into
+  // the plugin bundle instead of their dot-directories.
+  const config = await readHarnessConfig(repoRoot);
+  const selected = targets?.length ? targets : config.providers;
+  const compilers = selected?.length
+    ? ALL_COMPILERS.filter((c) => selected.includes(c.id))
     : await detectRelevantCompilers(repoRoot);
+  const harness: HarnessChoices = {
+    providers: compilers.map((c) => c.id),
+    format: config.format ?? "solo",
+    symlinks: config.symlinks ?? false,
+    pluginName: config.pluginName ?? sanitizePluginName(name),
+  };
 
   if (!compilers.length) {
     log.warn(
@@ -67,10 +80,12 @@ export async function runCast({ repoRoot, projectName, targets, dryRun = false }
     }
     for (const soul of tailoredSouls) {
       const compiled = compiler.compile(soul, { repoRoot, stack });
+      compiled.relPath = resolveAgentRelPath(harness, compiler.id, compiled.relPath);
       await writeCompiledFile(repoRoot, compiled, { dryRun, target: compiler.label });
     }
     log.ok(`${compiler.label}: compiled ${tailoredSouls.length} agents`);
   }
+  if (harness.format === "plugin") await syncPluginManifests(repoRoot, harness, { dryRun });
 
   // the dashboard always gets refreshed, regardless of which compilers ran
   const potions = await readPotions(PROJECT_POTIONS_DIR(repoRoot));
